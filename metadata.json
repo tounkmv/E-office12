@@ -1,0 +1,6 @@
+{
+  "name": "ລະບົບຈອງຫ້ອງປະຊຸມແບບທັນສະໄໝ ຫ້ອງວ່າການແຂວງຫົວພັນ",
+  "description": "ລະບົບຈອງຫ້ອງປະຊຸມແບບທັນສະໄໝ ຫ້ອງວ່າການແຂວງຫົວພັນ ສາມາດຈັດການຫ້ອງປະຊຸມ, ຈອງຫ້ອງ, ອະນຸມັດ ແລະ ຈັດການບັນຊີຜູ້ໃຊ້ງານ",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

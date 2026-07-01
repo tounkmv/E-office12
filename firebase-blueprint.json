@@ -1,0 +1,92 @@
+{
+  "entities": {
+    "user": {
+      "title": "User Profile",
+      "description": "User profile with role and contact details",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "user"] },
+        "department": { "type": "string" },
+        "phone": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "pending", "inactive"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "role", "status"]
+    },
+    "room": {
+      "title": "Meeting Room",
+      "description": "Details about a meeting room available for booking",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "capacity": { "type": "integer" },
+        "equipment": { "type": "array" },
+        "status": { "type": "string", "enum": ["active", "inactive"] },
+        "imageUrl": { "type": "string" },
+        "description": { "type": "string" },
+        "location": { "type": "string" }
+      },
+      "required": ["id", "name", "capacity", "status"]
+    },
+    "booking": {
+      "title": "Room Booking",
+      "description": "A booking record for a specific room and time slot",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "roomId": { "type": "string" },
+        "roomName": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "title": { "type": "string" },
+        "date": { "type": "string" },
+        "startTime": { "type": "string" },
+        "endTime": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "purpose": { "type": "string" },
+        "attendeesCount": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "notes": { "type": "string" }
+      },
+      "required": ["id", "roomId", "roomName", "userId", "userName", "userEmail", "title", "date", "startTime", "endTime", "status"]
+    },
+    "notification": {
+      "title": "System Notification",
+      "description": "An in-app notification for bookings and system actions",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "type": { "type": "string", "enum": ["info", "success", "warning", "error"] },
+        "isRead": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "title", "message", "isRead", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "user",
+      "description": "User profile collection, keyed by auth user uid"
+    },
+    "/rooms/{roomId}": {
+      "schema": "room",
+      "description": "Meeting rooms available for booking"
+    },
+    "/bookings/{bookingId}": {
+      "schema": "booking",
+      "description": "Meeting room bookings"
+    },
+    "/notifications/{notificationId}": {
+      "schema": "notification",
+      "description": "In-app notifications for users"
+    }
+  }
+}
