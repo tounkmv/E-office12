@@ -264,7 +264,8 @@ export default function App() {
           {/* Top Navbar details */}
           <Navbar 
             userProfile={userProfile} 
-            language={language} 
+            language={language}
+            setLanguage={setLanguage} 
             onUpdateProfile={setUserProfile}
           />
 

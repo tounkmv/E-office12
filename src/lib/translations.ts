@@ -30,11 +30,11 @@ export const translations: Record<AppLanguage, Record<string, string>> = {
     user: "ຜູ້ໃຊ້ງານທົ່ວໄປ (User)",
 
     // Navigation Links
-    navDashboard: "ໜ້າລາຍງານ",
-    navBooking: "ໜ້າການຈອງຫ້ອງ",
-    navRooms: "ໜ້າຈັດການຫ້ອງປະຊຸມ",
-    navUsers: "ໜ້າຈັດການບັນຊີຍູເຊີ",
-    navSettings: "ໜ້າການຕັ້ງຄ່າລະບົບ",
+    navDashboard: "ພາບລວມ",
+    navBooking: "ຈອງຫ້ອງປະຊຸມ",
+    navRooms: "ຈັດການຫ້ອງ",
+    navUsers: "ຈັດການຜູ້ໃຊ້",
+    navSettings: "ຕັ້ງຄ່າ",
 
     // Dashboard Page
     dbTotalBookings: "ການຈອງທັງໝົດ",

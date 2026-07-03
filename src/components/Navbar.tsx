@@ -31,6 +31,7 @@ import { motion, AnimatePresence } from "motion/react";
 interface NavbarProps {
   userProfile: UserProfile | null;
   language: AppLanguage;
+  setLanguage?: (lang: AppLanguage) => void;
   onUpdateProfile?: (updated: UserProfile) => void;
 }
 
@@ -45,7 +46,7 @@ const PRESET_AVATARS = [
   { id: "av8", name: "Consultant", url: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=150&h=150&q=80" }
 ];
 
-export default function Navbar({ userProfile, language, onUpdateProfile }: NavbarProps) {
+export default function Navbar({ userProfile, language, setLanguage, onUpdateProfile }: NavbarProps) {
   const t = translations[language];
   const [notifications, setNotifications] = useState<SystemNotification[]>([]);
   const [emailLogs, setEmailLogs] = useState<EmailLog[]>([]);
@@ -271,31 +272,43 @@ export default function Navbar({ userProfile, language, onUpdateProfile }: Navba
   };
 
   return (
-    <header id="navbar-header" className="h-20 w-full flex items-center justify-between px-8 border-b border-slate-200 dark:border-white/5 bg-white dark:bg-[#111827] sticky top-0 z-30 shadow-xs">
+    <header id="navbar-header" className="h-22 md:h-24 w-full flex items-center justify-between px-6 md:px-8 border-b border-indigo-500/15 dark:border-white/10 bg-white/90 dark:bg-[#0f172a]/90 backdrop-blur-xl sticky top-0 z-30 shadow-md">
       
       {/* Redesigned Brand header area featuring Laos National Emblem */}
-      <div id="navbar-left" className="flex items-center gap-3.5">
-        <div className="p-1 bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-white/5 rounded-2xl shadow-sm shrink-0 flex items-center justify-center">
+      <div id="navbar-left" className="flex items-center gap-4">
+        <div className="p-1.5 bg-white dark:bg-slate-900 border border-indigo-200/60 dark:border-white/10 rounded-2xl shadow-sm shrink-0 flex items-center justify-center">
           <img 
             src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Emblem_of_Laos.svg/512px-Emblem_of_Laos.svg.png" 
             alt="Laos State Emblem Logo" 
-            className="w-12 h-12 object-contain filter drop-shadow-[0_2px_4px_rgba(251,191,36,0.3)] hover:scale-105 transition-transform duration-200"
+            className="w-13 h-13 md:w-14 md:h-14 object-contain filter drop-shadow-[0_2px_6px_rgba(251,191,36,0.35)] hover:scale-105 transition-transform duration-300"
             referrerPolicy="no-referrer"
           />
         </div>
         <div>
-          <h2 id="navbar-greeting" className="text-sm md:text-base font-extrabold text-slate-800 dark:text-slate-100 leading-tight">
+          <h2 id="navbar-greeting" className="text-base md:text-xl font-black text-slate-800 dark:text-slate-100 leading-tight tracking-tight drop-shadow-sm">
             {t.appTitle}
           </h2>
-          <p id="navbar-sub" className="text-[10px] md:text-xs text-indigo-600 dark:text-indigo-400 font-extrabold uppercase tracking-wider mt-0.5 flex items-center gap-1.5">
-            <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-500" />
+          <p id="navbar-sub" className="text-xs md:text-sm text-indigo-600 dark:text-indigo-400 font-extrabold uppercase tracking-wider mt-1 flex items-center gap-2">
+            <span className="inline-block w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-xs shadow-red-500" />
             <span>{t.officeName}</span>
           </p>
         </div>
       </div>
 
-      <div id="navbar-right" className="flex items-center gap-4">
+      <div id="navbar-right" className="flex items-center gap-3 md:gap-4">
         
+        {/* Prominent Sleek Language Switch Button */}
+        {setLanguage && (
+          <button
+            onClick={() => setLanguage(language === "lo" ? "en" : "lo")}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/60 dark:to-purple-950/60 text-indigo-700 dark:text-indigo-300 font-black text-xs md:text-sm border border-indigo-200/80 dark:border-indigo-500/30 shadow-sm hover:shadow-lg hover:shadow-indigo-500/25 hover:scale-105 active:scale-95 hover:border-indigo-400 dark:hover:border-indigo-400 transition-all duration-300 cursor-pointer"
+            title="Switch Language / ປ່ຽນພາສາ"
+          >
+            <span className="text-base md:text-lg leading-none">{language === "lo" ? "🇱🇦" : "🇬🇧"}</span>
+            <span className="tracking-wider uppercase font-black">{language === "lo" ? "ລາວ (LO)" : "EN"}</span>
+          </button>
+        )}
+
         {/* Email Outbox Log Button (Email Notification system visibility) */}
         <div className="relative">
           <button
@@ -304,12 +317,12 @@ export default function Navbar({ userProfile, language, onUpdateProfile }: Navba
               setShowEmailLogs(!showEmailLogs);
               setShowNotifications(false);
             }}
-            className="p-2.5 rounded-full hover:bg-slate-500/10 text-slate-600 dark:text-slate-300 relative transition-all duration-200"
+            className="p-3 rounded-2xl bg-slate-100/80 dark:bg-slate-800/80 hover:bg-gradient-to-r hover:from-indigo-500/10 hover:to-purple-500/10 text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-amber-400 relative transition-all duration-300 hover:scale-105 active:scale-95 hover:shadow-lg hover:shadow-indigo-500/25 border border-transparent hover:border-indigo-400/60 cursor-pointer"
             title="Email Outbox (Simulated System)"
           >
-            <Mail className="w-5.5 h-5.5" />
+            <Mail className="w-5.5 h-5.5 md:w-6 md:h-6" />
             {unreadEmailCount > 0 && (
-              <span className="absolute top-1 right-1 bg-emerald-500 text-white font-mono text-[10px] w-4.5 h-4.5 flex items-center justify-center rounded-full border border-slate-900 animate-pulse">
+              <span className="absolute -top-1 -right-1 bg-emerald-500 text-white font-mono text-[10px] md:text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white dark:border-slate-900 animate-pulse shadow-sm shadow-emerald-500">
                 {unreadEmailCount}
               </span>
             )}
@@ -399,11 +412,11 @@ export default function Navbar({ userProfile, language, onUpdateProfile }: Navba
               setShowNotifications(!showNotifications);
               setShowEmailLogs(false);
             }}
-            className="p-2.5 rounded-full hover:bg-slate-500/10 text-slate-600 dark:text-slate-300 relative transition-all duration-200"
+            className="p-3 rounded-2xl bg-slate-100/80 dark:bg-slate-800/80 hover:bg-gradient-to-r hover:from-indigo-500/10 hover:to-purple-500/10 text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-amber-400 relative transition-all duration-300 hover:scale-105 active:scale-95 hover:shadow-lg hover:shadow-indigo-500/25 border border-transparent hover:border-indigo-400/60 cursor-pointer"
           >
-            <Bell className="w-5.5 h-5.5" />
+            <Bell className="w-5.5 h-5.5 md:w-6 md:h-6" />
             {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 bg-red-500 text-white text-[10px] w-4.5 h-4.5 flex items-center justify-center rounded-full border border-slate-900 font-bold">
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] md:text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white dark:border-slate-900 animate-pulse shadow-sm shadow-red-500">
                 {unreadCount}
               </span>
             )}
@@ -484,31 +497,32 @@ export default function Navbar({ userProfile, language, onUpdateProfile }: Navba
           </AnimatePresence>
         </div>
 
-        {/* Clickable User Badge Dropdown Initiator */}
+        {/* Clickable User Badge Dropdown Initiator with Upgraded Typography & Glow Effect */}
         {userProfile && (
           <button 
             id="user-profile-badge" 
             onClick={() => setShowProfileDrawer(true)}
-            className="flex items-center gap-2.5 bg-slate-50 hover:bg-indigo-50/50 dark:bg-slate-900/50 dark:hover:bg-slate-900 px-3 py-1.5 rounded-full border border-slate-100 dark:border-white/5 shadow-xs transition-all duration-200 cursor-pointer text-left"
+            className="flex items-center gap-3.5 bg-gradient-to-r from-slate-50 via-indigo-50/50 to-purple-50/50 hover:from-indigo-100 hover:to-purple-100 dark:from-slate-900/80 dark:via-indigo-950/50 dark:to-purple-950/50 dark:hover:from-indigo-900/60 dark:hover:to-purple-900/60 px-4 py-2 rounded-2xl border border-indigo-200/80 dark:border-indigo-500/30 shadow-sm hover:shadow-lg hover:shadow-indigo-500/25 hover:scale-[1.03] active:scale-95 hover:border-indigo-400 dark:hover:border-indigo-400 transition-all duration-300 cursor-pointer text-left group"
           >
             {userProfile.avatar ? (
               <img 
                 src={userProfile.avatar} 
                 alt={userProfile.displayName} 
-                className="w-8 h-8 rounded-full object-cover border border-indigo-200 dark:border-indigo-800/40"
+                className="w-10 h-10 md:w-11 md:h-11 rounded-full object-cover border-2 border-indigo-400 dark:border-amber-400 shadow-sm shrink-0 group-hover:scale-105 transition-transform duration-300"
               />
             ) : (
-              <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/40 flex items-center justify-center font-bold text-xs shrink-0">
-                {userProfile.displayName ? userProfile.displayName.charAt(0).toUpperCase() : <UserIcon className="w-4 h-4" />}
+              <div className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white border-2 border-indigo-300 dark:border-amber-400 flex items-center justify-center font-black text-sm md:text-base shrink-0 shadow-sm group-hover:scale-105 transition-transform duration-300">
+                {userProfile.displayName ? userProfile.displayName.charAt(0).toUpperCase() : <UserIcon className="w-5 h-5" />}
               </div>
             )}
-            <div className="hidden md:flex flex-col text-left">
-              <span className="text-[11px] font-bold text-slate-800 dark:text-slate-100 leading-none flex items-center gap-1">
+            <div className="hidden sm:flex flex-col text-left">
+              <span className="text-sm md:text-base font-black text-slate-800 dark:text-white leading-tight flex items-center gap-1.5 group-hover:text-indigo-600 dark:group-hover:text-amber-400 transition-colors">
                 <span>{userProfile.displayName}</span>
-                <Sliders className="w-3 h-3 text-slate-400" />
+                <Sliders className="w-3.5 h-3.5 text-indigo-500 animate-pulse" />
               </span>
-              <span className="text-[9px] text-slate-400 dark:text-slate-500 font-semibold mt-0.5">
-                {userProfile.email}
+              <span className="text-xs md:text-sm text-indigo-700 dark:text-indigo-300 font-extrabold tracking-wide mt-0.5 flex items-center gap-1">
+                <Building2 className="w-3 h-3 text-indigo-500 shrink-0" />
+                <span className="truncate max-w-[180px]">{userProfile.department || userProfile.email}</span>
               </span>
             </div>
           </button>
