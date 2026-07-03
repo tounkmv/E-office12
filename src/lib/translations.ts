@@ -3,9 +3,9 @@ import { AppLanguage } from "../types";
 export const translations: Record<AppLanguage, Record<string, string>> = {
   lo: {
     // App Title & General
-    appTitle: "ລະບົບຈອງຫ້ອງປະຊຸມແບບທັນສະໄໝ",
+    appTitle: "ລະບົບຈອງຫ້ອງປະຊຸມທັນສະໄໝ",
     officeName: "ຫ້ອງວ່າການແຂວງຫົວພັນ",
-    loginTitle: "ລະບົບຈອງຫ້ອງປະຊຸມ ຫ້ອງວ່າການແຂວງຫົວພັນ",
+    loginTitle: "ລະບົບຈອງຫ້ອງປະຊຸມທັນສະໄໝ ຫ້ອງວ່າການແຂວງຫົວພັນ",
     loginSubtitle: "ເຂົ້າສູ່ລະບົບດ້ວຍບັນຊີ Google / Gmail ເພື່ອຄວາມປອດໄພ",
     signInWithGoogle: "ເຂົ້າສູ່ລະບົບດ້ວຍ Google",
     signOut: "ອອກຈາກລະບົບ",
@@ -125,9 +125,9 @@ export const translations: Record<AppLanguage, Record<string, string>> = {
   },
   en: {
     // App Title & General
-    appTitle: "Modern Meeting Room Booking",
+    appTitle: "Modern Meeting Room Booking System",
     officeName: "Houaphanh Provincial Office",
-    loginTitle: "Room Booking System - Houaphanh Provincial Office",
+    loginTitle: "Modern Meeting Room Booking System - Houaphanh Provincial Office",
     loginSubtitle: "Sign in with Google / Gmail for maximum security",
     signInWithGoogle: "Sign in with Google",
     signOut: "Sign Out",

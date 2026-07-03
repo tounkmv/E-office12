@@ -278,10 +278,11 @@ export default function Navbar({ userProfile, language, setLanguage, onUpdatePro
       <div id="navbar-left" className="flex items-center gap-4">
         <div className="p-1.5 bg-white dark:bg-slate-900 border border-indigo-200/60 dark:border-white/10 rounded-2xl shadow-sm shrink-0 flex items-center justify-center">
           <img 
-            src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Emblem_of_Laos.svg/512px-Emblem_of_Laos.svg.png" 
+            src="/emblem.png" 
             alt="Laos State Emblem Logo" 
             className="w-13 h-13 md:w-14 md:h-14 object-contain filter drop-shadow-[0_2px_6px_rgba(251,191,36,0.35)] hover:scale-105 transition-transform duration-300"
             referrerPolicy="no-referrer"
+            onError={(e) => { e.currentTarget.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Emblem_of_Laos_%282025-%29.svg/800px-Emblem_of_Laos_%282025-%29.svg.png"; }}
           />
         </div>
         <div>

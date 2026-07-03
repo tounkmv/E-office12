@@ -46,10 +46,11 @@ export default function Sidebar({ activeTab, setActiveTab, language, userRole, o
         <div className="flex items-center gap-3.5 z-10">
           <div className="p-2 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-lg shrink-0 flex items-center justify-center">
             <img 
-              src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Emblem_of_Laos.svg/512px-Emblem_of_Laos.svg.png" 
+              src="/emblem.png" 
               alt="Laos State Emblem" 
               className="w-14 h-14 object-contain filter drop-shadow-[0_2px_8px_rgba(251,191,36,0.4)]"
               referrerPolicy="no-referrer"
+              onError={(e) => { e.currentTarget.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Emblem_of_Laos_%282025-%29.svg/800px-Emblem_of_Laos_%282025-%29.svg.png"; }}
             />
           </div>
           <div className="flex flex-col">
@@ -59,8 +60,8 @@ export default function Sidebar({ activeTab, setActiveTab, language, userRole, o
             <p className="text-sm font-black text-white uppercase tracking-wider">
               {language === "lo" ? "ແຂວງຫົວພັນ" : "Houaphanh"}
             </p>
-            <span className="text-[10px] text-indigo-200 font-extrabold tracking-widest uppercase mt-1 border-t border-white/15 pt-1">
-              E-OFFICE SYSTEM
+            <span className="text-[10px] text-indigo-200 font-extrabold tracking-wider mt-1 border-t border-white/15 pt-1 block">
+              {language === "lo" ? "ລະບົບຈອງຫ້ອງປະຊຸມທັນສະໄໝ" : "MODERN BOOKING SYSTEM"}
             </span>
           </div>
         </div>

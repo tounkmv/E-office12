@@ -175,27 +175,31 @@ export default function Login({ language, setLanguage, onLocalLogin }: LoginProp
             <div className="absolute -inset-2 bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 rounded-full blur-xl opacity-40 group-hover:opacity-75 transition duration-700 animate-pulse" />
             <div className="relative p-4 bg-slate-900/80 backdrop-blur-2xl rounded-full border-2 border-amber-400/40 shadow-[0_0_30px_rgba(251,191,36,0.3)] flex items-center justify-center transform group-hover:scale-105 transition-all duration-500">
               <img 
-                src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Emblem_of_Laos.svg/512px-Emblem_of_Laos.svg.png" 
+                src="/emblem.png" 
                 alt="Laos National Emblem" 
                 className="w-24 h-24 md:w-28 md:h-28 object-contain filter drop-shadow-[0_4px_12px_rgba(251,191,36,0.5)]"
                 referrerPolicy="no-referrer"
+                onError={(e) => { e.currentTarget.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Emblem_of_Laos_%282025-%29.svg/800px-Emblem_of_Laos_%282025-%29.svg.png"; }}
               />
             </div>
           </div>
 
-          {/* Prominent Centered Text Underneath Logo */}
-          <div className="space-y-2 max-w-md px-2">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-amber-500/15 via-yellow-500/15 to-indigo-500/15 border border-amber-400/30 text-amber-300 text-xs font-bold tracking-wide shadow-sm backdrop-blur-md">
-              <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0 animate-spin" style={{ animationDuration: '6s' }} />
-              <span>{language === "lo" ? "ລະບົບຄຸ້ມຄອງຫ້ອງປະຊຸມເອເລັກໂຕຣນິກ" : "Digital Meeting Governance"}</span>
-            </div>
-
-            <h1 className="text-3xl md:text-4xl lg:text-[42px] font-black tracking-tight leading-tight bg-gradient-to-r from-white via-slate-100 to-amber-200 bg-clip-text text-transparent drop-shadow-sm">
-              {language === "lo" ? "ຫ້ອງວ່າການແຂວງຫົວພັນ" : "PROVINCIAL OFFICE OF HOUAPHANH"}
+          {/* Prominent Centered System Name & Office Title Underneath Logo */}
+          <div className="space-y-4 max-w-2xl px-2 flex flex-col items-center">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-[40px] font-black tracking-tight leading-[1.25] text-center bg-gradient-to-r from-white via-amber-100 to-amber-200 bg-clip-text text-transparent drop-shadow-[0_4px_15px_rgba(255,255,255,0.2)]">
+              {language === "lo" ? "ລະບົບຈອງຫ້ອງປະຊຸມທັນສະໄໝ" : "Modern Meeting Room Booking System"}
             </h1>
 
-            <p className="text-xs md:text-sm font-extrabold text-indigo-300 uppercase tracking-[0.2em] opacity-90 block">
-              E-OFFICE MANAGEMENT SYSTEM
+            <div className="flex items-center justify-center gap-2 sm:gap-4 md:gap-5 w-full pt-1">
+              <div className="h-[3px] w-8 sm:w-16 md:w-20 bg-gradient-to-r from-transparent via-amber-400/80 to-amber-400 rounded-full shadow-sm shadow-amber-400 shrink-0" />
+              <p className="text-lg sm:text-2xl md:text-3xl lg:text-[34px] font-black text-amber-400 dark:text-amber-300 tracking-wider text-center whitespace-nowrap drop-shadow-[0_4px_15px_rgba(251,191,36,0.6)]">
+                {language === "lo" ? "ຫ້ອງວ່າການແຂວງຫົວພັນ" : "Houaphanh Provincial Office"}
+              </p>
+              <div className="h-[3px] w-8 sm:w-16 md:w-20 bg-gradient-to-l from-transparent via-amber-400/80 to-amber-400 rounded-full shadow-sm shadow-amber-400 shrink-0" />
+            </div>
+
+            <p className="text-sm sm:text-base md:text-lg font-black text-indigo-200 uppercase tracking-[0.2em] pt-1.5 block drop-shadow-sm text-center">
+              SMART E-OFFICE GOVERNANCE PLATFORM
             </p>
           </div>
         </div>
