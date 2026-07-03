@@ -6,6 +6,7 @@ import { AppLanguage } from "../types";
 import { motion } from "motion/react";
 import emblemLogo from "../assets/images/emblem.png";
 import emblemSvg from "../assets/images/emblem.svg";
+import sakuraBg from "../assets/images/sakura_login_background_1783052918576.jpg";
 
 interface LoginProps {
   language: AppLanguage;
@@ -158,24 +159,38 @@ export default function Login({ language, setLanguage, onLocalLogin }: LoginProp
   };
 
   return (
-    <div id="login-page" className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-[#0a0f1d] to-[#13112c] text-white overflow-x-hidden relative font-sans p-4 md:p-8 selection:bg-amber-400 selection:text-slate-900">
-      {/* Decorative Ambient Background Glow Blobs */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-to-tr from-indigo-600/20 via-purple-600/20 to-amber-500/10 rounded-full blur-[140px] pointer-events-none animate-pulse" style={{ animationDuration: '8s' }} />
-      <div className="absolute bottom-10 left-10 w-72 h-72 bg-blue-600/15 rounded-full blur-[100px] pointer-events-none" />
-      <div className="absolute top-10 right-10 w-80 h-80 bg-purple-600/15 rounded-full blur-[100px] pointer-events-none" />
-      
-      {/* Subtle Grid Pattern Overlay */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
+    <div id="login-page" className="min-h-screen flex flex-col items-center justify-center bg-slate-950 text-white overflow-x-hidden relative font-sans p-4 sm:p-6 md:p-8 selection:bg-amber-400 selection:text-slate-900">
+      {/* Fullscreen Sakura Wallpaper Background with smooth zoom animation */}
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        <img 
+          src={sakuraBg} 
+          alt="Sakura Blossoms Background" 
+          className="w-full h-full object-cover object-center scale-105 animate-pulse transition-all duration-1000"
+          style={{ animationDuration: '14s' }}
+          referrerPolicy="no-referrer"
+          onError={(e) => {
+            e.currentTarget.src = "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=2000&q=80";
+          }}
+        />
+        {/* Clear & Vibrant Overlay: Light edge vignette so the Sakura blossoms stay vivid and crisp */}
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/30 via-transparent to-slate-950/60" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_transparent_30%,_rgba(15,23,42,0.7)_100%)]" />
+      </div>
+
+      {/* Decorative Ambient Sakura Glow Blobs (Rose, Amber, Indigo) */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-gradient-to-tr from-rose-500/25 via-purple-600/20 to-amber-400/20 rounded-full blur-[140px] pointer-events-none animate-pulse z-0" style={{ animationDuration: '8s' }} />
+      <div className="absolute bottom-10 left-10 w-80 h-80 bg-pink-500/20 rounded-full blur-[120px] pointer-events-none z-0" />
+      <div className="absolute top-10 right-10 w-80 h-80 bg-indigo-500/20 rounded-full blur-[120px] pointer-events-none z-0" />
 
       {/* Main Centered Wrapper */}
       <div className="w-full max-w-lg flex flex-col items-center justify-center relative z-10 my-auto">
         
         {/* CENTERED LOGO & BRAND HEADER SECTION */}
         <div className="flex flex-col items-center text-center mb-8 space-y-4">
-          {/* Laos National Emblem Logo with Golden Glow Container */}
+          {/* Laos National Emblem Logo with Golden & Sakura Rose Glow Container */}
           <div className="relative group cursor-default">
-            <div className="absolute -inset-2 bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 rounded-full blur-xl opacity-40 group-hover:opacity-75 transition duration-700 animate-pulse" />
-            <div className="relative p-4 bg-slate-900/80 backdrop-blur-2xl rounded-full border-2 border-amber-400/40 shadow-[0_0_30px_rgba(251,191,36,0.3)] flex items-center justify-center transform group-hover:scale-105 transition-all duration-500">
+            <div className="absolute -inset-2 bg-gradient-to-r from-amber-400 via-rose-400 to-amber-600 rounded-full blur-xl opacity-50 group-hover:opacity-85 transition duration-700 animate-pulse" />
+            <div className="relative p-4 bg-slate-900/85 backdrop-blur-2xl rounded-full border-2 border-amber-400/50 shadow-[0_0_35px_rgba(251,191,36,0.35)] flex items-center justify-center transform group-hover:scale-105 transition-all duration-500">
               <img 
                 src={emblemLogo} 
                 alt="Laos National Emblem" 
@@ -194,30 +209,30 @@ export default function Login({ language, setLanguage, onLocalLogin }: LoginProp
 
           {/* Prominent Centered System Name & Office Title Underneath Logo */}
           <div className="space-y-4 max-w-2xl px-2 flex flex-col items-center">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-[40px] font-black tracking-tight leading-[1.25] text-center bg-gradient-to-r from-white via-amber-100 to-amber-200 bg-clip-text text-transparent drop-shadow-[0_4px_15px_rgba(255,255,255,0.2)]">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-[40px] font-black tracking-tight leading-[1.25] text-center text-white drop-shadow-[0_4px_16px_rgba(0,0,0,0.9)]">
               {language === "lo" ? "ລະບົບຈອງຫ້ອງປະຊຸມທັນສະໄໝ" : "Modern Meeting Room Booking System"}
             </h1>
 
             <div className="flex items-center justify-center gap-2 sm:gap-4 md:gap-5 w-full pt-1">
               <div className="h-[3px] w-8 sm:w-16 md:w-20 bg-gradient-to-r from-transparent via-amber-400/80 to-amber-400 rounded-full shadow-sm shadow-amber-400 shrink-0" />
-              <p className="text-lg sm:text-2xl md:text-3xl lg:text-[34px] font-black text-amber-400 dark:text-amber-300 tracking-wider text-center whitespace-nowrap drop-shadow-[0_4px_15px_rgba(251,191,36,0.6)]">
+              <p className="text-lg sm:text-2xl md:text-3xl lg:text-[34px] font-black text-amber-300 tracking-wider text-center whitespace-nowrap drop-shadow-[0_4px_16px_rgba(0,0,0,0.9)]">
                 {language === "lo" ? "ຫ້ອງວ່າການແຂວງຫົວພັນ" : "Houaphanh Provincial Office"}
               </p>
               <div className="h-[3px] w-8 sm:w-16 md:w-20 bg-gradient-to-l from-transparent via-amber-400/80 to-amber-400 rounded-full shadow-sm shadow-amber-400 shrink-0" />
             </div>
 
-            <p className="text-sm sm:text-base md:text-lg font-black text-indigo-200 uppercase tracking-[0.2em] pt-1.5 block drop-shadow-sm text-center">
+            <p className="text-sm sm:text-base md:text-lg font-black text-white/95 uppercase tracking-[0.2em] pt-1.5 block drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)] text-center">
               SMART E-OFFICE GOVERNANCE PLATFORM
             </p>
           </div>
         </div>
 
         {/* CENTERED GLASSMORPHIC LOGIN CARD */}
-        <div className="w-full bg-white/95 dark:bg-[#0f172a]/90 backdrop-blur-2xl rounded-3xl border border-white/20 dark:border-indigo-500/25 shadow-2xl shadow-black/50 p-6 md:p-8 relative overflow-hidden transition-all duration-300">
+        <div className="w-full bg-white/95 dark:bg-slate-950/85 backdrop-blur-3xl rounded-3xl border border-white/30 dark:border-rose-400/30 shadow-[0_25px_70px_-15px_rgba(0,0,0,0.85),0_0_40px_rgba(244,114,182,0.15)] p-6 md:p-8 relative overflow-hidden transition-all duration-300">
           
           {/* Ambient card corner glow */}
-          <div className="absolute top-0 right-0 w-40 h-40 bg-purple-500/10 rounded-full blur-2xl pointer-events-none" />
-          <div className="absolute bottom-0 left-0 w-40 h-40 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
+          <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-bl from-rose-500/20 to-purple-500/10 rounded-full blur-2xl pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-amber-500/15 to-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
 
           <div className="space-y-6 relative z-10">
             {/* Card Header & Title */}
@@ -240,7 +255,7 @@ export default function Login({ language, setLanguage, onLocalLogin }: LoginProp
                 onClick={() => { setAuthTab("google"); setError(null); }}
                 className={`flex-1 py-2.5 text-xs md:text-sm font-extrabold rounded-xl transition-all duration-300 cursor-pointer ${
                   authTab === "google" 
-                    ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-500/25 scale-[1.01]" 
+                    ? "bg-gradient-to-r from-rose-600 via-indigo-600 to-purple-600 text-white shadow-md shadow-rose-500/25 scale-[1.01]" 
                     : "text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-amber-300 hover:bg-white/50 dark:hover:bg-white/5"
                 }`}
               >
@@ -251,7 +266,7 @@ export default function Login({ language, setLanguage, onLocalLogin }: LoginProp
                 onClick={() => { setAuthTab("email"); setError(null); }}
                 className={`flex-1 py-2.5 text-xs md:text-sm font-extrabold rounded-xl transition-all duration-300 cursor-pointer ${
                   authTab === "email" 
-                    ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-500/25 scale-[1.01]" 
+                    ? "bg-gradient-to-r from-rose-600 via-indigo-600 to-purple-600 text-white shadow-md shadow-rose-500/25 scale-[1.01]" 
                     : "text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-amber-300 hover:bg-white/50 dark:hover:bg-white/5"
                 }`}
               >
@@ -387,7 +402,7 @@ export default function Login({ language, setLanguage, onLocalLogin }: LoginProp
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 hover:from-indigo-500 hover:to-purple-500 text-white py-3.5 rounded-xl font-black text-sm shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/40 hover:scale-[1.01] active:scale-95 transition-all duration-300 cursor-pointer disabled:opacity-50 border border-indigo-400/30"
+                    className="w-full bg-gradient-to-r from-rose-600 via-indigo-600 to-purple-600 hover:from-rose-500 hover:to-purple-500 text-white py-3.5 rounded-xl font-black text-sm shadow-lg shadow-rose-500/25 hover:shadow-xl hover:shadow-rose-500/40 hover:scale-[1.01] active:scale-95 transition-all duration-300 cursor-pointer disabled:opacity-50 border border-rose-400/30"
                   >
                     {loading ? t.loading : (isSignUp ? (language === "lo" ? "ລົງທະບຽນບັນຊີໃໝ່" : "Sign Up Account") : (language === "lo" ? "ເຂົ້າສູ່ລະບົບດ້ວຍອີເມວ" : "Sign In with Email"))}
                   </button>
