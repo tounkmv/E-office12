@@ -4,6 +4,8 @@ import { auth, googleProvider, signInWithPopup, signInWithEmailAndPassword, crea
 import { translations } from "../lib/translations";
 import { AppLanguage } from "../types";
 import { motion } from "motion/react";
+import emblemLogo from "../assets/images/emblem.png";
+import emblemSvg from "../assets/images/emblem.svg";
 
 interface LoginProps {
   language: AppLanguage;
@@ -175,11 +177,17 @@ export default function Login({ language, setLanguage, onLocalLogin }: LoginProp
             <div className="absolute -inset-2 bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 rounded-full blur-xl opacity-40 group-hover:opacity-75 transition duration-700 animate-pulse" />
             <div className="relative p-4 bg-slate-900/80 backdrop-blur-2xl rounded-full border-2 border-amber-400/40 shadow-[0_0_30px_rgba(251,191,36,0.3)] flex items-center justify-center transform group-hover:scale-105 transition-all duration-500">
               <img 
-                src="/emblem.png" 
+                src={emblemLogo} 
                 alt="Laos National Emblem" 
                 className="w-24 h-24 md:w-28 md:h-28 object-contain filter drop-shadow-[0_4px_12px_rgba(251,191,36,0.5)]"
                 referrerPolicy="no-referrer"
-                onError={(e) => { e.currentTarget.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Emblem_of_Laos_%282025-%29.svg/800px-Emblem_of_Laos_%282025-%29.svg.png"; }}
+                onError={(e) => { 
+                  if (e.currentTarget.src !== emblemSvg) {
+                    e.currentTarget.src = emblemSvg;
+                  } else {
+                    e.currentTarget.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Emblem_of_Laos_%282025-%29.svg/800px-Emblem_of_Laos_%282025-%29.svg.png";
+                  }
+                }}
               />
             </div>
           </div>

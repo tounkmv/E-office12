@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 import { AppLanguage, UserRole } from "../types";
 import { translations } from "../lib/translations";
+import emblemLogo from "../assets/images/emblem.png";
+import emblemSvg from "../assets/images/emblem.svg";
 
 interface SidebarProps {
   activeTab: string;
@@ -46,11 +48,17 @@ export default function Sidebar({ activeTab, setActiveTab, language, userRole, o
         <div className="flex items-center gap-3.5 z-10">
           <div className="p-2 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-lg shrink-0 flex items-center justify-center">
             <img 
-              src="/emblem.png" 
+              src={emblemLogo} 
               alt="Laos State Emblem" 
               className="w-14 h-14 object-contain filter drop-shadow-[0_2px_8px_rgba(251,191,36,0.4)]"
               referrerPolicy="no-referrer"
-              onError={(e) => { e.currentTarget.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Emblem_of_Laos_%282025-%29.svg/800px-Emblem_of_Laos_%282025-%29.svg.png"; }}
+              onError={(e) => { 
+                if (e.currentTarget.src !== emblemSvg) {
+                  e.currentTarget.src = emblemSvg;
+                } else {
+                  e.currentTarget.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Emblem_of_Laos_%282025-%29.svg/800px-Emblem_of_Laos_%282025-%29.svg.png";
+                }
+              }}
             />
           </div>
           <div className="flex flex-col">
