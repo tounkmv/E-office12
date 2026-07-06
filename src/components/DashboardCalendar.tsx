@@ -169,44 +169,44 @@ export default function DashboardCalendar({ bookings, rooms, language }: Dashboa
   };
 
   return (
-    <div id="calendar-dashboard-section" className="bg-white dark:bg-[#1e293b] rounded-3xl p-6 border border-slate-100 dark:border-white/5 space-y-6">
+    <div id="calendar-dashboard-section" className="bg-white dark:bg-[#1e293b] rounded-3xl p-6 border border-slate-100 dark:border-white/5 border-t-4 border-t-amber-500 shadow-xs space-y-6">
       
-      {/* Title & Today Control */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 dark:border-white/5 pb-4">
+      {/* Title & Today Control (Amber/Orange Gradient Banner) */}
+      <div className="bg-gradient-to-r from-amber-600 via-orange-600 to-rose-600 p-4 sm:p-5 rounded-2xl shadow-md text-white flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-indigo-500/10 text-indigo-500 rounded-xl">
-            <CalendarDays className="w-5 h-5" />
+          <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center shadow-sm shrink-0">
+            <CalendarDays className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h3 className="font-extrabold text-base text-slate-800 dark:text-slate-100">
+            <h3 className="font-extrabold text-base sm:text-lg text-white tracking-tight">
               {labels.title}
             </h3>
-            <p className="text-[11px] text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider">
-              {isLao ? "ກວດສອບຕາຕະລາງການໃຊ້ຫ້ອງທັງໝົດ" : "Verify room scheduling calendar"}
+            <p className="text-[11px] text-amber-100 font-medium">
+              {isLao ? "ກວດສອບຕາຕະລາງການໃຊ້ຫ້ອງປະຊຸມທັງໝົດໃນລະບົບ" : "Verify room scheduling calendar in the system"}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
           {/* Legend dots */}
-          <div className="hidden md:flex items-center gap-4 text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase mr-2 border-r border-slate-100 dark:border-white/5 pr-4">
+          <div className="flex items-center gap-3 text-[10px] text-white font-bold uppercase mr-1 bg-black/20 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10">
             <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-xs" />
               <span>{labels.legendApproved}</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-blue-300 animate-pulse shadow-xs" />
               <span>{labels.legendPending}</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+              <span className="w-2 h-2 rounded-full bg-red-400 shadow-xs" />
               <span>{labels.legendRejected}</span>
             </div>
           </div>
 
           <button
             onClick={handleGoToToday}
-            className="px-3.5 py-1.5 bg-slate-50 hover:bg-slate-100 dark:bg-slate-900/50 dark:hover:bg-slate-900 border border-slate-200/50 dark:border-white/5 text-xs font-bold rounded-xl transition-all text-slate-700 dark:text-slate-300 cursor-pointer"
+            className="px-3.5 py-1.5 bg-white text-orange-700 hover:bg-orange-50 font-black text-xs rounded-xl transition-all shadow-sm cursor-pointer shrink-0"
           >
             {labels.todayBtn}
           </button>

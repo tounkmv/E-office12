@@ -27,8 +27,6 @@ import { translations } from "../lib/translations";
 import { EmailLog, updateUserProfile, markEmailAsRead } from "../lib/firebaseHelper";
 import { showSystemToast } from "../utils/toast";
 import { motion, AnimatePresence } from "motion/react";
-import emblemLogo from "../assets/images/emblem.png";
-import emblemSvg from "../assets/images/emblem.svg";
 
 interface NavbarProps {
   userProfile: UserProfile | null;
@@ -81,7 +79,11 @@ export default function Navbar({ userProfile, language, setLanguage, onUpdatePro
 
   const processFile = (file: File) => {
     if (!file.type.startsWith("image/")) {
-      alert(isLao ? "ກະລຸນາເລືອກໄຟລ໌ຮູບພາບເທົ່ານັ້ນ!" : "Please select an image file only!");
+      showSystemToast(
+        isLao ? "ກະລຸນາເລືອກໄຟລ໌ຮູບພາບເທົ່ານັ້ນ (PNG, JPG, WebP)!" : "Please select an image file only!",
+        "error",
+        isLao ? "ຂໍ້ຜິດພາດ" : "Error"
+      );
       return;
     }
     
@@ -89,10 +91,10 @@ export default function Navbar({ userProfile, language, setLanguage, onUpdatePro
     reader.onload = (event) => {
       const img = new Image();
       img.onload = () => {
-        // Create canvas to downscale and compress image to fit beautifully in standard 150x150
+        // Create canvas to downscale and compress image to fit beautifully in high-def 300x300
         const canvas = document.createElement("canvas");
-        const MAX_WIDTH = 150;
-        const MAX_HEIGHT = 150;
+        const MAX_WIDTH = 300;
+        const MAX_HEIGHT = 300;
         let width = img.width;
         let height = img.height;
 
@@ -113,9 +115,14 @@ export default function Navbar({ userProfile, language, setLanguage, onUpdatePro
         const ctx = canvas.getContext("2d");
         if (ctx) {
           ctx.drawImage(img, 0, 0, width, height);
-          const compressedBase64 = canvas.toDataURL("image/jpeg", 0.85);
+          const compressedBase64 = canvas.toDataURL("image/jpeg", 0.92);
           setAvatar(compressedBase64);
           setCustomAvatarUrl(""); // Reset preset/url fields
+          showSystemToast(
+            isLao ? "ອັບໂຫຼດຮູບໂປຣຟາຍສຳເລັດແລ້ວ! ກົດປຸ່ມ 'ບັນທຶກການຕັ້ງຄ່າ' ດ້ານລຸ່ມເພື່ອຢືນຢັນ" : "Profile picture uploaded! Click 'Save Changes' below to confirm",
+            "success",
+            isLao ? "ອັບໂຫຼດຮູບພາບ" : "Avatar Uploaded"
+          );
         }
       };
       img.src = event.target?.result as string;
@@ -274,43 +281,27 @@ export default function Navbar({ userProfile, language, setLanguage, onUpdatePro
   };
 
   return (
-    <header id="navbar-header" className="h-22 md:h-24 w-full flex items-center justify-between px-6 md:px-8 border-b border-indigo-500/15 dark:border-white/10 bg-white/90 dark:bg-[#0f172a]/90 backdrop-blur-xl sticky top-0 z-30 shadow-md">
+    <header id="navbar-header" className="min-h-20 md:min-h-22 py-3 w-full flex items-center justify-between px-4 sm:px-6 md:px-8 border-b-2 border-amber-400/50 bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-950 text-white sticky top-0 z-30 shadow-[0_10px_35px_rgba(0,0,0,0.65)] backdrop-blur-3xl relative overflow-visible">
       
-      {/* Redesigned Brand header area featuring Laos National Emblem */}
-      <div id="navbar-left" className="flex items-center gap-4">
-        <div className="p-1.5 bg-white dark:bg-slate-900 border border-indigo-200/60 dark:border-white/10 rounded-2xl shadow-sm shrink-0 flex items-center justify-center">
-          <img 
-            src={emblemLogo} 
-            alt="Laos State Emblem Logo" 
-            className="w-13 h-13 md:w-14 md:h-14 object-contain filter drop-shadow-[0_2px_6px_rgba(251,191,36,0.35)] hover:scale-105 transition-transform duration-300"
-            referrerPolicy="no-referrer"
-            onError={(e) => { 
-              if (e.currentTarget.src !== emblemSvg) {
-                e.currentTarget.src = emblemSvg;
-              } else {
-                e.currentTarget.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Emblem_of_Laos_%282025-%29.svg/800px-Emblem_of_Laos_%282025-%29.svg.png";
-              }
-            }}
-          />
-        </div>
-        <div>
-          <h2 id="navbar-greeting" className="text-base md:text-xl font-black text-slate-800 dark:text-slate-100 leading-tight tracking-tight drop-shadow-sm">
-            {t.appTitle}
-          </h2>
-          <p id="navbar-sub" className="text-xs md:text-sm text-indigo-600 dark:text-indigo-400 font-extrabold uppercase tracking-wider mt-1 flex items-center gap-2">
-            <span className="inline-block w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-xs shadow-red-500" />
-            <span>{t.officeName}</span>
-          </p>
+      {/* Decorative animated bottom glowing ribbon */}
+      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-400 to-transparent opacity-80 pointer-events-none" />
+
+      {/* 1. LEFT COLUMN: Sleek System Status & Online Indicator (Clean UI without logos or titles) */}
+      <div id="navbar-left" className="flex items-center gap-3">
+        <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white/10 border border-white/15 text-xs sm:text-sm text-amber-300 font-black shadow-xs">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block shrink-0" />
+          <span className="tracking-wide">{isLao ? "ລະບົບອອນລາຍ (ONLINE)" : "SYSTEM ONLINE"}</span>
         </div>
       </div>
 
-      <div id="navbar-right" className="flex items-center gap-3 md:gap-4">
+      {/* 2. RIGHT COLUMN: Modern Controls & User Badge */}
+      <div id="navbar-right" className="flex items-center justify-end gap-2 sm:gap-3 min-w-0">
         
         {/* Prominent Sleek Language Switch Button */}
         {setLanguage && (
           <button
             onClick={() => setLanguage(language === "lo" ? "en" : "lo")}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/60 dark:to-purple-950/60 text-indigo-700 dark:text-indigo-300 font-black text-xs md:text-sm border border-indigo-200/80 dark:border-indigo-500/30 shadow-sm hover:shadow-lg hover:shadow-indigo-500/25 hover:scale-105 active:scale-95 hover:border-indigo-400 dark:hover:border-indigo-400 transition-all duration-300 cursor-pointer"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-white/10 hover:bg-white/20 text-amber-300 font-black text-xs md:text-sm border border-amber-400/40 shadow-sm hover:shadow-lg hover:shadow-amber-500/20 hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer shrink-0"
             title="Switch Language / ປ່ຽນພາສາ"
           >
             <span className="text-base md:text-lg leading-none">{language === "lo" ? "🇱🇦" : "🇬🇧"}</span>
@@ -326,7 +317,7 @@ export default function Navbar({ userProfile, language, setLanguage, onUpdatePro
               setShowEmailLogs(!showEmailLogs);
               setShowNotifications(false);
             }}
-            className="p-3 rounded-2xl bg-slate-100/80 dark:bg-slate-800/80 hover:bg-gradient-to-r hover:from-indigo-500/10 hover:to-purple-500/10 text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-amber-400 relative transition-all duration-300 hover:scale-105 active:scale-95 hover:shadow-lg hover:shadow-indigo-500/25 border border-transparent hover:border-indigo-400/60 cursor-pointer"
+            className="p-2.5 sm:p-3 rounded-2xl bg-white/10 hover:bg-amber-400/20 text-white hover:text-amber-300 relative transition-all duration-300 hover:scale-105 active:scale-95 hover:shadow-lg hover:shadow-amber-500/20 border border-white/15 hover:border-amber-400/50 cursor-pointer shrink-0"
             title="Email Outbox (Simulated System)"
           >
             <Mail className="w-5.5 h-5.5 md:w-6 md:h-6" />
@@ -421,7 +412,7 @@ export default function Navbar({ userProfile, language, setLanguage, onUpdatePro
               setShowNotifications(!showNotifications);
               setShowEmailLogs(false);
             }}
-            className="p-3 rounded-2xl bg-slate-100/80 dark:bg-slate-800/80 hover:bg-gradient-to-r hover:from-indigo-500/10 hover:to-purple-500/10 text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-amber-400 relative transition-all duration-300 hover:scale-105 active:scale-95 hover:shadow-lg hover:shadow-indigo-500/25 border border-transparent hover:border-indigo-400/60 cursor-pointer"
+            className="p-2.5 sm:p-3 rounded-2xl bg-white/10 hover:bg-amber-400/20 text-white hover:text-amber-300 relative transition-all duration-300 hover:scale-105 active:scale-95 hover:shadow-lg hover:shadow-amber-500/20 border border-white/15 hover:border-amber-400/50 cursor-pointer shrink-0"
           >
             <Bell className="w-5.5 h-5.5 md:w-6 md:h-6" />
             {unreadCount > 0 && (
@@ -506,32 +497,48 @@ export default function Navbar({ userProfile, language, setLanguage, onUpdatePro
           </AnimatePresence>
         </div>
 
-        {/* Clickable User Badge Dropdown Initiator with Upgraded Typography & Glow Effect */}
+        {/* Clickable Admin Settings & User Profile Badge with Upgraded Luxury UI */}
         {userProfile && (
           <button 
             id="user-profile-badge" 
             onClick={() => setShowProfileDrawer(true)}
-            className="flex items-center gap-3.5 bg-gradient-to-r from-slate-50 via-indigo-50/50 to-purple-50/50 hover:from-indigo-100 hover:to-purple-100 dark:from-slate-900/80 dark:via-indigo-950/50 dark:to-purple-950/50 dark:hover:from-indigo-900/60 dark:hover:to-purple-900/60 px-4 py-2 rounded-2xl border border-indigo-200/80 dark:border-indigo-500/30 shadow-sm hover:shadow-lg hover:shadow-indigo-500/25 hover:scale-[1.03] active:scale-95 hover:border-indigo-400 dark:hover:border-indigo-400 transition-all duration-300 cursor-pointer text-left group"
+            className="flex items-center gap-2.5 sm:gap-3.5 bg-gradient-to-r from-slate-900 via-indigo-950 to-purple-950 hover:from-slate-800 hover:to-indigo-900 px-3 sm:px-4 py-2 rounded-2xl border-2 border-amber-400/80 shadow-[0_0_20px_rgba(251,191,36,0.25)] hover:shadow-[0_0_28px_rgba(251,191,36,0.5)] hover:scale-[1.02] active:scale-95 transition-all duration-300 cursor-pointer text-left group shrink-0 relative overflow-hidden"
+            title={isLao ? "ຄລິກເພື່ອຕັ້ງຄ່າບັນຊີ ແລະ ຂໍ້ມູນຜູ້ດູແລລະບົບ" : "Click to manage admin account & profile settings"}
           >
-            {userProfile.avatar ? (
-              <img 
-                src={userProfile.avatar} 
-                alt={userProfile.displayName} 
-                className="w-10 h-10 md:w-11 md:h-11 rounded-full object-cover border-2 border-indigo-400 dark:border-amber-400 shadow-sm shrink-0 group-hover:scale-105 transition-transform duration-300"
-              />
-            ) : (
-              <div className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white border-2 border-indigo-300 dark:border-amber-400 flex items-center justify-center font-black text-sm md:text-base shrink-0 shadow-sm group-hover:scale-105 transition-transform duration-300">
-                {userProfile.displayName ? userProfile.displayName.charAt(0).toUpperCase() : <UserIcon className="w-5 h-5" />}
+            <div className="absolute -top-6 -right-6 w-20 h-20 bg-amber-400/15 rounded-full blur-xl pointer-events-none group-hover:bg-amber-400/30 transition-colors" />
+            
+            <div className="relative shrink-0">
+              {userProfile.avatar ? (
+                <img 
+                  src={userProfile.avatar} 
+                  alt={userProfile.displayName} 
+                  className="w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-full object-cover border-2 border-amber-400 shadow-md shrink-0 group-hover:scale-105 transition-transform duration-300"
+                />
+              ) : (
+                <div className="w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white border-2 border-amber-400 flex items-center justify-center font-black text-sm md:text-base shrink-0 shadow-md group-hover:scale-105 transition-transform duration-300">
+                  {userProfile.displayName ? userProfile.displayName.charAt(0).toUpperCase() : <UserIcon className="w-5 h-5" />}
+                </div>
+              )}
+              {userProfile.role === "admin" && (
+                <span className="absolute -bottom-1 -right-1 w-5 h-5 bg-gradient-to-br from-amber-400 to-orange-500 text-slate-950 rounded-full flex items-center justify-center border-2 border-slate-900 shadow-xs animate-pulse" title="Admin">
+                  <Sliders className="w-2.5 h-2.5 font-bold" />
+                </span>
+              )}
+            </div>
+
+            <div className="flex flex-col text-left min-w-0">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <span className="text-xs sm:text-sm font-black text-white leading-tight truncate max-w-[85px] sm:max-w-[130px] group-hover:text-amber-300 transition-colors">
+                  {userProfile.displayName || (isLao ? "ຜູ້ໃຊ້ງານ" : "User")}
+                </span>
+                <span className="px-2 py-0.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black text-[9px] sm:text-[10px] uppercase tracking-wider shadow-xs flex items-center gap-1 shrink-0 group-hover:brightness-110">
+                  <Sliders className="w-2.5 h-2.5 sm:w-3 sm:h-3 animate-spin-slow shrink-0" />
+                  <span>{userProfile.role === "admin" ? (isLao ? "ຕັ້ງຄ່າຜູ້ດູແລ" : "Admin") : (isLao ? "ຕັ້ງຄ່າໂປຣຟາຍ" : "Settings")}</span>
+                </span>
               </div>
-            )}
-            <div className="hidden sm:flex flex-col text-left">
-              <span className="text-sm md:text-base font-black text-slate-800 dark:text-white leading-tight flex items-center gap-1.5 group-hover:text-indigo-600 dark:group-hover:text-amber-400 transition-colors">
-                <span>{userProfile.displayName}</span>
-                <Sliders className="w-3.5 h-3.5 text-indigo-500 animate-pulse" />
-              </span>
-              <span className="text-xs md:text-sm text-indigo-700 dark:text-indigo-300 font-extrabold tracking-wide mt-0.5 flex items-center gap-1">
-                <Building2 className="w-3 h-3 text-indigo-500 shrink-0" />
-                <span className="truncate max-w-[180px]">{userProfile.department || userProfile.email}</span>
+              <span className="text-[10px] sm:text-[11px] text-indigo-200 font-bold tracking-wide mt-0.5 flex items-center gap-1 truncate max-w-[140px] sm:max-w-[180px]">
+                <Building2 className="w-3 h-3 text-amber-400 shrink-0" />
+                <span className="truncate">{userProfile.department || (userProfile.role === "admin" ? (isLao ? "ຜູ້ດູແລລະບົບສູງສຸດ" : "System Admin") : userProfile.email)}</span>
               </span>
             </div>
           </button>
@@ -667,274 +674,316 @@ export default function Navbar({ userProfile, language, setLanguage, onUpdatePro
       {/* 3. Comprehensive User Profile Settings Drawer Modal */}
       <AnimatePresence>
         {showProfileDrawer && userProfile && (
-          <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-md flex items-center justify-center z-50 p-4">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white dark:bg-[#1e293b] rounded-3xl max-w-2xl w-full border border-slate-100 dark:border-white/10 shadow-2xl overflow-hidden relative flex flex-col max-h-[92vh]"
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              transition={{ type: "spring", stiffness: 350, damping: 25 }}
+              className="bg-white dark:bg-[#0f172a] rounded-3xl max-w-xl w-full border-2 border-indigo-500/30 dark:border-white/15 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.65)] overflow-hidden relative flex flex-col max-h-[92vh]"
             >
-              {/* Header */}
-              <div className="p-6 border-b border-slate-100 dark:border-white/5 flex items-center justify-between bg-gradient-to-r from-indigo-500/5 via-transparent to-transparent">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-2.5 bg-indigo-500/10 text-indigo-500 rounded-xl">
-                    <Sliders className="w-5.5 h-5.5" />
+              {/* Vibrant Luxury Gradient Header Banner */}
+              <div className="p-5 sm:p-6 bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 text-white flex items-center justify-between shadow-lg relative overflow-hidden shrink-0">
+                <div className="absolute top-0 right-10 w-36 h-36 bg-amber-400/15 rounded-full blur-2xl pointer-events-none" />
+                <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-white/10 rounded-full blur-xl pointer-events-none" />
+                <div className="flex items-center gap-3.5 relative z-10">
+                  <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 shadow-md shrink-0">
+                    <Sliders className="w-6 h-6 text-amber-300 animate-pulse" />
                   </div>
                   <div>
-                    <h3 className="font-extrabold text-sm text-slate-800 dark:text-slate-100">
-                      {isLao ? "ຕັ້ງຄ່າຂໍ້ມູນສ່ວນຕົວລະອຽດ" : "Detailed User Profile Settings"}
-                    </h3>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
-                      {isLao ? "ຈັດການຮູບພາບ, ຂໍ້ມູນຕິດຕໍ່ ແລະ ປະຫວັດ" : "Customize avatar image, credentials & contact metadata"}
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-black text-base sm:text-lg text-white tracking-tight">
+                        {isLao ? "ຕັ້ງຄ່າຂໍ້ມູນໂປຣຟາຍ & ບັນຊີຜູ້ໃຊ້" : "Profile & Account Settings"}
+                      </h3>
+                      {userProfile.role === "admin" && (
+                        <span className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-orange-400 text-slate-950 text-[10px] font-black uppercase tracking-wider shadow-sm flex items-center gap-1">
+                          <span>{isLao ? "ຜູ້ດູແລລະບົບ" : "Admin"}</span>
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-indigo-100 font-medium mt-0.5">
+                      {isLao ? "ຈັດການຮູບພາບໂປຣຟາຍ, ຂໍ້ມູນຕິດຕໍ່ ແລະ ສິດທິການເຂົ້າເຖິງ" : "Customize avatar image, credentials & contact metadata"}
                     </p>
                   </div>
-                </div>
+                 </div>
                 <button 
                   onClick={() => setShowProfileDrawer(false)}
-                  className="p-1.5 rounded-full bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 text-slate-500 hover:text-slate-700 dark:text-slate-400 cursor-pointer"
+                  className="p-2 rounded-full bg-white/15 hover:bg-white/30 text-white transition-all cursor-pointer relative z-10 shrink-0 shadow-sm"
+                  title={isLao ? "ປິດ" : "Close"}
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-5 h-5" />
                 </button>
               </div>
 
               {/* Form body */}
-              <form onSubmit={handleSaveProfile} className="flex-1 overflow-y-auto p-6 space-y-6">
+              <form onSubmit={handleSaveProfile} className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5">
                 
-                {/* 1. Profile Picture Avatar Selection Section */}
+                {/* 1. Hero Avatar Showcase & Upgraded Drag-and-Drop PC Upload Box */}
                 <div className="space-y-3">
-                  <label className="text-[11px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                    <Camera className="w-4 h-4 text-indigo-500" />
-                    <span>{isLao ? "ເລືອກ ຫຼື ປ່ຽນຮູບພາບໂປຣຟາຍ" : "Select or Upload Profile Picture"}</span>
+                  <label className="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-lg bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                      <Camera className="w-3.5 h-3.5" />
+                    </div>
+                    <span>{isLao ? "ຮູບພາບໂປຣຟາຍຂອງລະບົບ (Avatar Profile)" : "Select or Upload Profile Picture"}</span>
                   </label>
 
-                  <div className="flex flex-col md:flex-row gap-5 items-center bg-slate-50 dark:bg-slate-900/30 p-4 rounded-2xl border border-slate-100 dark:border-white/5">
-                    {/* Current Avatar preview */}
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-indigo-500 shadow-md relative group bg-indigo-500/10">
-                        {customAvatarUrl.trim() !== "" ? (
-                          <img 
-                            src={customAvatarUrl} 
-                            alt="Custom Avatar Preview" 
-                            className="w-full h-full object-cover"
-                            onError={() => setCustomAvatarUrl("")}
-                          />
-                        ) : avatar ? (
-                          <img 
-                            src={avatar} 
-                            alt="Selected Avatar Preview" 
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-2xl font-bold text-indigo-500">
-                            {displayName ? displayName.charAt(0).toUpperCase() : "U"}
-                          </div>
-                        )}
+                  {/* Hero Showcase Card */}
+                  <div className="bg-gradient-to-br from-slate-50 via-indigo-50/30 to-purple-50/20 dark:from-slate-900/80 dark:via-indigo-950/20 dark:to-slate-900/60 p-4 sm:p-5 rounded-3xl border-2 border-indigo-100 dark:border-white/10 shadow-sm flex flex-col sm:flex-row items-center gap-5">
+                    
+                    {/* Left: Large Crisp Avatar Preview Ring */}
+                    <div className="flex flex-col items-center gap-2 shrink-0">
+                      <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full p-1 bg-gradient-to-tr from-amber-400 via-indigo-500 to-purple-600 shadow-xl relative group shrink-0">
+                        <div className="w-full h-full rounded-full overflow-hidden bg-white dark:bg-slate-900 relative">
+                          {customAvatarUrl.trim() !== "" ? (
+                            <img 
+                              src={customAvatarUrl} 
+                              alt="Custom Avatar Preview" 
+                              className="w-full h-full object-cover"
+                              onError={() => setCustomAvatarUrl("")}
+                            />
+                          ) : avatar ? (
+                            <img 
+                              src={avatar} 
+                              alt="Selected Avatar Preview" 
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-3xl font-black text-indigo-600 dark:text-indigo-400">
+                              {displayName ? displayName.charAt(0).toUpperCase() : "U"}
+                            </div>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="absolute inset-0 bg-slate-950/70 opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col items-center justify-center text-white cursor-pointer p-2 text-center"
+                            title={isLao ? "ຄລິກເພື່ອປ່ຽນຮູບ" : "Click to change"}
+                          >
+                            <Camera className="w-6 h-6 mb-1 text-amber-300 animate-bounce" />
+                            <span className="text-[10px] font-black leading-tight">{isLao ? "ຄລິກປ່ຽນຮູບ" : "Change Avatar"}</span>
+                          </button>
+                        </div>
                       </div>
-                      <span className="text-[9px] text-indigo-500 font-extrabold uppercase bg-indigo-500/10 px-2 py-0.5 rounded-full">
-                        {isLao ? "ຕົວຢ່າງຮູບ" : "Preview"}
+                      <span className="px-2.5 py-0.5 rounded-full bg-indigo-600/10 dark:bg-indigo-400/10 text-indigo-600 dark:text-indigo-400 text-[10px] font-black tracking-wide border border-indigo-500/20">
+                        {isLao ? "ຮູບປັດຈຸບັນ" : "Current Avatar"}
                       </span>
                     </div>
 
-                    {/* Pre-set Avatars Picker Grid */}
-                    <div className="flex-1 space-y-2">
-                      <p className="text-[10px] text-slate-400 font-semibold">
-                        {isLao ? "ເລືອກຈາກຮູບພາບຕົວແທນລະບົບ:" : "Pick a preset premium portrait style:"}
-                      </p>
-                      <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
-                        {PRESET_AVATARS.map((av) => (
-                          <button
-                            type="button"
-                            key={av.id}
-                            onClick={() => {
-                              setAvatar(av.url);
-                              setCustomAvatarUrl(""); // Reset custom url input
-                            }}
-                            className={`w-9 h-9 rounded-full overflow-hidden border-2 transition-all hover:scale-105 cursor-pointer ${
-                              avatar === av.url && customAvatarUrl === ""
-                                ? "border-indigo-500 ring-2 ring-indigo-500/20 scale-105" 
-                                : "border-transparent opacity-80 hover:opacity-100"
-                            }`}
-                            title={av.name}
-                          >
-                            <img src={av.url} alt={av.name} className="w-full h-full object-cover" />
-                          </button>
-                        ))}
-                      </div>
-
-                      {/* Custom image URL option */}
-                      <div className="pt-2">
-                        <p className="text-[10px] text-slate-400 font-semibold mb-1">
-                          {isLao ? "ຫຼື ວາງ URL ຮູບພາບຂອງທ່ານເອງ:" : "Or paste custom image Link URL:"}
-                        </p>
+                    {/* Right: Prominent Drag & Drop PC File Upload Box */}
+                    <div className="flex-1 w-full flex flex-col justify-center min-w-0">
+                      <div
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                        onClick={() => fileInputRef.current?.click()}
+                        className={`border-2 border-dashed rounded-2xl p-4 text-center transition-all duration-300 cursor-pointer flex flex-col items-center justify-center gap-2 group/upload ${
+                          isDragging
+                            ? "border-amber-400 bg-amber-400/15 text-amber-600 dark:text-amber-300 scale-[1.02] shadow-md"
+                            : "border-indigo-400/80 hover:border-indigo-600 bg-white/80 dark:bg-slate-900/60 hover:bg-indigo-50/80 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 shadow-xs hover:shadow-md"
+                        }`}
+                      >
                         <input
-                          type="url"
-                          placeholder="https://example.com/avatar.jpg"
-                          value={customAvatarUrl}
-                          onChange={(e) => setCustomAvatarUrl(e.target.value)}
-                          className="w-full px-3 py-1.5 rounded-lg themed-input text-[10px]"
+                          type="file"
+                          ref={fileInputRef}
+                          onChange={handleFileChange}
+                          accept="image/*"
+                          className="hidden"
                         />
-                      </div>
-
-                      {/* Premium Local File Upload Dropzone */}
-                      <div className="pt-2">
-                        <p className="text-[10px] text-slate-400 font-semibold mb-1">
-                          {isLao ? "ຫຼື ອັບໂຫຼດຮູບພາບຈາກຄອມພິວເຕີ:" : "Or upload image file from computer:"}
-                        </p>
-                        <div
-                          onDragOver={handleDragOver}
-                          onDragLeave={handleDragLeave}
-                          onDrop={handleDrop}
-                          onClick={() => fileInputRef.current?.click()}
-                          className={`border-2 border-dashed rounded-xl p-3 text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1.5 ${
-                            isDragging
-                              ? "border-indigo-500 bg-indigo-500/5 dark:bg-indigo-500/10 text-indigo-500 scale-[1.01]"
-                              : "border-slate-200 hover:border-indigo-400 hover:bg-slate-100/30 dark:border-white/10 dark:hover:border-white/20 text-slate-500 dark:text-slate-400"
-                          }`}
-                        >
-                          <input
-                            type="file"
-                            ref={fileInputRef}
-                            onChange={handleFileChange}
-                            accept="image/*"
-                            className="hidden"
-                          />
-                          <Upload className={`w-5 h-5 ${isDragging ? "animate-bounce text-indigo-500" : "text-slate-400"}`} />
-                          <div className="text-[10px] font-bold">
-                            {isLao ? "ຄລິກ ຫຼື ລາກຮູບມາປະໄວ້ທີ່ນີ້ເພື່ອອັບໂຫຼດ" : "Click or drag image file here to upload"}
-                          </div>
-                          <div className="text-[9px] text-slate-400 font-semibold">
-                            {isLao ? "ຮອງຮັບ JPEG, PNG ແລະ ຈະຖືກປັບຂະໜາດໃຫ້ພໍດີໂດຍອັດຕະໂນມັດ" : "Supports JPEG, PNG. Automatically resized"}
-                          </div>
+                        <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-600 to-purple-600 text-white flex items-center justify-center shadow-md group-hover/upload:scale-110 group-hover/upload:rotate-6 transition-all duration-300">
+                          <Upload className={`w-5 h-5 ${isDragging ? "animate-bounce text-amber-300" : ""}`} />
+                        </div>
+                        <div>
+                          <p className="text-xs sm:text-sm font-black text-indigo-700 dark:text-indigo-300 group-hover/upload:text-indigo-600">
+                            {isLao ? "ອັບໂຫຼດຮູບຈາກຄອມພິວເຕີ" : "Upload Image from PC"}
+                          </p>
+                          <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+                            {isLao ? "ຄລິກ ຫຼື ລາກຮູບມາວາງ (PNG, JPG, WebP ປັບຂະໜາດອັດຕະໂນມັດ)" : "Click or drag file here (PNG, JPG, WebP - auto resized)"}
+                          </p>
                         </div>
                       </div>
+                    </div>
+                  </div>
+
+                  {/* Compact Preset Avatars & URL Link Option */}
+                  <div className="bg-slate-50 dark:bg-slate-900/40 p-3.5 rounded-2xl border border-slate-200/80 dark:border-white/5 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400">
+                        {isLao ? "ຫຼື ເລືອກຈາກຮູບຕົວແທນສຳເລັດຮູບໃນລະບົບ (8 ຮູບແບບ):" : "Or choose preset system avatar (8 styles):"}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-8 gap-1.5">
+                      {PRESET_AVATARS.map((av) => (
+                        <button
+                          type="button"
+                          key={av.id}
+                          onClick={() => {
+                            setAvatar(av.url);
+                            setCustomAvatarUrl("");
+                          }}
+                          className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden border-2 transition-all duration-200 hover:scale-110 cursor-pointer ${
+                            avatar === av.url && customAvatarUrl === ""
+                              ? "border-amber-400 ring-2 ring-amber-400/40 scale-105 shadow-md" 
+                              : "border-transparent opacity-75 hover:opacity-100"
+                          }`}
+                          title={av.name}
+                        >
+                          <img src={av.url} alt={av.name} className="w-full h-full object-cover" />
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Custom image URL input */}
+                    <div className="pt-1">
+                      <input
+                        type="url"
+                        placeholder={isLao ? "ຫຼື ວາງລິ້ງ URL ຮູບພາບຈາກອິນເຕີເນັດ..." : "Or paste image Link URL from internet..."}
+                        value={customAvatarUrl}
+                        onChange={(e) => setCustomAvatarUrl(e.target.value)}
+                        className="w-full px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-xs focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
+                      />
                     </div>
                   </div>
                 </div>
 
                 {/* 2. Personal Parameters Fields */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Display Name */}
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                      {isLao ? "ຊື່ ແລະ ນາມສະກຸນ" : "Display Name"} *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={displayName}
-                      onChange={(e) => setDisplayName(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl themed-input text-xs"
-                      placeholder="Display Name"
-                    />
-                  </div>
+                <div className="space-y-3">
+                  <label className="text-xs font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-lg bg-indigo-500/10 text-indigo-500 flex items-center justify-center">
+                      <UserIcon className="w-3.5 h-3.5" />
+                    </div>
+                    <span>{isLao ? "ຂໍ້ມູນສ່ວນຕົວ ແລະ ສັງກັດ (Personal Info)" : "Personal Information"}</span>
+                  </label>
 
-                  {/* Department */}
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                      {isLao ? "ພະແນກ / ສັງກັດ" : "Department"} *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={department}
-                      onChange={(e) => setDepartment(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl themed-input text-xs"
-                      placeholder="e.g. Planning Department"
-                    />
-                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-900/40 p-4 rounded-2xl border border-slate-200/80 dark:border-white/5">
+                    {/* Display Name */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                        {isLao ? "ຊື່ ແລະ ນາມສະກຸນ *" : "Display Name *"}
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={displayName}
+                        onChange={(e) => setDisplayName(e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-xs font-medium focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
+                        placeholder="Display Name"
+                      />
+                    </div>
 
-                  {/* Phone */}
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                      {isLao ? "ເບີໂທຕິດຕໍ່" : "Phone Number"}
-                    </label>
-                    <input
-                      type="text"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl themed-input text-xs"
-                      placeholder="e.g. 020 XXXXXXXX"
-                    />
-                  </div>
+                    {/* Department */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                        {isLao ? "ພະແນກ / ສັງກັດ *" : "Department *"}
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={department}
+                        onChange={(e) => setDepartment(e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-xs font-medium focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
+                        placeholder="e.g. Planning Department"
+                      />
+                    </div>
 
-                  {/* Read Only Email */}
-                  <div className="space-y-1.5 opacity-60">
-                    <label className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                      {isLao ? "ອີເມວ (ປ່ຽນບໍ່ໄດ້)" : "Email Address (Read-only)"}
-                    </label>
-                    <input
-                      type="text"
-                      disabled
-                      value={userProfile.email}
-                      className="w-full px-4 py-2.5 rounded-xl themed-input text-xs bg-slate-100 dark:bg-slate-900/50 cursor-not-allowed"
-                    />
+                    {/* Phone */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                        {isLao ? "ເບີໂທຕິດຕໍ່" : "Phone Number"}
+                      </label>
+                      <input
+                        type="text"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-xs font-medium focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
+                        placeholder="e.g. 020 XXXXXXXX"
+                      />
+                    </div>
+
+                    {/* Read Only Email */}
+                    <div className="space-y-1.5 opacity-70">
+                      <label className="text-xs font-bold text-slate-500 dark:text-slate-400">
+                        {isLao ? "ອີເມວລະບົບ (ປ່ຽນບໍ່ໄດ້)" : "Email Address (Read-only)"}
+                      </label>
+                      <input
+                        type="text"
+                        disabled
+                        value={userProfile.email}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-slate-800 text-xs font-medium text-slate-500 cursor-not-allowed"
+                      />
+                    </div>
                   </div>
                 </div>
 
                 {/* 3. Short Bio / Description */}
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                    <FileText className="w-3.5 h-3.5 text-indigo-500" />
+                <div className="space-y-2">
+                  <label className="text-xs font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-lg bg-indigo-500/10 text-indigo-500 flex items-center justify-center">
+                      <FileText className="w-3.5 h-3.5" />
+                    </div>
                     <span>{isLao ? "ແນະນຳຕົວຫຍໍ້ / ໜ້າທີ່ຮັບຜິດຊອບ" : "Short Biography / Duties Description"}</span>
                   </label>
                   <textarea
-                    rows={3}
+                    rows={2}
                     value={bio}
                     onChange={(e) => setBio(e.target.value)}
                     placeholder={isLao ? "ຂຽນລາຍລະອຽດໜ້າທີ່ ຫຼື ຕຳແໜ່ງຂອງທ່ານພາຍໃນຫ້ອງການ..." : "Write a brief sentence about your official duties..."}
-                    className="w-full px-4 py-3 rounded-xl themed-input text-xs resize-none"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-xs font-medium focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all resize-none"
                   />
                 </div>
 
                 {/* 4. Credentials metadata block */}
-                <div className="bg-slate-50 dark:bg-slate-900/40 rounded-2xl p-4 border border-slate-100 dark:border-white/5 space-y-2 text-[10px] font-semibold text-slate-500 dark:text-slate-400">
-                  <div className="flex justify-between">
-                    <span>{isLao ? "ລະດັບການເຂົ້າເຖິງ:" : "Access Role Privilege:"}</span>
-                    <span className="font-extrabold text-indigo-600 dark:text-indigo-400 uppercase">
-                      {userProfile.role === "admin" ? t.admin : t.user}
+                <div className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-slate-900/60 dark:to-slate-900/40 rounded-2xl p-4 border border-indigo-100 dark:border-white/10 space-y-2.5 text-xs">
+                  <div className="flex justify-between items-center">
+                    <span className="font-bold text-slate-600 dark:text-slate-400">{isLao ? "ລະດັບສິດທິການເຂົ້າເຖິງ:" : "Access Role Privilege:"}</span>
+                    <span className="font-black text-indigo-600 dark:text-indigo-400 uppercase bg-indigo-500/10 px-2.5 py-0.5 rounded-full border border-indigo-500/20">
+                      {userProfile.role === "admin" ? (isLao ? "ຜູ້ດູແລລະບົບ (Admin)" : "Admin") : (isLao ? "ຜູ້ໃຊ້ງານທົ່ວໄປ (User)" : "User")}
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span>{isLao ? "ສະຖານະບັນຊີ:" : "Account System Status:"}</span>
-                    <span className="font-bold text-emerald-500">
-                      ● {isLao ? "ອະນຸມັດພ້ອມໃຊ້ງານ" : "Active Approved"}
+                  <div className="flex justify-between items-center">
+                    <span className="font-bold text-slate-600 dark:text-slate-400">{isLao ? "ສະຖານະບັນຊີໃນລະບົບ:" : "Account System Status:"}</span>
+                    <span className="font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20 flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      <span>{isLao ? "ອະນຸມັດພ້ອມໃຊ້ງານ" : "Active Approved"}</span>
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span>{isLao ? "ວັນທີສ້າງບັນຊີ:" : "Registration Date:"}</span>
-                    <span>{new Date(userProfile.createdAt).toLocaleString()}</span>
+                  <div className="flex justify-between items-center text-[11px] text-slate-500 dark:text-slate-400">
+                    <span>{isLao ? "ວັນທີລົງທະບຽນເຂົ້າໃຊ້:" : "Registration Date:"}</span>
+                    <span className="font-semibold">{new Date(userProfile.createdAt).toLocaleString()}</span>
                   </div>
                 </div>
 
               </form>
 
-              {/* Footer action buttons */}
-              <div className="p-4 border-t border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-slate-900/10 flex justify-end gap-3">
-                {saveSuccessMsg && (
-                  <span className="text-xs text-emerald-500 font-bold flex items-center gap-1 animate-pulse mr-auto pl-2">
-                    <CheckCircle className="w-4 h-4" />
-                    <span>{saveSuccessMsg}</span>
-                  </span>
-                )}
-                <button
-                  type="button"
-                  onClick={() => setShowProfileDrawer(false)}
-                  className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-300 text-xs font-bold transition-all cursor-pointer"
-                >
-                  {isLao ? "ຍົກເລີກ" : "Cancel"}
-                </button>
-                <button
-                  onClick={handleSaveProfile}
-                  disabled={savingProfile}
-                  className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
-                >
-                  {savingProfile ? (
-                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    <Save className="w-4 h-4" />
+              {/* Footer action buttons - 100% Lao wording */}
+              <div className="p-4 sm:p-5 border-t border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-900/60 flex items-center justify-between gap-3 shrink-0">
+                <div className="flex-1 min-w-0">
+                  {saveSuccessMsg && (
+                    <span className="text-xs text-emerald-600 dark:text-emerald-400 font-extrabold flex items-center gap-1.5 animate-pulse pl-1 truncate">
+                      <CheckCircle className="w-4 h-4 shrink-0" />
+                      <span>{isLao ? "ບັນທຶກການຕັ້ງຄ່າສຳເລັດແລ້ວ!" : saveSuccessMsg}</span>
+                    </span>
                   )}
-                  <span>{isLao ? "บันທຶກການຕັ້ງຄ່າ" : "Save Changes"}</span>
-                </button>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setShowProfileDrawer(false)}
+                    className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 hover:bg-slate-200/60 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold transition-all cursor-pointer"
+                  >
+                    {isLao ? "ຍົກເລີກ" : "Cancel"}
+                  </button>
+                  <button
+                    onClick={handleSaveProfile}
+                    disabled={savingProfile}
+                    className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-xl text-xs font-black transition-all shadow-md hover:shadow-indigo-500/25 flex items-center gap-2 cursor-pointer active:scale-95"
+                  >
+                    {savingProfile ? (
+                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0" />
+                    ) : (
+                      <Save className="w-4 h-4 shrink-0" />
+                    )}
+                    <span>{isLao ? "ບັນທຶກການຕັ້ງຄ່າ" : "Save Changes"}</span>
+                  </button>
+                </div>
               </div>
 
             </motion.div>

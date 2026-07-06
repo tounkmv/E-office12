@@ -76,80 +76,116 @@ export default function Dashboard({ bookings, rooms, language, setActiveTab }: D
       {/* Overview Stats Bento */}
       <div id="stats-grid" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         
-        {/* Card 1: Total Bookings */}
+        {/* Card 1: Total Bookings (Blue Tone) */}
         <motion.div 
           whileHover={{ y: -4 }}
           id="stat-total-bookings" 
-          className="bg-white dark:bg-[#1e293b] p-6 rounded-3xl shadow-xs border border-slate-100 dark:border-white/5 flex flex-col justify-between transition-all duration-300 min-h-[140px]"
+          className="bg-white dark:bg-[#1e293b] p-6 rounded-3xl shadow-xs border border-slate-100 dark:border-white/5 border-t-4 border-t-blue-500 flex flex-col justify-between transition-all duration-300 min-h-[145px] relative overflow-hidden group"
         >
-          <div>
-            <p className="text-slate-400 dark:text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">
-              {t.dbTotalBookings}
-            </p>
-            <h3 className="text-3xl font-extrabold text-slate-900 dark:text-white">
-              {totalBookings}
-            </h3>
+          <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl pointer-events-none group-hover:bg-blue-500/10 transition-colors" />
+          <div className="flex justify-between items-start mb-2">
+            <div>
+              <p className="text-slate-400 dark:text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">
+                {t.dbTotalBookings}
+              </p>
+              <h3 className="text-3xl font-extrabold text-blue-600 dark:text-blue-400">
+                {totalBookings}
+              </h3>
+            </div>
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20 shrink-0">
+              <Briefcase className="w-5 h-5" />
+            </div>
           </div>
-          <div className="mt-4 h-1 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-            <div className="h-full bg-indigo-500 rounded-full" style={{ width: "100%" }}></div>
+          <div className="mt-4 flex items-center gap-2">
+            <div className="h-1.5 flex-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full" style={{ width: "100%" }} />
+            </div>
+            <span className="text-[10px] font-bold text-blue-500 uppercase">100%</span>
           </div>
         </motion.div>
 
-        {/* Card 2: Pending Approval */}
+        {/* Card 2: Pending Approval (Amber/Orange Tone) */}
         <motion.div 
           whileHover={{ y: -4 }}
           id="stat-pending-bookings" 
-          className="bg-white dark:bg-[#1e293b] p-6 rounded-3xl shadow-xs border border-slate-100 dark:border-white/5 flex flex-col justify-between transition-all duration-300 min-h-[140px]"
+          className="bg-white dark:bg-[#1e293b] p-6 rounded-3xl shadow-xs border border-slate-100 dark:border-white/5 border-t-4 border-t-amber-500 flex flex-col justify-between transition-all duration-300 min-h-[145px] relative overflow-hidden group"
         >
-          <div>
-            <p className="text-slate-400 dark:text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">
-              {t.dbPendingBookings}
-            </p>
-            <h3 className="text-3xl font-extrabold text-amber-500 dark:text-amber-400">
-              {pendingBookings}
-            </h3>
+          <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl pointer-events-none group-hover:bg-amber-500/10 transition-colors" />
+          <div className="flex justify-between items-start mb-2">
+            <div>
+              <p className="text-slate-400 dark:text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">
+                {t.dbPendingBookings}
+              </p>
+              <h3 className="text-3xl font-extrabold text-amber-500 dark:text-amber-400">
+                {pendingBookings}
+              </h3>
+            </div>
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center shadow-md shadow-amber-500/20 shrink-0">
+              <Clock className="w-5 h-5 animate-pulse" />
+            </div>
           </div>
-          <div className="mt-4 h-1 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-            <div className="h-full bg-amber-500 rounded-full" style={{ width: `${totalBookings > 0 ? (pendingBookings / totalBookings) * 100 : 0}%` }}></div>
+          <div className="mt-4 flex items-center gap-2">
+            <div className="h-1.5 flex-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full" style={{ width: `${totalBookings > 0 ? (pendingBookings / totalBookings) * 100 : 0}%` }} />
+            </div>
+            <span className="text-[10px] font-bold text-amber-500 uppercase">{totalBookings > 0 ? Math.round((pendingBookings / totalBookings) * 100) : 0}%</span>
           </div>
         </motion.div>
 
-        {/* Card 3: Approved Bookings */}
+        {/* Card 3: Approved Bookings (Emerald/Teal Tone) */}
         <motion.div 
           whileHover={{ y: -4 }}
           id="stat-approved-bookings" 
-          className="bg-white dark:bg-[#1e293b] p-6 rounded-3xl shadow-xs border border-slate-100 dark:border-white/5 flex flex-col justify-between transition-all duration-300 min-h-[140px]"
+          className="bg-white dark:bg-[#1e293b] p-6 rounded-3xl shadow-xs border border-slate-100 dark:border-white/5 border-t-4 border-t-emerald-500 flex flex-col justify-between transition-all duration-300 min-h-[145px] relative overflow-hidden group"
         >
-          <div>
-            <p className="text-slate-400 dark:text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">
-              {t.dbApprovedBookings}
-            </p>
-            <h3 className="text-3xl font-extrabold text-emerald-500 dark:text-emerald-400">
-              {approvedBookings}
-            </h3>
+          <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none group-hover:bg-emerald-500/10 transition-colors" />
+          <div className="flex justify-between items-start mb-2">
+            <div>
+              <p className="text-slate-400 dark:text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">
+                {t.dbApprovedBookings}
+              </p>
+              <h3 className="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400">
+                {approvedBookings}
+              </h3>
+            </div>
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20 shrink-0">
+              <CheckCircle className="w-5 h-5" />
+            </div>
           </div>
-          <div className="mt-4 h-1 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-            <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${totalBookings > 0 ? (approvedBookings / totalBookings) * 100 : 0}%` }}></div>
+          <div className="mt-4 flex items-center gap-2">
+            <div className="h-1.5 flex-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full" style={{ width: `${totalBookings > 0 ? (approvedBookings / totalBookings) * 100 : 0}%` }} />
+            </div>
+            <span className="text-[10px] font-bold text-emerald-500 uppercase">{totalBookings > 0 ? Math.round((approvedBookings / totalBookings) * 100) : 0}%</span>
           </div>
         </motion.div>
 
-        {/* Card 4: Special Notification & Active Status Card */}
+        {/* Card 4: Active Rooms (Violet/Purple Gradient Tone) */}
         <motion.div 
           whileHover={{ y: -4 }}
           id="stat-active-rooms" 
-          className="p-6 rounded-3xl bg-gradient-to-br from-indigo-600 to-indigo-800 text-white border-0 flex flex-col justify-between transition-all duration-300 shadow-sm min-h-[140px]"
+          className="p-6 rounded-3xl bg-gradient-to-br from-violet-600 via-indigo-600 to-purple-800 text-white border-t-4 border-t-violet-400 flex flex-col justify-between transition-all duration-300 shadow-md shadow-indigo-500/15 min-h-[145px] relative overflow-hidden group"
         >
-          <div>
-            <p className="text-indigo-200 text-xs font-bold uppercase tracking-wider mb-1">
-              {t.dbActiveRooms}
-            </p>
-            <h3 className="text-xl font-bold leading-tight">
-              {activeRooms} {language === "lo" ? "ຫ້ອງພ້ອມໃຊ້" : "Rooms Active"}
-            </h3>
+          <div className="absolute -right-6 -bottom-6 w-28 h-28 bg-white/10 rounded-full blur-xl pointer-events-none" />
+          <div className="flex justify-between items-start mb-2">
+            <div>
+              <p className="text-violet-200 text-xs font-bold uppercase tracking-wider mb-1">
+                {t.dbActiveRooms}
+              </p>
+              <h3 className="text-2xl font-extrabold leading-tight">
+                {activeRooms} {language === "lo" ? "ຫ້ອງພ້ອມໃຊ້" : "Rooms Active"}
+              </h3>
+            </div>
+            <div className="w-11 h-11 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shadow-sm shrink-0">
+              <Building className="w-5 h-5 text-white" />
+            </div>
           </div>
-          <div className="mt-4 flex gap-1.5">
-            <span className="px-2 py-0.5 bg-white/25 rounded text-[10px] font-bold backdrop-blur-xs">Email Active</span>
-            <span className="px-2 py-0.5 bg-white/25 rounded text-[10px] font-bold backdrop-blur-xs">App Alert</span>
+          <div className="mt-4 flex gap-1.5 flex-wrap">
+            <span className="px-2.5 py-0.5 bg-white/25 rounded-full text-[10px] font-black backdrop-blur-xs flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-ping" />
+              <span>Email Active</span>
+            </span>
+            <span className="px-2.5 py-0.5 bg-white/25 rounded-full text-[10px] font-black backdrop-blur-xs">App Alert</span>
           </div>
         </motion.div>
 
@@ -158,17 +194,24 @@ export default function Dashboard({ bookings, rooms, language, setActiveTab }: D
       {/* Main Grid: Visual Analytics & Today's Meetings */}
       <div id="main-grid" className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
-        {/* Visual Analytics Recharts Card */}
-        <div id="chart-panel" className="lg:col-span-8 bg-white dark:bg-[#1e293b] p-6 rounded-3xl shadow-xs border border-slate-100 dark:border-white/5 space-y-6">
-          <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-4">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-blue-500" />
-              <h3 className="font-bold text-base text-slate-800 dark:text-slate-100">
-                {t.dbRoomStats}
-              </h3>
+        {/* Visual Analytics Recharts Card (Blue/Cyan Header Theme) */}
+        <div id="chart-panel" className="lg:col-span-8 bg-white dark:bg-[#1e293b] p-6 rounded-3xl shadow-xs border border-slate-100 dark:border-white/5 border-t-4 border-t-blue-500 space-y-6">
+          <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-600 p-4 sm:p-5 rounded-2xl shadow-md text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center shadow-sm shrink-0">
+                <TrendingUp className="w-6 h-6 text-white animate-pulse" />
+              </div>
+              <div>
+                <h3 className="font-extrabold text-base sm:text-lg text-white tracking-tight">
+                  {t.dbRoomStats}
+                </h3>
+                <p className="text-[11px] text-blue-100 font-medium">
+                  {language === "lo" ? "ສະຖິຕິການຈອງ ແລະ ສະຖານະການນຳໃຊ້ຫ້ອງປະຊຸມ" : "Room booking statistics & usage breakdown"}
+                </p>
+              </div>
             </div>
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold bg-slate-500/10 px-3 py-1 rounded-full">
-              Real-time Firestore Analytics
+            <span className="text-xs text-white font-bold bg-white/20 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/20 shadow-xs shrink-0">
+              {language === "lo" ? "ຂໍ້ມູນອັບເດດ Real-time" : "Real-time Analytics"}
             </span>
           </div>
 
@@ -247,16 +290,23 @@ export default function Dashboard({ bookings, rooms, language, setActiveTab }: D
           </div>
         </div>
 
-        {/* Today's Meetings Sidebar */}
-        <div id="today-meetings-panel" className="lg:col-span-4 bg-white dark:bg-[#1e293b] p-6 rounded-3xl shadow-xs border border-slate-100 dark:border-white/5 flex flex-col max-h-[380px]">
-          <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-4 mb-4">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-violet-500" />
-              <h3 className="font-bold text-base text-slate-800 dark:text-slate-100">
-                {t.dbTodayMeetings}
-              </h3>
+        {/* Today's Meetings Sidebar (Violet/Purple Header Theme) */}
+        <div id="today-meetings-panel" className="lg:col-span-4 bg-white dark:bg-[#1e293b] p-6 rounded-3xl shadow-xs border border-slate-100 dark:border-white/5 border-t-4 border-t-violet-500 flex flex-col max-h-[440px]">
+          <div className="bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 p-4 rounded-2xl shadow-md text-white flex items-center justify-between gap-3 mb-4 shrink-0">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center shadow-sm shrink-0">
+                <Calendar className="w-5 h-5 text-white animate-bounce" />
+              </div>
+              <div className="min-w-0">
+                <h3 className="font-extrabold text-base text-white tracking-tight truncate">
+                  {t.dbTodayMeetings}
+                </h3>
+                <p className="text-[10px] text-violet-100 font-medium truncate">
+                  {language === "lo" ? "ກອງປະຊຸມມື້ນີ້" : "Scheduled today"}
+                </p>
+              </div>
             </div>
-            <span className="text-[10px] bg-blue-500/10 text-blue-500 px-2.5 py-0.5 rounded-full font-bold">
+            <span className="text-xs bg-white text-violet-700 px-3 py-1 rounded-full font-black shadow-sm shrink-0">
               {todayMeetings.length}
             </span>
           </div>
@@ -300,18 +350,25 @@ export default function Dashboard({ bookings, rooms, language, setActiveTab }: D
         language={language} 
       />
 
-      {/* Recent Bookings Live Log Section */}
-      <div id="recent-bookings-panel" className="bg-white dark:bg-[#1e293b] p-6 rounded-3xl shadow-xs border border-slate-100 dark:border-white/5">
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-5 mb-5">
-          <div className="flex items-center gap-2">
-            <Clock className="w-5 h-5 text-emerald-500" />
-            <h3 className="font-bold text-base text-slate-800 dark:text-slate-100">
-              {t.dbRecentBookings}
-            </h3>
+      {/* Recent Bookings Live Log Section (Emerald/Teal Header Theme) */}
+      <div id="recent-bookings-panel" className="bg-white dark:bg-[#1e293b] p-6 rounded-3xl shadow-xs border border-slate-100 dark:border-white/5 border-t-4 border-t-emerald-500">
+        <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 p-4 sm:p-5 rounded-2xl shadow-md text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center shadow-sm shrink-0">
+              <Clock className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h3 className="font-extrabold text-base sm:text-lg text-white tracking-tight">
+                {t.dbRecentBookings}
+              </h3>
+              <p className="text-[11px] text-emerald-100 font-medium">
+                {language === "lo" ? "ລາຍການຈອງຫ້ອງປະຊຸມລ່າສຸດໃນລະບົບ" : "Latest room booking requests in the system"}
+              </p>
+            </div>
           </div>
           <button
             onClick={() => setActiveTab("booking")}
-            className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 font-bold flex items-center gap-1 group cursor-pointer"
+            className="text-xs bg-white text-emerald-700 hover:bg-emerald-50 font-black px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-sm transition-all duration-200 cursor-pointer shrink-0"
           >
             <span>{t.bkBookRoom}</span>
             <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
