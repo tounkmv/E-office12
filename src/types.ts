@@ -37,7 +37,8 @@ export interface RoomBooking {
   userEmail: string;
   department: string;
   title: string;
-  date: string; // YYYY-MM-DD
+  date: string; // YYYY-MM-DD (Start Date)
+  endDate?: string; // YYYY-MM-DD (End Date)
   startTime: string; // HH:MM
   endTime: string; // HH:MM
   status: BookingStatus;

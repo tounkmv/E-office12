@@ -45,9 +45,9 @@ export default function Dashboard({ bookings, rooms, language, setActiveTab }: D
   const approvedBookings = bookings.filter(b => b.status === "approved").length;
   const activeRooms = rooms.filter(r => r.status === "active").length;
 
-  // Filter today's meetings
+  // Filter today's meetings (supporting multi-day meeting date ranges)
   const todayStr = new Date().toISOString().split("T")[0];
-  const todayMeetings = bookings.filter(b => b.date === todayStr && b.status === "approved");
+  const todayMeetings = bookings.filter(b => b.date <= todayStr && (b.endDate || b.date) >= todayStr && b.status === "approved");
 
   // Recent bookings (top 5)
   const recentBookings = bookings
@@ -404,7 +404,13 @@ export default function Dashboard({ bookings, rooms, language, setActiveTab }: D
                       {booking.title}
                     </td>
                     <td className="py-3.5 px-4 opacity-80 font-semibold">
-                      {booking.date}
+                      {booking.endDate && booking.endDate !== booking.date ? (
+                        <span className="text-indigo-600 dark:text-indigo-400 font-extrabold">
+                          {booking.date} → {booking.endDate}
+                        </span>
+                      ) : (
+                        booking.date
+                      )}
                     </td>
                     <td className="py-3.5 px-4 opacity-80 font-semibold">
                       {booking.startTime} - {booking.endTime}
@@ -412,7 +418,9 @@ export default function Dashboard({ bookings, rooms, language, setActiveTab }: D
                     <td className="py-3.5 px-4">
                       <div className="flex flex-col">
                         <span className="font-bold opacity-90">{booking.userName}</span>
-                        <span className="text-[10px] opacity-60 font-semibold">{booking.department}</span>
+                        <span className="text-[10px] text-blue-500 font-extrabold flex items-center gap-1 mt-0.5">
+                          <span>{booking.department || (language === "lo" ? "ທົ່ວໄປ" : "General")}</span>
+                        </span>
                       </div>
                     </td>
                     <td className="py-3.5 px-4">

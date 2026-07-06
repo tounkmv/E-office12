@@ -144,6 +144,18 @@ export async function updateUserProfile(uid: string, updates: Partial<UserProfil
   await setDoc(userRef, updates, { merge: true });
 }
 
+// Create new user profile
+export async function createUserProfile(profile: UserProfile) {
+  const userRef = doc(db, "users", profile.uid);
+  await setDoc(userRef, profile);
+}
+
+// Delete user profile
+export async function deleteUserProfile(uid: string) {
+  const userRef = doc(db, "users", uid);
+  await deleteDoc(userRef);
+}
+
 // Rooms API
 export async function getRooms(): Promise<MeetingRoom[]> {
   await seedDefaultRooms(); // Ensure some default rooms exist

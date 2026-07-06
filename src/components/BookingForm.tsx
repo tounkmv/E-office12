@@ -16,7 +16,12 @@ import {
   ShieldCheck,
   XCircle,
   MessageSquare,
-  Pencil
+  Pencil,
+  Briefcase,
+  CalendarDays,
+  Sparkles,
+  ArrowRight,
+  Layers
 } from "lucide-react";
 import { AppLanguage, MeetingRoom, RoomBooking, UserProfile } from "../types";
 import { translations } from "../lib/translations";
@@ -38,7 +43,9 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
   // Component States
   const [selectedRoom, setSelectedRoom] = useState<MeetingRoom | null>(null);
   const [title, setTitle] = useState("");
+  const [department, setDepartment] = useState(userProfile.department || "");
   const [date, setDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [attendeesCount, setAttendeesCount] = useState<number>(5);
@@ -56,7 +63,9 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
   // Editing Booking States
   const [editingBooking, setEditingBooking] = useState<RoomBooking | null>(null);
   const [editTitle, setEditTitle] = useState("");
+  const [editDepartment, setEditDepartment] = useState("");
   const [editDate, setEditDate] = useState("");
+  const [editEndDate, setEditEndDate] = useState("");
   const [editStartTime, setEditStartTime] = useState("");
   const [editEndTime, setEditEndTime] = useState("");
   const [editAttendeesCount, setEditAttendeesCount] = useState<number>(5);
@@ -116,14 +125,25 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
   // Filter My Bookings
   const myBookings = bookings.filter(b => b.userId === userProfile.uid);
 
-  // Helper to validate time slot overlapping
-  const checkTimeConflict = (roomId: string, bookingDate: string, start: string, end: string, excludeBookingId?: string) => {
+  // Helper to validate time slot overlapping across date ranges
+  const checkTimeConflict = (roomId: string, bookingStartDate: string, bookingEndDate: string, start: string, end: string, excludeBookingId?: string) => {
     return bookings.some(b => {
       if (excludeBookingId && b.id === excludeBookingId) return false;
-      if (b.roomId !== roomId || b.date !== bookingDate || b.status === "rejected") {
+      if (b.roomId !== roomId || b.status === "rejected") {
         return false;
       }
-      // Overlap logic
+      // Date range overlap logic
+      const startD1 = bookingStartDate;
+      const endD1 = bookingEndDate || bookingStartDate;
+      const startD2 = b.date;
+      const endD2 = b.endDate || b.date;
+
+      // If date ranges do not overlap, no conflict
+      if (endD1 < startD2 || startD1 > endD2) {
+        return false;
+      }
+
+      // If date ranges overlap, check time overlap
       const s1 = start;
       const e1 = end;
       const s2 = b.startTime;
@@ -141,14 +161,22 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
     setSuccess(null);
 
     // Basic Validation
-    if (!title || !date || !startTime || !endTime) {
+    if (!title || !date || !startTime || !endTime || !department) {
       const msg = language === "lo" ? "ກະລຸນາປ້ອນຂໍ້ມູນໃຫ້ຄົບຖ້ວນ!" : "Please fill in all fields!";
       setError(msg);
       showSystemToast(msg, "warning", language === "lo" ? "ແຈ້ງເຕືອນ" : "Warning");
       return;
     }
 
-    if (startTime >= endTime) {
+    const effectiveEndDate = endDate || date;
+    if (effectiveEndDate < date) {
+      const msg = language === "lo" ? "ວັນທີສິ້ນສຸດຕ້ອງບໍ່ໜ້ອຍກວ່າວັນທີເລີ່ມຕົ້ນ!" : "End date cannot be before start date!";
+      setError(msg);
+      showSystemToast(msg, "warning", language === "lo" ? "ແຈ້ງເຕືອນ" : "Warning");
+      return;
+    }
+
+    if (startTime >= endTime && effectiveEndDate === date) {
       const msg = language === "lo" ? "ເວລາເລີ່ມຕົ້ນຕ້ອງໜ້ອຍກວ່າເວລາສິ້ນສຸດ!" : "Start time must be before end time!";
       setError(msg);
       showSystemToast(msg, "warning", language === "lo" ? "ແຈ້ງເຕືອນ" : "Warning");
@@ -156,7 +184,7 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
     }
 
     // Conflict Check
-    const hasConflict = checkTimeConflict(selectedRoom.id, date, startTime, endTime);
+    const hasConflict = checkTimeConflict(selectedRoom.id, date, effectiveEndDate, startTime, endTime);
     if (hasConflict) {
       setError(t.bkConflictError);
       showSystemToast(t.bkConflictError, "error", language === "lo" ? "ເວລາຊ້ຳກັນ" : "Conflict Detected");
@@ -174,16 +202,17 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
         userId: userProfile.uid,
         userName: userProfile.displayName,
         userEmail: userProfile.email,
-        department: userProfile.department || "",
+        department: department,
         title,
         date,
+        endDate: effectiveEndDate,
         startTime,
         endTime,
         status: "pending",
         purpose,
         attendeesCount,
         createdAt: new Date().toISOString(),
-        notes: userProfile.phone || notes // fallback or merge
+        notes: userProfile.phone || notes
       };
 
       await addBooking(newBooking);
@@ -197,7 +226,9 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
       
       // Reset form fields
       setTitle("");
+      setDepartment(userProfile.department || "");
       setDate("");
+      setEndDate("");
       setStartTime("");
       setEndTime("");
       setAttendeesCount(5);
@@ -231,7 +262,9 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
   const handleOpenEditBooking = (booking: RoomBooking) => {
     setEditingBooking(booking);
     setEditTitle(booking.title);
+    setEditDepartment(booking.department || userProfile.department || "");
     setEditDate(booking.date);
+    setEditEndDate(booking.endDate || booking.date);
     setEditStartTime(booking.startTime);
     setEditEndTime(booking.endTime);
     setEditAttendeesCount(booking.attendeesCount);
@@ -246,21 +279,29 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
     setError(null);
     setSuccess(null);
 
-    if (!editTitle || !editDate || !editStartTime || !editEndTime) {
+    if (!editTitle || !editDate || !editStartTime || !editEndTime || !editDepartment) {
       const msg = language === "lo" ? "ກະລຸນາປ້ອນຂໍ້ມູນໃຫ້ຄົບຖ້ວນ!" : "Please fill in all fields!";
       setError(msg);
       showSystemToast(msg, "warning", language === "lo" ? "ແຈ້ງເຕືອນ" : "Warning");
       return;
     }
 
-    if (editStartTime >= editEndTime) {
+    const effectiveEditEndDate = editEndDate || editDate;
+    if (effectiveEditEndDate < editDate) {
+      const msg = language === "lo" ? "ວັນທີສິ້ນສຸດຕ້ອງບໍ່ໜ້ອຍກວ່າວັນທີເລີ່ມຕົ້ນ!" : "End date cannot be before start date!";
+      setError(msg);
+      showSystemToast(msg, "warning", language === "lo" ? "ແຈ້ງເຕືອນ" : "Warning");
+      return;
+    }
+
+    if (editStartTime >= editEndTime && effectiveEditEndDate === editDate) {
       const msg = language === "lo" ? "ເວລາເລີ່ມຕົ້ນຕ້ອງໜ້ອຍກວ່າເວລາສິ້ນສຸດ!" : "Start time must be before end time!";
       setError(msg);
       showSystemToast(msg, "warning", language === "lo" ? "ແຈ້ງເຕືອນ" : "Warning");
       return;
     }
 
-    const hasConflict = checkTimeConflict(editingBooking.roomId, editDate, editStartTime, editEndTime, editingBooking.id);
+    const hasConflict = checkTimeConflict(editingBooking.roomId, editDate, effectiveEditEndDate, editStartTime, editEndTime, editingBooking.id);
     if (hasConflict) {
       const msg = language === "lo" ? "ເວລາຊ້ຳກັນກັບການຈອງອື່ນທີ່ມີຢູ່ແລ້ວ!" : "Time slot conflicts with an existing booking!";
       setError(msg);
@@ -273,13 +314,15 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
     try {
       const updates: Partial<RoomBooking> = {
         title: editTitle,
+        department: editDepartment,
         date: editDate,
+        endDate: effectiveEditEndDate,
         startTime: editStartTime,
         endTime: editEndTime,
         attendeesCount: editAttendeesCount,
         purpose: editPurpose,
         notes: editNotes,
-        status: "pending" // Reset to pending if user edits it so admin can re-review
+        status: "pending"
       };
 
       await updateBooking(editingBooking.id, updates);
@@ -335,11 +378,27 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
 
       {/* Part 1: Grid list of available rooms */}
       <div id="rooms-selection-panel" className="space-y-6">
-        <div className="flex items-center gap-2 border-b border-white/5 pb-4">
-          <Building2 className="w-5 h-5 text-blue-500" />
-          <h3 className="font-bold text-base text-slate-800 dark:text-slate-100">
-            {t.bkBookRoom} - {t.bkSelectRoom}
-          </h3>
+        <div className="bg-gradient-to-r from-blue-600/10 via-indigo-600/5 to-transparent p-5 rounded-2xl border-l-4 border-blue-500 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-xs">
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20 shrink-0">
+              <Building2 className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="font-extrabold text-base md:text-lg text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <span>{t.bkBookRoom} - {t.bkSelectRoom}</span>
+                <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                {language === "lo" ? "ເລືອກຫ້ອງປະຊຸມທີ່ຕ້ອງການຈອງ ແລະ ກວດສອບສະຖານະຄວາມພ້ອມໃຊ້ງານ" : "Select a meeting room to book and check availability status"}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 self-start sm:self-center bg-white dark:bg-slate-800/80 px-3.5 py-1.5 rounded-xl border border-slate-200/60 dark:border-white/10 shadow-2xs">
+            <Layers className="w-4 h-4 text-blue-500" />
+            <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+              {rooms.length} {language === "lo" ? "ຫ້ອງທັງໝົດ" : "Rooms Total"}
+            </span>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -347,7 +406,7 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
             <div 
               key={room.id}
               id={`room-card-${room.id}`}
-              className="bg-white dark:bg-[#1e293b] rounded-3xl overflow-hidden border border-slate-100 dark:border-white/5 shadow-xs flex flex-col hover:shadow-md hover:border-indigo-500/20 transition-all duration-300 group"
+              className="bg-white dark:bg-[#1e293b] rounded-3xl overflow-hidden border border-slate-100 dark:border-white/5 shadow-xs flex flex-col hover:shadow-lg hover:border-indigo-500/30 transition-all duration-300 group"
             >
               {/* Room Image with lazy layout and hover effect */}
               <div className="h-44 w-full bg-slate-800 overflow-hidden relative">
@@ -364,15 +423,15 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
                   </div>
                 )}
                 {/* Location Badge */}
-                <span className="absolute bottom-3 left-3 bg-slate-900/80 backdrop-blur-md text-[10px] text-white font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 border border-white/5">
+                <span className="absolute bottom-3 left-3 bg-slate-900/80 backdrop-blur-md text-[10px] text-white font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 border border-white/10">
                   <MapPin className="w-3 h-3 text-red-400" />
                   {room.location}
                 </span>
                 {/* Status Badge */}
-                <span className={`absolute top-3 right-3 text-[10px] font-bold px-2.5 py-1 rounded-lg ${
+                <span className={`absolute top-3 right-3 text-[10px] font-bold px-2.5 py-1 rounded-lg shadow-xs ${
                   room.status === "active" 
-                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" 
-                    : "bg-red-500/20 text-red-400 border border-red-500/30"
+                    ? "bg-emerald-500/90 text-white border border-emerald-400/30 backdrop-blur-sm" 
+                    : "bg-red-500/90 text-white border border-red-400/30 backdrop-blur-sm"
                 }`}>
                   {room.status === "active" ? t.rmStatusActive : t.rmStatusInactive}
                 </span>
@@ -381,23 +440,23 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
               {/* Room Metadata */}
               <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
                 <div className="space-y-1.5">
-                  <h4 className="font-extrabold text-sm text-slate-800 dark:text-slate-100 group-hover:text-blue-500 transition-colors">
+                  <h4 className="font-extrabold text-base text-slate-800 dark:text-slate-100 group-hover:text-blue-500 transition-colors">
                     {room.name}
                   </h4>
-                  <p className="text-xs opacity-70 line-clamp-2">
+                  <p className="text-xs opacity-70 line-clamp-2 leading-relaxed font-medium">
                     {room.description}
                   </p>
                 </div>
 
-                <div className="space-y-2 border-t border-white/5 pt-3">
-                  <div className="flex items-center gap-1.5 text-xs opacity-85 font-semibold">
+                <div className="space-y-2.5 border-t border-slate-100 dark:border-white/5 pt-3.5">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300">
                     <Users className="w-4 h-4 text-blue-500" />
-                    <span>{t.rmCapacity}: {room.capacity} {language === "lo" ? "ບ່ອນນັ່ງ" : "Seats"}</span>
+                    <span>{t.rmCapacity}: <span className="text-blue-600 dark:text-blue-400">{room.capacity}</span> {language === "lo" ? "ບ່ອນນັ່ງ" : "Seats"}</span>
                   </div>
                   {/* Equipments Tags */}
                   <div className="flex flex-wrap gap-1">
                     {room.equipment.map((eq, i) => (
-                      <span key={i} className="text-[9px] bg-slate-500/10 opacity-80 px-2 py-0.5 rounded-md font-semibold">
+                      <span key={i} className="text-[10px] bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md font-bold border border-slate-200/50 dark:border-white/5">
                         {eq}
                       </span>
                     ))}
@@ -407,10 +466,15 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
                 <button
                   id={`btn-select-room-${room.id}`}
                   disabled={room.status !== "active"}
-                  onClick={() => setSelectedRoom(room)}
-                  className="w-full flex items-center justify-center gap-1.5 bg-blue-600/95 hover:bg-blue-600 text-white py-2.5 rounded-xl text-xs font-bold transition-all shadow-md shadow-blue-600/10 disabled:opacity-50 disabled:hover:bg-blue-600/95 cursor-pointer"
+                  onClick={() => {
+                    setSelectedRoom(room);
+                    setDepartment(userProfile.department || "");
+                    setDate(todayStr);
+                    setEndDate(todayStr);
+                  }}
+                  className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white py-3 rounded-xl text-xs font-extrabold transition-all shadow-md shadow-blue-600/15 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer group/btn"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-4 h-4 transition-transform group-hover/btn:rotate-90" />
                   <span>{t.bkBookRoom}</span>
                 </button>
               </div>
@@ -424,30 +488,38 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
         {selectedRoom && (
           <div id="booking-modal-overlay" className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
             <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
               id="booking-form-box" 
-              className="bg-white dark:bg-[#1e293b] rounded-3xl p-6 md:p-8 max-w-xl w-full border border-slate-100 dark:border-white/5 shadow-2xl space-y-6 relative max-h-[90vh] overflow-y-auto"
+              className="bg-white dark:bg-[#1e293b] rounded-3xl p-6 md:p-8 max-w-2xl w-full border border-slate-100 dark:border-white/10 shadow-2xl space-y-6 relative max-h-[90vh] overflow-y-auto"
             >
               {/* Close Button */}
               <button 
                 onClick={() => setSelectedRoom(null)}
-                className="absolute top-5 right-5 p-1.5 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-all"
+                className="absolute top-5 right-5 p-2 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-all cursor-pointer"
               >
-                <X className="w-5.5 h-5.5" />
+                <X className="w-5 h-5" />
               </button>
 
-              <div className="space-y-1">
-                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                  <Calendar className="w-5.5 h-5.5 text-blue-500" />
-                  <span>{t.bkBookingForm}</span>
-                </h3>
-                <p className="text-xs text-blue-500 font-extrabold flex items-center gap-1">
-                  <span>{selectedRoom.name}</span>
-                  <span className="opacity-60">|</span>
-                  <span className="opacity-90">{selectedRoom.location}</span>
-                </p>
+              {/* Modal Header */}
+              <div className="bg-gradient-to-r from-blue-600/10 via-indigo-600/5 to-transparent p-4 rounded-2xl border-l-4 border-blue-500 flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20 shrink-0">
+                  <Calendar className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-extrabold text-slate-800 dark:text-slate-100">
+                    {t.bkBookingForm}
+                  </h3>
+                  <p className="text-xs text-blue-600 dark:text-blue-400 font-extrabold flex items-center gap-1.5 mt-0.5">
+                    <span>{selectedRoom.name}</span>
+                    <span className="opacity-50">•</span>
+                    <span className="opacity-90 flex items-center gap-0.5">
+                      <MapPin className="w-3 h-3 text-red-400" />
+                      {selectedRoom.location}
+                    </span>
+                  </p>
+                </div>
               </div>
 
               {/* Main Booking Form */}
@@ -455,7 +527,7 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
                 
                 {/* Meeting Title input */}
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold opacity-80 uppercase tracking-wider flex items-center gap-1">
+                  <label className="text-[11px] font-bold opacity-80 uppercase tracking-wider flex items-center gap-1 text-slate-700 dark:text-slate-300">
                     <FileText className="w-3.5 h-3.5 text-blue-500" />
                     <span>{t.bkMeetingTitle} *</span>
                   </label>
@@ -465,29 +537,83 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
                     onChange={(e) => setTitle(e.target.value)}
                     required
                     placeholder={t.bkMeetingTitlePlaceholder}
-                    className="w-full px-4 py-3 rounded-xl themed-input text-xs"
+                    className="w-full px-4 py-3 rounded-xl themed-input text-xs font-medium"
                   />
                 </div>
 
-                {/* Date Input */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-bold opacity-80 uppercase tracking-wider flex items-center gap-1">
-                      <Calendar className="w-3.5 h-3.5 text-blue-500" />
-                      <span>{t.bkDate} *</span>
-                    </label>
-                    <input 
-                      type="date" 
-                      value={date}
-                      onChange={(e) => setDate(e.target.value)}
-                      required
-                      min={todayStr}
-                      className="w-full px-4 py-3 rounded-xl themed-input text-xs"
-                    />
+                {/* Requesting Department / Unit Input */}
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold opacity-80 uppercase tracking-wider flex items-center gap-1 text-slate-700 dark:text-slate-300">
+                    <Briefcase className="w-3.5 h-3.5 text-blue-500" />
+                    <span>{t.bkDepartment} *</span>
+                  </label>
+                  <input 
+                    type="text" 
+                    value={department}
+                    onChange={(e) => setDepartment(e.target.value)}
+                    required
+                    placeholder={t.bkDepartmentPlaceholder}
+                    className="w-full px-4 py-3 rounded-xl themed-input text-xs font-medium"
+                  />
+                </div>
+
+                {/* Meeting Date Range & Attendees Container */}
+                <div className="p-4 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-200/60 dark:border-white/5 space-y-3">
+                  <div className="flex items-center justify-between border-b border-slate-200/60 dark:border-white/5 pb-2.5">
+                    <span className="text-xs font-extrabold text-blue-600 dark:text-blue-400 flex items-center gap-1.5 uppercase tracking-wider">
+                      <CalendarDays className="w-4 h-4" />
+                      <span>{language === "lo" ? "ໄລຍະວັນທີການປະຊຸມ" : "Meeting Date Range"}</span>
+                    </span>
+                    {endDate && endDate !== date && (
+                      <span className="text-[10px] bg-indigo-500/10 text-indigo-500 dark:text-indigo-400 px-2.5 py-0.5 rounded-full font-extrabold border border-indigo-500/20 flex items-center gap-1">
+                        <Sparkles className="w-3 h-3" />
+                        {language === "lo" ? "ປະຊຸມຫຼາຍວັນ (Multi-day)" : "Multi-day Meeting"}
+                      </span>
+                    )}
                   </div>
 
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    {/* Start Date */}
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 flex items-center gap-1">
+                        <span>{t.bkStartDate} *</span>
+                      </label>
+                      <input 
+                        type="date" 
+                        value={date}
+                        onChange={(e) => {
+                          setDate(e.target.value);
+                          if (!endDate || e.target.value > endDate) {
+                            setEndDate(e.target.value);
+                          }
+                        }}
+                        required
+                        min={todayStr}
+                        className="w-full px-3.5 py-2.5 rounded-xl themed-input text-xs font-semibold"
+                      />
+                    </div>
+
+                    {/* End Date */}
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 flex items-center gap-1">
+                        <span>{t.bkEndDate} *</span>
+                      </label>
+                      <input 
+                        type="date" 
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        required
+                        min={date || todayStr}
+                        className="w-full px-3.5 py-2.5 rounded-xl themed-input text-xs font-semibold"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Attendees and Start & End Times Inputs */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="space-y-1">
-                    <label className="text-[11px] font-bold opacity-80 uppercase tracking-wider flex items-center gap-1">
+                    <label className="text-[11px] font-bold opacity-80 uppercase tracking-wider flex items-center gap-1 text-slate-700 dark:text-slate-300">
                       <Users className="w-3.5 h-3.5 text-blue-500" />
                       <span>{t.bkAttendees} *</span>
                     </label>
@@ -498,15 +624,12 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
                       required
                       min={1}
                       max={selectedRoom.capacity}
-                      className="w-full px-4 py-3 rounded-xl themed-input text-xs"
+                      className="w-full px-3.5 py-2.5 rounded-xl themed-input text-xs font-semibold"
                     />
                   </div>
-                </div>
 
-                {/* Start & End Times Inputs */}
-                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="text-[11px] font-bold opacity-80 uppercase tracking-wider flex items-center gap-1">
+                    <label className="text-[11px] font-bold opacity-80 uppercase tracking-wider flex items-center gap-1 text-slate-700 dark:text-slate-300">
                       <Clock className="w-3.5 h-3.5 text-blue-500" />
                       <span>{t.bkStartTime} *</span>
                     </label>
@@ -515,12 +638,12 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
                       value={startTime}
                       onChange={(e) => setStartTime(e.target.value)}
                       required
-                      className="w-full px-4 py-3 rounded-xl themed-input text-xs"
+                      className="w-full px-3.5 py-2.5 rounded-xl themed-input text-xs font-semibold"
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[11px] font-bold opacity-80 uppercase tracking-wider flex items-center gap-1">
+                    <label className="text-[11px] font-bold opacity-80 uppercase tracking-wider flex items-center gap-1 text-slate-700 dark:text-slate-300">
                       <Clock className="w-3.5 h-3.5 text-blue-500" />
                       <span>{t.bkEndTime} *</span>
                     </label>
@@ -529,14 +652,14 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
                       value={endTime}
                       onChange={(e) => setEndTime(e.target.value)}
                       required
-                      className="w-full px-4 py-3 rounded-xl themed-input text-xs"
+                      className="w-full px-3.5 py-2.5 rounded-xl themed-input text-xs font-semibold"
                     />
                   </div>
                 </div>
 
                 {/* Purpose textarea */}
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold opacity-80 uppercase tracking-wider">
+                  <label className="text-[11px] font-bold opacity-80 uppercase tracking-wider text-slate-700 dark:text-slate-300">
                     {t.bkPurpose}
                   </label>
                   <textarea 
@@ -544,13 +667,13 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
                     onChange={(e) => setPurpose(e.target.value)}
                     rows={2}
                     placeholder={t.bkPurposePlaceholder}
-                    className="w-full px-4 py-3 rounded-xl themed-input text-xs"
+                    className="w-full px-4 py-3 rounded-xl themed-input text-xs font-medium"
                   />
                 </div>
 
                 {/* Notes Input (Phone) */}
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold opacity-80 uppercase tracking-wider">
+                  <label className="text-[11px] font-bold opacity-80 uppercase tracking-wider text-slate-700 dark:text-slate-300">
                     {t.bkNotes} ({t.phone})
                   </label>
                   <input 
@@ -558,25 +681,30 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder={t.bkNotesPlaceholder}
-                    className="w-full px-4 py-3 rounded-xl themed-input text-xs"
+                    className="w-full px-4 py-3 rounded-xl themed-input text-xs font-medium"
                   />
                 </div>
 
                 {/* Submit button */}
-                <div className="flex gap-3 pt-3">
+                <div className="flex gap-3 pt-4 border-t border-slate-100 dark:border-white/5">
                   <button
                     type="button"
                     onClick={() => setSelectedRoom(null)}
-                    className="flex-1 bg-slate-500/10 hover:bg-slate-500/15 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer text-center"
+                    className="flex-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer text-center"
                   >
                     {t.cancel}
                   </button>
                   <button
                     type="submit"
                     disabled={loading}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl text-xs font-bold transition-all shadow-lg shadow-blue-600/10 cursor-pointer"
+                    className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white py-3 rounded-xl text-xs font-extrabold transition-all shadow-lg shadow-blue-600/20 cursor-pointer flex items-center justify-center gap-1.5"
                   >
-                    {loading ? t.loading : t.bkSubmit}
+                    {loading ? t.loading : (
+                      <>
+                        <span>{t.bkSubmit}</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
                   </button>
                 </div>
 
@@ -591,28 +719,33 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
         {editingBooking && (
           <div id="edit-booking-modal-overlay" className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
             <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
               id="edit-booking-form-box" 
-              className="bg-white dark:bg-[#1e293b] rounded-3xl p-6 md:p-8 max-w-xl w-full border border-slate-100 dark:border-white/5 shadow-2xl space-y-6 relative max-h-[90vh] overflow-y-auto"
+              className="bg-white dark:bg-[#1e293b] rounded-3xl p-6 md:p-8 max-w-2xl w-full border border-slate-100 dark:border-white/10 shadow-2xl space-y-6 relative max-h-[90vh] overflow-y-auto"
             >
               {/* Close Button */}
               <button 
                 onClick={() => setEditingBooking(null)}
-                className="absolute top-5 right-5 p-1.5 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-all"
+                className="absolute top-5 right-5 p-2 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-all cursor-pointer"
               >
-                <X className="w-5.5 h-5.5" />
+                <X className="w-5 h-5" />
               </button>
 
-              <div className="space-y-1">
-                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                  <Pencil className="w-5.5 h-5.5 text-amber-500" />
-                  <span>{language === "lo" ? "ແກ້ໄຂການຈອງຫ້ອງປະຊຸມ" : "Edit Room Booking"}</span>
-                </h3>
-                <p className="text-xs text-amber-500 font-extrabold flex items-center gap-1">
-                  <span>{editingBooking.roomName}</span>
-                </p>
+              {/* Modal Header */}
+              <div className="bg-gradient-to-r from-amber-600/10 via-orange-600/5 to-transparent p-4 rounded-2xl border-l-4 border-amber-500 flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white shadow-md shadow-amber-500/20 shrink-0">
+                  <Pencil className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-extrabold text-slate-800 dark:text-slate-100">
+                    {language === "lo" ? "ແກ້ໄຂການຈອງຫ້ອງປະຊຸມ" : "Edit Room Booking"}
+                  </h3>
+                  <p className="text-xs text-amber-600 dark:text-amber-400 font-extrabold flex items-center gap-1.5 mt-0.5">
+                    <span>{editingBooking.roomName}</span>
+                  </p>
+                </div>
               </div>
 
               {/* Edit Booking Form */}
@@ -620,7 +753,7 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
                 
                 {/* Meeting Title input */}
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold opacity-80 uppercase tracking-wider flex items-center gap-1">
+                  <label className="text-[11px] font-bold opacity-80 uppercase tracking-wider flex items-center gap-1 text-slate-700 dark:text-slate-300">
                     <FileText className="w-3.5 h-3.5 text-amber-500" />
                     <span>{t.bkMeetingTitle} *</span>
                   </label>
@@ -630,29 +763,83 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
                     onChange={(e) => setEditTitle(e.target.value)}
                     required
                     placeholder={t.bkMeetingTitlePlaceholder}
-                    className="w-full px-4 py-3 rounded-xl themed-input text-xs"
+                    className="w-full px-4 py-3 rounded-xl themed-input text-xs font-medium"
                   />
                 </div>
 
-                {/* Date & Attendees count */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-bold opacity-80 uppercase tracking-wider flex items-center gap-1">
-                      <Calendar className="w-3.5 h-3.5 text-amber-500" />
-                      <span>{t.bkDate} *</span>
-                    </label>
-                    <input 
-                      type="date" 
-                      value={editDate}
-                      onChange={(e) => setEditDate(e.target.value)}
-                      required
-                      min={todayStr}
-                      className="w-full px-4 py-3 rounded-xl themed-input text-xs"
-                    />
+                {/* Requesting Department / Unit Input */}
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold opacity-80 uppercase tracking-wider flex items-center gap-1 text-slate-700 dark:text-slate-300">
+                    <Briefcase className="w-3.5 h-3.5 text-amber-500" />
+                    <span>{t.bkDepartment} *</span>
+                  </label>
+                  <input 
+                    type="text" 
+                    value={editDepartment}
+                    onChange={(e) => setEditDepartment(e.target.value)}
+                    required
+                    placeholder={t.bkDepartmentPlaceholder}
+                    className="w-full px-4 py-3 rounded-xl themed-input text-xs font-medium"
+                  />
+                </div>
+
+                {/* Meeting Date Range & Attendees Container */}
+                <div className="p-4 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-200/60 dark:border-white/5 space-y-3">
+                  <div className="flex items-center justify-between border-b border-slate-200/60 dark:border-white/5 pb-2.5">
+                    <span className="text-xs font-extrabold text-amber-600 dark:text-amber-400 flex items-center gap-1.5 uppercase tracking-wider">
+                      <CalendarDays className="w-4 h-4" />
+                      <span>{language === "lo" ? "ໄລຍະວັນທີການປະຊຸມ" : "Meeting Date Range"}</span>
+                    </span>
+                    {editEndDate && editEndDate !== editDate && (
+                      <span className="text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-400 px-2.5 py-0.5 rounded-full font-extrabold border border-amber-500/20 flex items-center gap-1">
+                        <Sparkles className="w-3 h-3" />
+                        {language === "lo" ? "ປະຊຸມຫຼາຍວັນ (Multi-day)" : "Multi-day Meeting"}
+                      </span>
+                    )}
                   </div>
 
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    {/* Start Date */}
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 flex items-center gap-1">
+                        <span>{t.bkStartDate} *</span>
+                      </label>
+                      <input 
+                        type="date" 
+                        value={editDate}
+                        onChange={(e) => {
+                          setEditDate(e.target.value);
+                          if (!editEndDate || e.target.value > editEndDate) {
+                            setEditEndDate(e.target.value);
+                          }
+                        }}
+                        required
+                        min={todayStr}
+                        className="w-full px-3.5 py-2.5 rounded-xl themed-input text-xs font-semibold"
+                      />
+                    </div>
+
+                    {/* End Date */}
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 flex items-center gap-1">
+                        <span>{t.bkEndDate} *</span>
+                      </label>
+                      <input 
+                        type="date" 
+                        value={editEndDate}
+                        onChange={(e) => setEditEndDate(e.target.value)}
+                        required
+                        min={editDate || todayStr}
+                        className="w-full px-3.5 py-2.5 rounded-xl themed-input text-xs font-semibold"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Attendees and Start & End Times Inputs */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="space-y-1">
-                    <label className="text-[11px] font-bold opacity-80 uppercase tracking-wider flex items-center gap-1">
+                    <label className="text-[11px] font-bold opacity-80 uppercase tracking-wider flex items-center gap-1 text-slate-700 dark:text-slate-300">
                       <Users className="w-3.5 h-3.5 text-amber-500" />
                       <span>{t.bkAttendees} *</span>
                     </label>
@@ -662,15 +849,12 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
                       onChange={(e) => setEditAttendeesCount(parseInt(e.target.value) || 5)}
                       required
                       min={1}
-                      className="w-full px-4 py-3 rounded-xl themed-input text-xs"
+                      className="w-full px-3.5 py-2.5 rounded-xl themed-input text-xs font-semibold"
                     />
                   </div>
-                </div>
 
-                {/* Start & End Times Inputs */}
-                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="text-[11px] font-bold opacity-80 uppercase tracking-wider flex items-center gap-1">
+                    <label className="text-[11px] font-bold opacity-80 uppercase tracking-wider flex items-center gap-1 text-slate-700 dark:text-slate-300">
                       <Clock className="w-3.5 h-3.5 text-amber-500" />
                       <span>{t.bkStartTime} *</span>
                     </label>
@@ -679,12 +863,12 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
                       value={editStartTime}
                       onChange={(e) => setEditStartTime(e.target.value)}
                       required
-                      className="w-full px-4 py-3 rounded-xl themed-input text-xs"
+                      className="w-full px-3.5 py-2.5 rounded-xl themed-input text-xs font-semibold"
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[11px] font-bold opacity-80 uppercase tracking-wider flex items-center gap-1">
+                    <label className="text-[11px] font-bold opacity-80 uppercase tracking-wider flex items-center gap-1 text-slate-700 dark:text-slate-300">
                       <Clock className="w-3.5 h-3.5 text-amber-500" />
                       <span>{t.bkEndTime} *</span>
                     </label>
@@ -693,14 +877,14 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
                       value={editEndTime}
                       onChange={(e) => setEditEndTime(e.target.value)}
                       required
-                      className="w-full px-4 py-3 rounded-xl themed-input text-xs"
+                      className="w-full px-3.5 py-2.5 rounded-xl themed-input text-xs font-semibold"
                     />
                   </div>
                 </div>
 
                 {/* Purpose textarea */}
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold opacity-80 uppercase tracking-wider">
+                  <label className="text-[11px] font-bold opacity-80 uppercase tracking-wider text-slate-700 dark:text-slate-300">
                     {t.bkPurpose}
                   </label>
                   <textarea 
@@ -708,13 +892,13 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
                     onChange={(e) => setEditPurpose(e.target.value)}
                     rows={2}
                     placeholder={t.bkPurposePlaceholder}
-                    className="w-full px-4 py-3 rounded-xl themed-input text-xs"
+                    className="w-full px-4 py-3 rounded-xl themed-input text-xs font-medium"
                   />
                 </div>
 
                 {/* Notes Input (Phone) */}
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold opacity-80 uppercase tracking-wider">
+                  <label className="text-[11px] font-bold opacity-80 uppercase tracking-wider text-slate-700 dark:text-slate-300">
                     {t.bkNotes} ({t.phone})
                   </label>
                   <input 
@@ -722,25 +906,30 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
                     value={editNotes}
                     onChange={(e) => setEditNotes(e.target.value)}
                     placeholder={t.bkNotesPlaceholder}
-                    className="w-full px-4 py-3 rounded-xl themed-input text-xs"
+                    className="w-full px-4 py-3 rounded-xl themed-input text-xs font-medium"
                   />
                 </div>
 
                 {/* Submit button */}
-                <div className="flex gap-3 pt-3">
+                <div className="flex gap-3 pt-4 border-t border-slate-100 dark:border-white/5">
                   <button
                     type="button"
                     onClick={() => setEditingBooking(null)}
-                    className="flex-1 bg-slate-500/10 hover:bg-slate-500/15 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer text-center"
+                    className="flex-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer text-center"
                   >
                     {t.cancel}
                   </button>
                   <button
                     type="submit"
                     disabled={loading}
-                    className="flex-1 bg-amber-500 hover:bg-amber-600 text-white py-3 rounded-xl text-xs font-bold transition-all shadow-lg shadow-amber-500/10 cursor-pointer"
+                    className="flex-1 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white py-3 rounded-xl text-xs font-extrabold transition-all shadow-lg shadow-amber-500/20 cursor-pointer flex items-center justify-center gap-1.5"
                   >
-                    {loading ? t.loading : (language === "lo" ? "ບັນທຶກການແກ້ໄຂ" : "Save Changes")}
+                    {loading ? t.loading : (
+                      <>
+                        <span>{language === "lo" ? "ບັນທຶກການແກ້ໄຂ" : "Save Changes"}</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
                   </button>
                 </div>
 
@@ -753,29 +942,31 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
       {/* Admin Approvals Board Section */}
       {userProfile.role === "admin" && (
         <div id="admin-approvals-panel" className="bg-white dark:bg-[#1e293b] p-6 rounded-3xl border border-slate-100 dark:border-white/5 shadow-xs space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-100 dark:border-white/5 pb-5">
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-blue-500" />
+          <div className="bg-gradient-to-r from-emerald-600/10 via-teal-600/5 to-transparent p-5 rounded-2xl border-l-4 border-emerald-500 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-xs">
+            <div className="flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-md shadow-emerald-500/20 shrink-0">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
               <div>
-                <h3 className="font-bold text-base text-slate-800 dark:text-slate-100">
+                <h3 className="font-extrabold text-base md:text-lg text-slate-800 dark:text-slate-100">
                   {language === "lo" ? "ລາຍການອະນຸມັດການຈອງທັງໝົດ (ສຳລັບ Admin)" : "All Bookings Approval Board (Admin)"}
                 </h3>
-                <p className="text-[11px] opacity-60 font-semibold">
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
                   {language === "lo" ? "ກວດສອບ, ອະນຸມັດ ຫຼື ປະຕິເສດ ຄຳຮ້ອງຂໍຈອງຫ້ອງປະຊຸມພາຍໃນລະບົບ" : "Verify, approve, or reject meeting room booking requests"}
                 </p>
               </div>
             </div>
 
             {/* Status Filters */}
-            <div className="flex gap-2 text-[10px] font-bold">
+            <div className="flex flex-wrap gap-1.5 text-[10px] font-bold">
               {(["pending", "approved", "rejected", "all"] as const).map((filter) => (
                 <button
                   key={filter}
                   onClick={() => setAdminFilter(filter)}
-                  className={`px-3 py-1.5 rounded-xl border transition-all cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-xl border transition-all cursor-pointer font-extrabold ${
                     adminFilter === filter
-                      ? "bg-blue-600 text-white border-blue-500 shadow-md shadow-blue-600/10"
-                      : "bg-slate-500/10 hover:bg-slate-500/15 border-white/5 text-slate-700 dark:text-slate-300"
+                      ? "bg-emerald-600 text-white border-emerald-500 shadow-md shadow-emerald-600/15"
+                      : "bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300"
                   }`}
                 >
                   {filter === "pending" ? t.bkStatusPending :
@@ -826,12 +1017,23 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
                         <td className="py-4 px-4">
                           <div className="flex flex-col">
                             <span className="font-bold opacity-90">{booking.userName}</span>
-                            <span className="text-[10px] opacity-60 font-semibold">{booking.department}</span>
+                            <span className="text-[10px] text-blue-500 font-extrabold flex items-center gap-1 mt-0.5">
+                              <Briefcase className="w-3 h-3 inline" />
+                              <span>{booking.department || (language === "lo" ? "ທົ່ວໄປ" : "General")}</span>
+                            </span>
                           </div>
                         </td>
                         <td className="py-4 px-4 font-semibold">
                           <div className="flex flex-col">
-                            <span>{booking.date}</span>
+                            <span className="font-bold text-slate-700 dark:text-slate-300">
+                              {booking.endDate && booking.endDate !== booking.date ? (
+                                <span className="text-indigo-600 dark:text-indigo-400 font-extrabold">
+                                  {booking.date} → {booking.endDate}
+                                </span>
+                              ) : (
+                                booking.date
+                              )}
+                            </span>
                             <span className="text-[10px] text-blue-500 font-bold">{booking.startTime} - {booking.endTime}</span>
                           </div>
                         </td>
@@ -925,13 +1127,15 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
 
       {/* Part 3: Personal booking log ("My Booking History") */}
       <div id="personal-bookings-panel" className="bg-white dark:bg-[#1e293b] p-6 rounded-3xl border border-slate-100 dark:border-white/5 shadow-xs space-y-6">
-        <div className="flex items-center gap-2 border-b border-slate-100 dark:border-white/5 pb-4">
-          <History className="w-5 h-5 text-indigo-500" />
+        <div className="bg-gradient-to-r from-indigo-600/10 via-purple-600/5 to-transparent p-5 rounded-2xl border-l-4 border-indigo-500 flex items-center gap-3.5 shadow-xs">
+          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-md shadow-indigo-500/20 shrink-0">
+            <History className="w-6 h-6" />
+          </div>
           <div>
-            <h3 className="font-bold text-base text-slate-800 dark:text-slate-100">
+            <h3 className="font-extrabold text-base md:text-lg text-slate-800 dark:text-slate-100">
               {t.bkMyBookings}
             </h3>
-            <p className="text-[11px] opacity-60">
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
               {language === "lo" ? "ລາຍການຈອງຫ້ອງທັງໝົດຂອງທ່ານໃນລະບົບ" : "View your personal room bookings"}
             </p>
           </div>
@@ -943,6 +1147,7 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
               <tr className="bg-slate-50/75 dark:bg-slate-900/40 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 pb-3 border-b border-slate-100 dark:border-white/5">
                 <th className="py-3 px-4">{t.rmRoomName}</th>
                 <th className="py-3 px-4">{t.bkMeetingTitle}</th>
+                <th className="py-3 px-4">{t.bkDepartment}</th>
                 <th className="py-3 px-4">{t.bkDate}</th>
                 <th className="py-3 px-4">{t.dbTimeRange}</th>
                 <th className="py-3 px-4">{t.status}</th>
@@ -952,7 +1157,7 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
             <tbody className="divide-y divide-white/5 text-xs">
               {myBookings.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center opacity-60 font-semibold">
+                  <td colSpan={7} className="py-8 text-center opacity-60 font-semibold">
                     {t.noData}
                   </td>
                 </tr>
@@ -965,8 +1170,17 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
                     <td className="py-3.5 px-4 font-medium opacity-90">
                       {booking.title}
                     </td>
-                    <td className="py-3.5 px-4 font-semibold opacity-80">
-                      {booking.date}
+                    <td className="py-3.5 px-4 font-bold text-blue-500">
+                      {booking.department || (language === "lo" ? "ທົ່ວໄປ" : "General")}
+                    </td>
+                    <td className="py-3.5 px-4 font-semibold opacity-90">
+                      {booking.endDate && booking.endDate !== booking.date ? (
+                        <span className="text-indigo-600 dark:text-indigo-400 font-extrabold">
+                          {booking.date} → {booking.endDate}
+                        </span>
+                      ) : (
+                        booking.date
+                      )}
                     </td>
                     <td className="py-3.5 px-4 font-semibold opacity-80">
                       {booking.startTime} - {booking.endTime}

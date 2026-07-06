@@ -139,14 +139,14 @@ export default function DashboardCalendar({ bookings, rooms, language }: Dashboa
     });
   }
 
-  // Filter bookings for the selected date
+  // Filter bookings for the selected date (supporting multi-day meeting ranges)
   const selectedBookings = bookings
-    .filter(b => b.date === selectedDateStr)
+    .filter(b => b.date <= selectedDateStr && (b.endDate || b.date) >= selectedDateStr)
     .sort((a, b) => a.startTime.localeCompare(b.startTime));
 
   // Helper to check bookings on a given date for dots
   const getBookingsForDate = (dateStr: string) => {
-    return bookings.filter(b => b.date === dateStr);
+    return bookings.filter(b => b.date <= dateStr && (b.endDate || b.date) >= dateStr);
   };
 
   // Format date display nicely (e.g., 01 ກໍລະກົດ 2026 or July 1, 2026)
@@ -368,7 +368,15 @@ export default function DashboardCalendar({ bookings, rooms, language }: Dashboa
                           </span>
                         </div>
 
-                        {/* Room and Time parameters */}
+                        {/* Room, Date Range and Time parameters */}
+                        {booking.endDate && booking.endDate !== booking.date && (
+                          <div className="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-2.5 py-1 rounded-xl text-[10px] font-extrabold flex items-center gap-1.5 mt-1 border border-indigo-500/20">
+                            <CalendarDays className="w-3.5 h-3.5" />
+                            <span>
+                              {booking.date} → {booking.endDate} ({isLao ? "ປະຊຸມຫຼາຍວັນ" : "Multi-day"})
+                            </span>
+                          </div>
+                        )}
                         <div className="grid grid-cols-2 gap-3 pt-1 text-[11px] text-slate-500 dark:text-slate-400 font-semibold">
                           <div className="flex items-center gap-2">
                             <Building className="w-3.5 h-3.5 text-slate-400" />
