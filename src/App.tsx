@@ -5,6 +5,7 @@ import { UserProfile, MeetingRoom, RoomBooking, AppTheme, AppLanguage } from "./
 import { translations } from "./lib/translations";
 import { Building2, LogOut, Clock, ShieldAlert } from "lucide-react";
 import { motion } from "motion/react";
+import { Analytics } from "@vercel/analytics/react";
 
 // Components
 import Sidebar from "./components/Sidebar";
@@ -185,6 +186,7 @@ export default function App() {
       <>
         <Login language={language} setLanguage={setLanguage} onLocalLogin={handleLocalLogin} />
         <ToastContainer />
+        <Analytics />
       </>
     );
   }
@@ -240,6 +242,7 @@ export default function App() {
           </div>
         </div>
         <ToastContainer />
+        <Analytics />
       </>
     );
   }
@@ -317,6 +320,7 @@ export default function App() {
         </div>
       </div>
       <ToastContainer />
+      <Analytics />
     </>
   );
 }
