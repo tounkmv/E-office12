@@ -118,3 +118,63 @@ p, span, select, input, textarea {
   font-family: "Phetsarath", "Inter", sans-serif;
   font-weight: 400;
 }
+
+/* --- PRINTING STYLES --- */
+@media print {
+  /* Set page setup options */
+  @page {
+    size: A4 portrait;
+    margin: 15mm 15mm 15mm 15mm;
+  }
+
+  /* Reset all HTML / body backgrounds for printing */
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    font-size: 11pt !important;
+    font-family: "Phetsarath", "Inter", sans-serif !important;
+  }
+
+  /* Hide absolutely everything by default */
+  body * {
+    visibility: hidden !important;
+  }
+
+  /* Only display the print-report-sheet container and all of its descendants */
+  #print-report-sheet,
+  #print-report-sheet * {
+    visibility: visible !important;
+  }
+
+  /* Position the print-report-sheet container at the top of the printable area */
+  #print-report-sheet {
+    display: block !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  /* Hide any other panels/elements if they somehow render */
+  .print\:hidden,
+  .print-hidden,
+  aside,
+  nav,
+  header,
+  footer,
+  button,
+  #app-root-layout,
+  #toast-container {
+    display: none !important;
+  }
+}
+
