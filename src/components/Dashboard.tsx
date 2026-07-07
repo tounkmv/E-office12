@@ -10,7 +10,15 @@ import {
   TrendingUp,
   Inbox,
   Clock,
-  Briefcase
+  Briefcase,
+  FileText,
+  LayoutDashboard,
+  Sparkles,
+  Printer,
+  FileSpreadsheet,
+  Filter,
+  CalendarDays,
+  Award
 } from "lucide-react";
 import { 
   BarChart, 
@@ -38,6 +46,7 @@ interface DashboardProps {
 
 export default function Dashboard({ bookings, rooms, language, setActiveTab }: DashboardProps) {
   const t = translations[language];
+  const isLao = language === "lo";
 
   // Calculations
   const totalBookings = bookings.length;
@@ -48,6 +57,99 @@ export default function Dashboard({ bookings, rooms, language, setActiveTab }: D
   // Filter today's meetings (supporting multi-day meeting date ranges)
   const todayStr = new Date().toISOString().split("T")[0];
   const todayMeetings = bookings.filter(b => b.date <= todayStr && (b.endDate || b.date) >= todayStr && b.status === "approved");
+
+  // Reporting States & Helpers
+  const [reportPeriod, setReportPeriod] = useState<"day" | "week" | "month" | "year">("month");
+  const [reportDate, setReportDate] = useState(todayStr);
+  const [reportRoomId, setReportRoomId] = useState<string>("all");
+  const [reportStatus, setReportStatus] = useState<string>("all");
+
+  const calculateDuration = (start: string, end: string): number => {
+    if (!start || !end) return 0;
+    const [sh, sm] = start.split(":").map(Number);
+    const [eh, em] = end.split(":").map(Number);
+    if (isNaN(sh) || isNaN(sm) || isNaN(eh) || isNaN(em)) return 0;
+    const diffMinutes = (eh * 60 + em) - (sh * 60 + sm);
+    return diffMinutes > 0 ? Number((diffMinutes / 60).toFixed(1)) : 0;
+  };
+
+  const getWeekRange = (dateStr: string) => {
+    const dateObj = new Date(dateStr);
+    if (isNaN(dateObj.getTime())) return { start: "", end: "" };
+    const day = dateObj.getDay(); // 0 is Sunday
+    const diffToSun = dateObj.getDate() - day; // Adjust to Sunday
+    
+    const sunDate = new Date(dateObj.setDate(diffToSun));
+    const satDate = new Date(sunDate);
+    satDate.setDate(sunDate.getDate() + 6);
+    
+    const formatDate = (d: Date) => d.toISOString().split("T")[0];
+    return {
+      start: formatDate(sunDate),
+      end: formatDate(satDate)
+    };
+  };
+
+  const filteredReportBookings = bookings.filter(b => {
+    // Room Filter
+    if (reportRoomId !== "all" && b.roomId !== reportRoomId) return false;
+    
+    // Status Filter
+    if (reportStatus !== "all" && b.status !== reportStatus) return false;
+    
+    // Period Filter
+    if (reportPeriod === "day") {
+      return b.date === reportDate;
+    } else if (reportPeriod === "week") {
+      const { start, end } = getWeekRange(reportDate);
+      return b.date >= start && b.date <= end;
+    } else if (reportPeriod === "month") {
+      const reportMonth = reportDate.substring(0, 7); // YYYY-MM
+      return b.date.substring(0, 7) === reportMonth;
+    } else if (reportPeriod === "year") {
+      const reportYear = reportDate.substring(0, 4); // YYYY
+      return b.date.substring(0, 4) === reportYear;
+    }
+    return true;
+  });
+
+  // Calculate report metrics
+  const rTotal = filteredReportBookings.length;
+  const rApproved = filteredReportBookings.filter(b => b.status === "approved").length;
+  const rPending = filteredReportBookings.filter(b => b.status === "pending").length;
+  const rRejected = filteredReportBookings.filter(b => b.status === "rejected").length;
+  const rTotalHours = filteredReportBookings.reduce((sum, b) => sum + calculateDuration(b.startTime, b.endTime), 0);
+
+  const rRoomCount: Record<string, number> = {};
+  filteredReportBookings.forEach(b => {
+    rRoomCount[b.roomName] = (rRoomCount[b.roomName] || 0) + 1;
+  });
+  let rMostPopularRoom = "-";
+  let rMaxRoomCount = 0;
+  Object.entries(rRoomCount).forEach(([name, count]) => {
+    if (count > rMaxRoomCount) {
+      rMaxRoomCount = count;
+      rMostPopularRoom = name;
+    }
+  });
+
+  const rDeptCount: Record<string, number> = {};
+  filteredReportBookings.forEach(b => {
+    const dept = b.department || (isLao ? "ທົ່ວໄປ" : "General");
+    rDeptCount[dept] = (rDeptCount[dept] || 0) + 1;
+  });
+  let rMostActiveDept = "-";
+  let rMaxDeptCount = 0;
+  Object.entries(rDeptCount).forEach(([name, count]) => {
+    if (count > rMaxDeptCount) {
+      rMaxDeptCount = count;
+      rMostActiveDept = name;
+    }
+  });
+
+  const triggerPrint = () => {
+    window.print();
+  };
 
   // Recent bookings (top 5)
   const recentBookings = bookings
@@ -72,7 +174,33 @@ export default function Dashboard({ bookings, rooms, language, setActiveTab }: D
   ].filter(d => d.value > 0);
 
   return (
-    <div id="dashboard-view" className="space-y-8 font-sans pb-12">
+    <div id="dashboard-view" className="font-sans pb-12">
+      <div className="print:hidden space-y-8">
+      
+      {/* HERO SECTION HEADER BANNER */}
+      <div className="bg-gradient-to-r from-[#312e81] via-[#1e1b4b] to-[#4338ca] rounded-3xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden border border-white/10">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
+        <div className="absolute bottom-0 right-1/3 w-64 h-64 bg-indigo-500/15 rounded-full blur-2xl pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-2 max-w-2xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-amber-300 text-[11px] font-extrabold uppercase tracking-wider shadow-xs">
+              <Sparkles className="w-3.5 h-3.5 animate-pulse" />
+              <span>{isLao ? "ສູນລວມຂໍ້ມູນ ແລະ ການວິເຄາະສະຖິຕິ" : "Analytical Center & Live Statistics"}</span>
+            </div>
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tight flex items-center gap-3">
+              <LayoutDashboard className="w-8 h-8 text-amber-300 shrink-0" />
+              <span>{isLao ? "ແຜງຄວບຄຸມລະບົບ (Dashboard)" : t.navDashboard}</span>
+            </h2>
+            <p className="text-xs sm:text-sm text-indigo-100 font-medium leading-relaxed">
+              {isLao 
+                ? "ຍິນດີຕ້ອນຮັບເຂົ້າສູ່ລະບົບຈອງຫ້ອງປະຊຸມທັນສະໄໝ. ກວດສອບສະຖິຕິການຈອງ, ຄວາມຖີ່ໃນການນຳໃຊ້ຫ້ອງປະຊຸມ ແລະ ຕິດຕາມການຈອງປະຈຳວັນ." 
+                : "Welcome to the modern meeting room reservation dashboard. Monitor suite utilization frequency, view schedules, and analyze stats."}
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Overview Stats Bento */}
       <div id="stats-grid" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         
@@ -350,6 +478,238 @@ export default function Dashboard({ bookings, rooms, language, setActiveTab }: D
         language={language} 
       />
 
+      {/* 2. MODERN INTERACTIVE REPORTING & STATISTICS SYSTEM */}
+      <div id="reporting-panel" className="bg-white dark:bg-[#1e293b] p-6 rounded-3xl shadow-xs border border-slate-100 dark:border-white/5 border-t-4 border-t-indigo-500 space-y-6">
+        
+        {/* Banner header */}
+        <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 p-4 sm:p-5 rounded-2xl shadow-md text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center shadow-sm shrink-0">
+              <FileSpreadsheet className="w-5 h-5 text-white animate-bounce" style={{ animationDuration: '3s' }} />
+            </div>
+            <div>
+              <h3 className="font-extrabold text-base sm:text-lg text-white tracking-tight">
+                {t.rpTitle || "ລະບົບລາຍງານ ແລະ ສະຫຼຸບສະຖິຕິ"}
+              </h3>
+              <p className="text-[11px] text-indigo-100 font-medium">
+                {isLao ? "ສະຫຼຸບຜົນການຈອງເປັນລາຍວັນ, ອາທິດ, ເດືອນ, ປີ ແລະ ສັ່ງພິມເອກະສານໄດ້ທັນທີ" : "Summarize bookings by day, week, month, year, and export/print instantly"}
+              </p>
+            </div>
+          </div>
+          
+          <button
+            onClick={triggerPrint}
+            className="flex items-center gap-2 bg-white hover:bg-slate-100 text-indigo-700 active:scale-95 px-5 py-2.5 rounded-xl text-xs font-black transition-all shadow-sm cursor-pointer shrink-0 group"
+          >
+            <Printer className="w-4 h-4 transition-transform group-hover:rotate-12" />
+            <span>{t.rpPrint || "ພິມລາຍງານສະຫຼຸບ"}</span>
+          </button>
+        </div>
+
+        {/* Filters Box */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 bg-slate-50/50 dark:bg-slate-900/40 p-4 rounded-2xl border border-slate-100 dark:border-white/5">
+          
+          {/* Period selector tabs */}
+          <div className="md:col-span-4 flex flex-col space-y-1.5">
+            <label className="text-[10px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-wider flex items-center gap-1">
+              <CalendarDays className="w-3.5 h-3.5 text-indigo-500" />
+              <span>{isLao ? "ຮູບແບບການສະຫຼຸບ" : "Summary Period"}</span>
+            </label>
+            <div className="grid grid-cols-4 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl gap-1">
+              {(["day", "week", "month", "year"] as const).map((period) => (
+                <button
+                  key={period}
+                  onClick={() => setReportPeriod(period)}
+                  className={`py-1.5 px-1 rounded-lg text-[10px] font-black transition-all text-center cursor-pointer capitalize ${
+                    reportPeriod === period
+                      ? "bg-indigo-600 text-white shadow-xs"
+                      : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                  }`}
+                >
+                  {period === "day" ? (isLao ? "ລາຍວັນ" : "Day") :
+                   period === "week" ? (isLao ? "ອາທິດ" : "Week") :
+                   period === "month" ? (isLao ? "ລາຍເດືອນ" : "Month") :
+                   (isLao ? "ລາຍປີ" : "Year")}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Date Picker */}
+          <div className="md:col-span-3 flex flex-col space-y-1.5">
+            <label className="text-[10px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-wider">
+              {isLao ? "ວັນທີ / ເດືອນ / ປີ ທີ່ອ້າງອີງ" : "Reference Date"}
+            </label>
+            {reportPeriod === "year" ? (
+              <select
+                value={reportDate.substring(0, 4)}
+                onChange={(e) => setReportDate(`${e.target.value}-01-01`)}
+                className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                {Array.from({ length: 6 }, (_, i) => 2024 + i).map((y) => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            ) : reportPeriod === "month" ? (
+              <input
+                type="month"
+                value={reportDate.substring(0, 7)}
+                onChange={(e) => setReportDate(`${e.target.value}-01`)}
+                className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            ) : (
+              <input
+                type="date"
+                value={reportDate}
+                onChange={(e) => setReportDate(e.target.value)}
+                className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            )}
+          </div>
+
+          {/* Room filter */}
+          <div className="md:col-span-3 flex flex-col space-y-1.5">
+            <label className="text-[10px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-wider flex items-center gap-1">
+              <Filter className="w-3.5 h-3.5 text-indigo-500" />
+              <span>{t.rpRoomFilter || "ເລືອກຫ້ອງປະຊຸມ"}</span>
+            </label>
+            <select
+              value={reportRoomId}
+              onChange={(e) => setReportRoomId(e.target.value)}
+              className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              <option value="all">{isLao ? "ທຸກຫ້ອງປະຊຸມ" : "All Meeting Rooms"}</option>
+              {rooms.map((room) => (
+                <option key={room.id} value={room.id}>{room.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Status filter */}
+          <div className="md:col-span-2 flex flex-col space-y-1.5">
+            <label className="text-[10px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-wider">
+              {t.rpStatusFilter || "ເລືອກສະຖານະ"}
+            </label>
+            <select
+              value={reportStatus}
+              onChange={(e) => setReportStatus(e.target.value)}
+              className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              <option value="all">{isLao ? "ທຸກສະຖານະ" : "All Status"}</option>
+              <option value="approved">{t.bkStatusApproved}</option>
+              <option value="pending">{t.bkStatusPending}</option>
+              <option value="rejected">{t.bkStatusRejected}</option>
+            </select>
+          </div>
+
+        </div>
+
+        {/* Period descriptive title badge */}
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-2">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 bg-indigo-500 rounded-full animate-ping" />
+            <h4 className="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100">
+              {isLao ? "ບົດລາຍງານຜົນສັງລວມ" : "Period Summary Result"}:{" "}
+              <span className="text-indigo-600 dark:text-indigo-400 underline decoration-indigo-500/30 underline-offset-4">
+                {reportPeriod === "day" && `${isLao ? "ວັນທີ" : "Date"} ${reportDate}`}
+                {reportPeriod === "week" && `${isLao ? "ອາທິດຂອງວັນທີ" : "Week of"} ${getWeekRange(reportDate).start} → ${getWeekRange(reportDate).end}`}
+                {reportPeriod === "month" && `${isLao ? "ເດືອນ" : "Month"} ${reportDate.substring(0, 7)}`}
+                {reportPeriod === "year" && `${isLao ? "ປີ" : "Year"} ${reportDate.substring(0, 4)}`}
+              </span>
+            </h4>
+          </div>
+          <span className="text-[11px] font-bold text-indigo-500 bg-indigo-500/10 px-2.5 py-0.5 rounded-full">
+            {rTotal} {isLao ? "ລາຍການພົບເຫັນ" : "found"}
+          </span>
+        </div>
+
+        {/* Dynamic Micro Stats Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
+          
+          <div className="bg-slate-50 dark:bg-slate-900/30 p-3.5 rounded-2xl border border-slate-100 dark:border-white/5 text-center">
+            <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold block mb-1 uppercase tracking-wider">{isLao ? "ຈຳນວນຈອງທັງໝົດ" : "Total Bookings"}</span>
+            <span className="text-xl font-extrabold text-indigo-600 dark:text-indigo-400">{rTotal}</span>
+          </div>
+
+          <div className="bg-emerald-500/5 p-3.5 rounded-2xl border border-emerald-500/10 text-center">
+            <span className="text-[10px] text-emerald-600/70 dark:text-emerald-400/60 font-bold block mb-1 uppercase tracking-wider">{t.bkStatusApproved}</span>
+            <span className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400">{rApproved}</span>
+          </div>
+
+          <div className="bg-blue-500/5 p-3.5 rounded-2xl border border-blue-500/10 text-center">
+            <span className="text-[10px] text-blue-600/70 dark:text-blue-400/60 font-bold block mb-1 uppercase tracking-wider">{t.bkStatusPending}</span>
+            <span className="text-xl font-extrabold text-blue-500 dark:text-blue-400">{rPending}</span>
+          </div>
+
+          <div className="bg-amber-500/5 p-3.5 rounded-2xl border border-amber-500/10 text-center col-span-1">
+            <span className="text-[10px] text-amber-600/70 dark:text-amber-400/60 font-bold block mb-1 uppercase tracking-wider leading-tight">{t.rpTotalHours || "ຊົ່ວໂມງໃຊ້ງານລວມ"}</span>
+            <span className="text-xl font-extrabold text-amber-500 dark:text-amber-400 flex items-center justify-center gap-0.5 mt-1">
+              <span>{rTotalHours}</span>
+              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">h</span>
+            </span>
+          </div>
+
+          <div className="bg-purple-500/5 p-3.5 rounded-2xl border border-purple-500/10 text-center col-span-1 lg:col-span-1">
+            <span className="text-[10px] text-purple-600/70 dark:text-purple-400/60 font-bold block mb-1 uppercase tracking-wider leading-tight truncate">{t.rpPopularRoom || "ຫ້ອງທີ່ໃຊ້ຫຼາຍສຸດ"}</span>
+            <span className="text-xs font-black text-purple-600 dark:text-purple-400 block truncate mt-1">{rMostPopularRoom}</span>
+          </div>
+
+          <div className="bg-pink-500/5 p-3.5 rounded-2xl border border-pink-500/10 text-center col-span-1 lg:col-span-1">
+            <span className="text-[10px] text-pink-600/70 dark:text-pink-400/60 font-bold block mb-1 uppercase tracking-wider leading-tight truncate">{t.rpActiveDept || "ພາກສ່ວນຈອງຫຼາຍສຸດ"}</span>
+            <span className="text-xs font-black text-pink-600 dark:text-pink-400 block truncate mt-1">{rMostActiveDept}</span>
+          </div>
+
+        </div>
+
+        {/* Mini report bookings table */}
+        <div className="overflow-x-auto rounded-2xl border border-slate-100 dark:border-white/5">
+          <table className="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr className="bg-slate-50 dark:bg-slate-900/60 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-white/5">
+                <th className="py-2.5 px-4">{t.rmRoomName}</th>
+                <th className="py-2.5 px-4">{t.bkMeetingTitle}</th>
+                <th className="py-2.5 px-4">{t.bkDate}</th>
+                <th className="py-2.5 px-4">{t.dbTimeRange}</th>
+                <th className="py-2.5 px-4">{t.bkDepartment}</th>
+                <th className="py-2.5 px-4">{t.status}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+              {filteredReportBookings.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-6 text-center opacity-60 font-bold text-slate-500">
+                    {t.noData}
+                  </td>
+                </tr>
+              ) : (
+                filteredReportBookings.map((booking) => (
+                  <tr key={booking.id} className="hover:bg-slate-500/5">
+                    <td className="py-2.5 px-4 font-bold text-slate-700 dark:text-slate-300">{booking.roomName}</td>
+                    <td className="py-2.5 px-4 font-semibold text-slate-900 dark:text-white max-w-[200px] truncate">{booking.title}</td>
+                    <td className="py-2.5 px-4 font-medium text-slate-600 dark:text-slate-400">{booking.date}</td>
+                    <td className="py-2.5 px-4 font-bold text-slate-600 dark:text-slate-400">{booking.startTime} - {booking.endTime}</td>
+                    <td className="py-2.5 px-4 font-bold text-indigo-500 dark:text-indigo-400">{booking.department || (isLao ? "ທົ່ວໄປ" : "General")}</td>
+                    <td className="py-2.5 px-4">
+                      <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black border ${
+                        booking.status === "approved" 
+                          ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" 
+                          : booking.status === "rejected" 
+                          ? "bg-red-500/10 text-red-500 border-red-500/20" 
+                          : "bg-blue-500/10 text-blue-500 border-blue-500/20"
+                      }`}>
+                        {booking.status === "approved" ? t.bkStatusApproved :
+                         booking.status === "rejected" ? t.bkStatusRejected : t.bkStatusPending}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+
       {/* Recent Bookings Live Log Section (Emerald/Teal Header Theme) */}
       <div id="recent-bookings-panel" className="bg-white dark:bg-[#1e293b] p-6 rounded-3xl shadow-xs border border-slate-100 dark:border-white/5 border-t-4 border-t-emerald-500">
         <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 p-4 sm:p-5 rounded-2xl shadow-md text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-5">
@@ -401,7 +761,19 @@ export default function Dashboard({ bookings, rooms, language, setActiveTab }: D
                       {booking.roomName}
                     </td>
                     <td className="py-3.5 px-4 opacity-90 font-medium">
-                      {booking.title}
+                      <div className="flex flex-col">
+                        <span>{booking.title}</span>
+                        {booking.attachmentName && booking.attachmentData && (
+                          <a 
+                            href={booking.attachmentData}
+                            download={booking.attachmentName}
+                            className="text-[10px] text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 font-bold flex items-center gap-1 mt-1 cursor-pointer w-fit"
+                          >
+                            <FileText className="w-3.5 h-3.5 text-blue-500" />
+                            <span className="underline">{booking.attachmentName}</span>
+                          </a>
+                        )}
+                      </div>
                     </td>
                     <td className="py-3.5 px-4 opacity-80 font-semibold">
                       {booking.endDate && booking.endDate !== booking.date ? (
@@ -443,6 +815,136 @@ export default function Dashboard({ bookings, rooms, language, setActiveTab }: D
         </div>
       </div>
 
+      </div> {/* Closing of print:hidden */}
+
+      {/* PRINT-ONLY OFFICIAL LAO DOCUMENT */}
+      <div id="print-report-sheet" className="hidden print:block bg-white text-slate-950 p-10 min-h-screen font-sans border-8 border-double border-slate-300">
+        
+        {/* LAO PDR NATIONAL EMBLEM HEADER */}
+        <div className="text-center font-sans space-y-1.5 mb-10 text-slate-950 border-b-2 border-slate-950 pb-5">
+          <h3 className="text-sm font-black uppercase tracking-wide leading-none text-slate-950">ສາທາລະນະລັດ ປະຊາທິປະໄຕ ປະຊາຊົນລາວ</h3>
+          <h4 className="text-xs font-bold leading-none text-slate-800">ສັນຕິພາບ ເອກະລາດ ປະຊາທິປະໄຕ ເອກະພາບ ວັດທະນະຖາວອນ</h4>
+          <p className="text-[10px] font-semibold text-slate-600">--- ooo ---</p>
+          
+          <div className="flex justify-between items-end mt-6 text-[11px] font-bold text-slate-950">
+            <div className="text-left leading-relaxed">
+              <p className="uppercase font-black text-[12px]">ແຂວງຫົວພັນ</p>
+              <p className="font-extrabold text-[12px]">ຫ້ອງວ່າການແຂວງຫົວພັນ</p>
+              <p className="text-slate-600 font-medium">ລະບົບຈອງຫ້ອງປະຊຸມທັນສະໄໝ</p>
+            </div>
+            <div className="text-right leading-relaxed font-semibold">
+              <p>ເລກທີ: ......./ຫວກ.ຮພ</p>
+              <p>ວັນທີ: {new Date().toLocaleDateString('lo-LA', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* REPORT TITLE */}
+        <div className="text-center my-8 space-y-2">
+          <h2 className="text-lg font-black uppercase tracking-tight text-slate-950">ໃບສະຫຼຸບລາຍງານການນຳໃຊ້ຫ້ອງປະຊຸມ</h2>
+          <div className="inline-block px-4 py-1.5 bg-slate-100 rounded-full border border-slate-300">
+            <p className="text-xs font-black text-slate-800">
+              {reportPeriod === "day" && `ສະຫຼຸບປະຈຳວັນທີ: ${reportDate}`}
+              {reportPeriod === "week" && `ສະຫຼຸບປະຈຳອາທິດ: ວັນທີ ${getWeekRange(reportDate).start} ຫາ ວັນທີ ${getWeekRange(reportDate).end}`}
+              {reportPeriod === "month" && `ສະຫຼຸບປະຈຳເດືອນ: ${reportDate.substring(0, 7)}`}
+              {reportPeriod === "year" && `ສະຫຼຸບປະຈຳປີ: ${reportDate.substring(0, 4)}`}
+            </p>
+          </div>
+        </div>
+
+        {/* REPORT METRICS TABLE SUMMARY */}
+        <div className="mb-8">
+          <h3 className="text-xs font-black uppercase text-slate-950 mb-3 flex items-center gap-1.5">
+            <span>I. ບົດສະຫຼຸບຕົວເລກສະຖິຕິທີ່ສຳຄັນ (Executive Summary Indicators)</span>
+          </h3>
+          <div className="grid grid-cols-4 gap-x-6 gap-y-4 border border-slate-950 p-5 rounded-2xl text-xs text-slate-950 bg-slate-50/50">
+            <div className="space-y-1">
+              <p className="font-black text-[10px] text-slate-500 uppercase">ການຈອງທັງໝົດ</p>
+              <p className="text-lg font-black text-indigo-700">{rTotal} ລາຍການ</p>
+            </div>
+            <div className="space-y-1">
+              <p className="font-black text-[10px] text-slate-500 uppercase">ອະນຸມັດແລ້ວ</p>
+              <p className="text-lg font-black text-emerald-700">{rApproved} ລາຍການ</p>
+            </div>
+            <div className="space-y-1">
+              <p className="font-black text-[10px] text-slate-500 uppercase">ລໍຖ້າກວດສອບ</p>
+              <p className="text-lg font-black text-blue-700">{rPending} ລາຍການ</p>
+            </div>
+            <div className="space-y-1">
+              <p className="font-black text-[10px] text-slate-500 uppercase">ຊົ່ວໂມງໃຊ້ງານລວມ</p>
+              <p className="text-lg font-black text-amber-700">{rTotalHours} ຊົ່ວໂມງ</p>
+            </div>
+            <div className="col-span-2 border-t border-slate-300 pt-3 mt-1 space-y-1">
+              <p className="font-black text-[10px] text-slate-500 uppercase">ຫ້ອງປະຊຸມທີ່ໃຊ້ຫຼາຍສຸດ</p>
+              <p className="font-black text-xs text-slate-900">{rMostPopularRoom}</p>
+            </div>
+            <div className="col-span-2 border-t border-slate-300 pt-3 mt-1 space-y-1">
+              <p className="font-black text-[10px] text-slate-500 uppercase">ພາກສ່ວນທີ່ຂໍຈອງຫຼາຍສຸດ</p>
+              <p className="font-black text-xs text-slate-900">{rMostActiveDept}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* DETAILS LIST TABLE */}
+        <div className="mb-10">
+          <h3 className="text-xs font-black uppercase text-slate-950 mb-3 flex items-center gap-1.5">
+            <span>II. ລາຍການເຄື່ອນໄຫວຈອງຫ້ອງປະຊຸມລະອຽດ (Detailed Activity Registry)</span>
+          </h3>
+          <table className="w-full text-left border-collapse border border-slate-950 text-[10px] text-slate-950">
+            <thead>
+              <tr className="bg-slate-100 text-slate-950 border-b border-slate-950">
+                <th className="py-2.5 px-2 border-r border-slate-950 font-black text-center w-10">ລຳດັບ</th>
+                <th className="py-2.5 px-3 border-r border-slate-950 font-black w-24">ຫ້ອງປະຊຸມ</th>
+                <th className="py-2.5 px-3 border-r border-slate-950 font-black">ຫົວຂໍ້ກອງປະຊຸມ</th>
+                <th className="py-2.5 px-3 border-r border-slate-950 font-black text-center w-24">ວັນທີປະຊຸມ</th>
+                <th className="py-2.5 px-3 border-r border-slate-950 font-black text-center w-20">ເວລາ</th>
+                <th className="py-2.5 px-3 border-r border-slate-950 font-black w-32">ພາກສ່ວນຂໍຈອງ</th>
+                <th className="py-2.5 px-2 font-black text-center w-20">ສະຖານະ</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredReportBookings.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-6 text-center font-black text-slate-500">ບໍ່ມີຂໍ້ມູນໃນຊ່ວງເວລານີ້</td>
+                </tr>
+              ) : (
+                filteredReportBookings.map((b, idx) => (
+                  <tr key={b.id} className="border-b border-slate-950">
+                    <td className="py-2.5 px-2 border-r border-slate-950 text-center font-bold">{idx + 1}</td>
+                    <td className="py-2.5 px-3 border-r border-slate-950 font-bold">{b.roomName}</td>
+                    <td className="py-2.5 px-3 border-r border-slate-950 font-semibold">{b.title}</td>
+                    <td className="py-2.5 px-3 border-r border-slate-950 text-center">{b.date}</td>
+                    <td className="py-2.5 px-3 border-r border-slate-950 text-center">{b.startTime} - {b.endTime}</td>
+                    <td className="py-2.5 px-3 border-r border-slate-950 font-bold">{b.department || "ທົ່ວໄປ"}</td>
+                    <td className="py-2.5 px-2 text-center font-black">
+                      {b.status === "approved" ? "ອະນຸມັດແລ້ວ" : b.status === "rejected" ? "ປະຕິເສດແລ້ວ" : "ລໍຖ້າກວດສອບ"}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* SIGNATURE SIGN-OFF SECTION */}
+        <div className="grid grid-cols-2 gap-8 text-xs text-slate-950 mt-16 pt-10">
+          <div className="text-center space-y-16">
+            <p className="font-black">ຜູ້ສະຫຼຸບສັງລວມລາຍງານ</p>
+            <div className="space-y-1.5">
+              <p className="font-bold text-slate-400">....................................................................</p>
+              <p className="font-bold text-slate-800 font-sans">ວັນທີ: ......./......./............</p>
+            </div>
+          </div>
+          <div className="text-center space-y-16">
+            <p className="font-black">ຫົວໜ້າຫ້ອງວ່າການແຂວງຫົວພັນ</p>
+            <div className="space-y-1.5">
+              <p className="font-bold text-slate-400">....................................................................</p>
+              <p className="font-bold text-slate-800 font-sans">(ເຊັນ ແລະ ປະທັບຕາ)</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
     </div>
   );
 }

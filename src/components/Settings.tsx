@@ -10,7 +10,8 @@ import {
   BellRing,
   Info,
   ShieldCheck,
-  MailCheck
+  MailCheck,
+  Sparkles
 } from "lucide-react";
 import { AppLanguage, AppTheme, UserProfile } from "../types";
 import { translations } from "../lib/translations";
@@ -92,11 +93,28 @@ export default function Settings({
         )}
       </AnimatePresence>
 
-      <div className="flex items-center gap-2 border-b border-white/5 pb-4">
-        <SettingsIcon className="w-5 h-5 text-blue-500" />
-        <h3 className="font-bold text-base text-slate-800 dark:text-slate-100">
-          {t.stSettings}
-        </h3>
+      {/* 1. HERO SECTION HEADER WITH VIBRANT COLOR TONE BANNER */}
+      <div className="bg-gradient-to-r from-slate-700 via-slate-800 to-slate-900 rounded-3xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden border border-white/10">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-white/5 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
+        <div className="absolute bottom-0 right-1/3 w-64 h-64 bg-slate-500/10 rounded-full blur-2xl pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-2 max-w-2xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-amber-300 text-[11px] font-extrabold uppercase tracking-wider shadow-xs">
+              <Sparkles className="w-3.5 h-3.5 animate-pulse" />
+              <span>{language === "lo" ? "ກຳນົດຄ່າພາສາ, ຮູບແບບ ແລະ ຂໍ້ມູນສ່ວນຕົວ" : "Personalization & Preferences"}</span>
+            </div>
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tight flex items-center gap-3">
+              <SettingsIcon className="w-8 h-8 text-amber-300 shrink-0" />
+              <span>{language === "lo" ? t.stSettings : "System Settings"}</span>
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-300 font-medium leading-relaxed">
+              {language === "lo" 
+                ? "ປັບປ່ຽນພາສາການໃຊ້ງານຂອງລະບົບ, ເລືອກຮູບແບບການສະແດງຜົນ (ທິມມືດ/ທິມສະຫວ່າງ) ແລະ ແກ້ໄຂຂໍ້ມູນໂປຣຟາຍສ່ວນຕົວຂອງທ່ານ" 
+                : "Customize system display language, toggle themes (Dark/Light), and manage your personal account profile details."}
+            </p>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">

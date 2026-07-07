@@ -434,6 +434,23 @@ export default function DashboardCalendar({ bookings, rooms, language }: Dashboa
                           </div>
                         )}
 
+                        {/* Attachment Details */}
+                        {booking.attachmentName && booking.attachmentData && (
+                          <div className="text-[10px] bg-blue-50/50 dark:bg-blue-950/10 rounded-xl p-2.5 space-y-1.5 border border-blue-500/10">
+                            <div className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 opacity-80 font-bold">
+                              <FileText className="w-3.5 h-3.5" />
+                              <span>{isLao ? "ເອກະສານຕິດຄັດ" : "Attachment Document"}</span>
+                            </div>
+                            <a 
+                              href={booking.attachmentData}
+                              download={booking.attachmentName}
+                              className="text-slate-700 dark:text-slate-300 font-bold hover:text-blue-600 dark:hover:text-blue-400 underline flex items-center gap-1 cursor-pointer truncate"
+                            >
+                              <span>{booking.attachmentName}</span>
+                            </a>
+                          </div>
+                        )}
+
                         {/* Room Location snippet if available */}
                         {roomInfo && roomInfo.location && (
                           <div className="flex items-center gap-1.5 text-[9px] text-slate-400 dark:text-slate-500 font-semibold italic">

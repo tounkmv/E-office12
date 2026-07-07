@@ -1,4 +1,4 @@
-import { useState, FormEvent } from "react";
+import React, { useState, FormEvent } from "react";
 import { 
   Building2, 
   Users, 
@@ -71,6 +71,97 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
   const [editAttendeesCount, setEditAttendeesCount] = useState<number>(5);
   const [editPurpose, setEditPurpose] = useState("");
   const [editNotes, setEditNotes] = useState("");
+
+  // Optional Document Attachment States & Handlers
+  const [attachment, setAttachment] = useState<{name: string, data: string, type: string} | null>(null);
+  const [editAttachment, setEditAttachment] = useState<{name: string, data: string, type: string} | null>(null);
+  const [dragActive, setDragActive] = useState(false);
+  const [editDragActive, setEditDragActive] = useState(false);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, isEdit: boolean = false) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      const msg = language === "lo" 
+        ? "ຂະໜາດຟາຍໃຫຍ່ເກີນໄປ! ກະລຸນາເລືອກຟາຍທີ່ບໍ່ເກີນ 2MB" 
+        : "File is too large! Please choose a file under 2MB";
+      showSystemToast(msg, "warning", "Warning");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const resultStr = reader.result as string;
+      const fileObj = {
+        name: file.name,
+        data: resultStr,
+        type: file.type
+      };
+      if (isEdit) {
+        setEditAttachment(fileObj);
+      } else {
+        setAttachment(fileObj);
+      }
+      showSystemToast(
+        language === "lo" ? "ແນບເອກະສານສຳເລັດແລ້ວ" : "File attached successfully",
+        "success",
+        "Success"
+      );
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleDrag = (e: React.DragEvent, active: boolean, isEdit: boolean = false) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isEdit) {
+      setEditDragActive(active);
+    } else {
+      setDragActive(active);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent, isEdit: boolean = false) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isEdit) {
+      setEditDragActive(false);
+    } else {
+      setDragActive(false);
+    }
+
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        const msg = language === "lo" 
+          ? "ຂະໜາດຟາຍໃຫຍ່ເກີນໄປ! ກະລຸນາເລືອກຟາຍທີ່ບໍ່ເກີນ 2MB" 
+          : "File is too large! Please choose a file under 2MB";
+        showSystemToast(msg, "warning", "Warning");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const resultStr = reader.result as string;
+        const fileObj = {
+          name: file.name,
+          data: resultStr,
+          type: file.type
+        };
+        if (isEdit) {
+          setEditAttachment(fileObj);
+        } else {
+          setAttachment(fileObj);
+        }
+        showSystemToast(
+          language === "lo" ? "ແນບເອກະສານສຳເລັດແລ້ວ" : "File attached successfully",
+          "success",
+          "Success"
+        );
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleApprove = async (id: string) => {
     try {
@@ -212,7 +303,10 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
         purpose,
         attendeesCount,
         createdAt: new Date().toISOString(),
-        notes: userProfile.phone || notes
+        notes: userProfile.phone || notes,
+        attachmentName: attachment?.name || "",
+        attachmentData: attachment?.data || "",
+        attachmentType: attachment?.type || ""
       };
 
       await addBooking(newBooking);
@@ -234,6 +328,7 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
       setAttendeesCount(5);
       setPurpose("");
       setNotes("");
+      setAttachment(null);
       setSelectedRoom(null);
     } catch (err: any) {
       console.error("Booking submission error:", err);
@@ -270,6 +365,16 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
     setEditAttendeesCount(booking.attendeesCount);
     setEditPurpose(booking.purpose);
     setEditNotes(booking.notes || "");
+    
+    if (booking.attachmentName && booking.attachmentData) {
+      setEditAttachment({
+        name: booking.attachmentName,
+        data: booking.attachmentData,
+        type: booking.attachmentType || ""
+      });
+    } else {
+      setEditAttachment(null);
+    }
   };
 
   const handleEditBookingSubmit = async (e: FormEvent) => {
@@ -322,7 +427,10 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
         attendeesCount: editAttendeesCount,
         purpose: editPurpose,
         notes: editNotes,
-        status: "pending"
+        status: "pending",
+        attachmentName: editAttachment?.name || "",
+        attachmentData: editAttachment?.data || "",
+        attachmentType: editAttachment?.type || ""
       };
 
       await updateBooking(editingBooking.id, updates);
@@ -331,6 +439,7 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
       setSuccess(msg);
       showSystemToast(msg, "success", language === "lo" ? "ແກ້ໄຂສຳເລັດ" : "Booking Updated");
       setEditingBooking(null);
+      setEditAttachment(null);
     } catch (err: any) {
       console.error("Edit booking submit error:", err);
       setError(t.error + ": " + err.message);
@@ -378,26 +487,35 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
 
       {/* Part 1: Grid list of available rooms */}
       <div id="rooms-selection-panel" className="space-y-6">
-        <div className="bg-gradient-to-r from-blue-600/10 via-indigo-600/5 to-transparent p-5 rounded-2xl border-l-4 border-blue-500 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-xs">
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20 shrink-0">
-              <Building2 className="w-6 h-6" />
-            </div>
-            <div>
-              <h3 className="font-extrabold text-base md:text-lg text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                <span>{t.bkBookRoom} - {t.bkSelectRoom}</span>
-                <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                {language === "lo" ? "ເລືອກຫ້ອງປະຊຸມທີ່ຕ້ອງການຈອງ ແລະ ກວດສອບສະຖານະຄວາມພ້ອມໃຊ້ງານ" : "Select a meeting room to book and check availability status"}
+        <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-700 rounded-3xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden border border-white/10">
+          <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
+          <div className="absolute bottom-0 right-1/3 w-64 h-64 bg-cyan-400/15 rounded-full blur-2xl pointer-events-none" />
+
+          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="space-y-2 max-w-2xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-amber-300 text-[11px] font-extrabold uppercase tracking-wider shadow-xs">
+                <Sparkles className="w-3.5 h-3.5 animate-pulse" />
+                <span>{language === "lo" ? "ບໍລິການຈອງຫ້ອງປະຊຸມແບບອອນໄລນ໌" : "Online Room Booking Service"}</span>
+              </div>
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tight flex items-center gap-3">
+                <Building2 className="w-8 h-8 text-amber-300 shrink-0" />
+                <span>{language === "lo" ? "ຈອງຫ້ອງປະຊຸມ (Book Meeting Room)" : t.bkBookRoom}</span>
+              </h2>
+              <p className="text-xs sm:text-sm text-indigo-100 font-medium leading-relaxed">
+                {language === "lo" 
+                  ? "ເລືອກຫ້ອງປະຊຸມທີ່ຕ້ອງການຈອງ, ກວດສອບຄວາມພ້ອມໃຊ້ງານ ແລະ ສົ່ງແບບຟອມຄຳຮ້ອງຂໍຈອງຫ້ອງໄດ້ທັນທີ" 
+                  : "Select a meeting suite, view real-time availability, and submit your reservation request instantly."}
               </p>
             </div>
-          </div>
-          <div className="flex items-center gap-2 self-start sm:self-center bg-white dark:bg-slate-800/80 px-3.5 py-1.5 rounded-xl border border-slate-200/60 dark:border-white/10 shadow-2xs">
-            <Layers className="w-4 h-4 text-blue-500" />
-            <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-              {rooms.length} {language === "lo" ? "ຫ້ອງທັງໝົດ" : "Rooms Total"}
-            </span>
+            <div className="flex items-center gap-2.5 bg-white/10 backdrop-blur-md border border-white/15 px-4 py-2 rounded-2xl shadow-lg shrink-0 self-start sm:self-center">
+              <Layers className="w-5 h-5 text-amber-300 animate-bounce" style={{ animationDuration: '3s' }} />
+              <div className="flex flex-col text-left">
+                <span className="text-[9px] text-indigo-200 uppercase font-black tracking-wider leading-none">{language === "lo" ? "ຫ້ອງທັງໝົດ" : "TOTAL SUITES"}</span>
+                <span className="text-lg font-black text-white leading-tight">
+                  {rooms.length} {language === "lo" ? "ຫ້ອງ" : "Rooms"}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -685,6 +803,67 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
                   />
                 </div>
 
+                {/* Optional Document Attachment Input */}
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold opacity-80 uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                    <FileText className="w-3.5 h-3.5 text-blue-500" />
+                    <span>{t.bkAttachment}</span>
+                  </label>
+                  
+                  <div 
+                    className={`border-2 border-dashed rounded-2xl p-4 transition-all duration-200 text-center relative flex flex-col items-center justify-center ${
+                      dragActive 
+                        ? "border-blue-500 bg-blue-500/10" 
+                        : "border-slate-200 dark:border-white/10 hover:border-blue-500/30 bg-slate-500/[0.02]"
+                    }`}
+                    onDragEnter={(e) => handleDrag(e, true, false)}
+                    onDragOver={(e) => handleDrag(e, true, false)}
+                    onDragLeave={(e) => handleDrag(e, false, false)}
+                    onDrop={(e) => handleDrop(e, false)}
+                  >
+                    <input 
+                      type="file"
+                      id="file-upload-input"
+                      onChange={(e) => handleFileChange(e, false)}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                      accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                    />
+                    
+                    {attachment ? (
+                      <div className="flex flex-col items-center space-y-2 z-20">
+                        <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+                          <CheckCircle className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{attachment.name}</p>
+                          <p className="text-[10px] text-emerald-500 font-bold">{t.bkFileAttached}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            setAttachment(null);
+                          }}
+                          className="px-2.5 py-1 text-[10px] bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-lg font-bold transition-all relative z-30 cursor-pointer"
+                        >
+                          {t.bkClearFile}
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center space-y-2 py-2">
+                        <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
+                          <Plus className="w-5 h-5" />
+                        </div>
+                        <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{t.bkDragDrop}</p>
+                        <p className="text-[10px] text-slate-400 font-medium">
+                          {t.bkAttachmentPlaceholder}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 {/* Submit button */}
                 <div className="flex gap-3 pt-4 border-t border-slate-100 dark:border-white/5">
                   <button
@@ -910,6 +1089,67 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
                   />
                 </div>
 
+                {/* Optional Edit Document Attachment Input */}
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold opacity-80 uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                    <FileText className="w-3.5 h-3.5 text-blue-500" />
+                    <span>{t.bkAttachment}</span>
+                  </label>
+                  
+                  <div 
+                    className={`border-2 border-dashed rounded-2xl p-4 transition-all duration-200 text-center relative flex flex-col items-center justify-center ${
+                      editDragActive 
+                        ? "border-blue-500 bg-blue-500/10" 
+                        : "border-slate-200 dark:border-white/10 hover:border-blue-500/30 bg-slate-500/[0.02]"
+                    }`}
+                    onDragEnter={(e) => handleDrag(e, true, true)}
+                    onDragOver={(e) => handleDrag(e, true, true)}
+                    onDragLeave={(e) => handleDrag(e, false, true)}
+                    onDrop={(e) => handleDrop(e, true)}
+                  >
+                    <input 
+                      type="file"
+                      id="edit-file-upload-input"
+                      onChange={(e) => handleFileChange(e, true)}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                      accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                    />
+                    
+                    {editAttachment ? (
+                      <div className="flex flex-col items-center space-y-2 z-20">
+                        <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+                          <CheckCircle className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{editAttachment.name}</p>
+                          <p className="text-[10px] text-emerald-500 font-bold">{t.bkFileAttached}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            setEditAttachment(null);
+                          }}
+                          className="px-2.5 py-1 text-[10px] bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-lg font-bold transition-all relative z-30 cursor-pointer"
+                        >
+                          {t.bkClearFile}
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center space-y-2 py-2">
+                        <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
+                          <Plus className="w-5 h-5" />
+                        </div>
+                        <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{t.bkDragDrop}</p>
+                        <p className="text-[10px] text-slate-400 font-medium">
+                          {t.bkAttachmentPlaceholder}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 {/* Submit button */}
                 <div className="flex gap-3 pt-4 border-t border-slate-100 dark:border-white/5">
                   <button
@@ -1011,6 +1251,16 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
                             <span className="font-bold opacity-90">{booking.title}</span>
                             {booking.purpose && (
                               <span className="text-[10px] opacity-65 font-medium mt-0.5 line-clamp-1">{booking.purpose}</span>
+                            )}
+                            {booking.attachmentName && booking.attachmentData && (
+                              <a 
+                                href={booking.attachmentData}
+                                download={booking.attachmentName}
+                                className="text-[10px] text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 font-bold flex items-center gap-1.5 mt-1.5 cursor-pointer w-fit"
+                              >
+                                <FileText className="w-3.5 h-3.5 text-blue-500" />
+                                <span className="underline">{booking.attachmentName}</span>
+                              </a>
                             )}
                           </div>
                         </td>
@@ -1168,7 +1418,19 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
                       {booking.roomName}
                     </td>
                     <td className="py-3.5 px-4 font-medium opacity-90">
-                      {booking.title}
+                      <div className="flex flex-col">
+                        <span>{booking.title}</span>
+                        {booking.attachmentName && booking.attachmentData && (
+                          <a 
+                            href={booking.attachmentData}
+                            download={booking.attachmentName}
+                            className="text-[10px] text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 font-bold flex items-center gap-1 mt-1 cursor-pointer w-fit"
+                          >
+                            <FileText className="w-3.5 h-3.5 text-blue-500" />
+                            <span className="underline">{booking.attachmentName}</span>
+                          </a>
+                        )}
+                      </div>
                     </td>
                     <td className="py-3.5 px-4 font-bold text-blue-500">
                       {booking.department || (language === "lo" ? "ທົ່ວໄປ" : "General")}

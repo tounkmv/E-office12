@@ -46,6 +46,9 @@ export interface RoomBooking {
   attendeesCount: number;
   createdAt: string;
   notes?: string;
+  attachmentName?: string;
+  attachmentData?: string;
+  attachmentType?: string;
 }
 
 export interface SystemNotification {

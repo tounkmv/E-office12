@@ -281,32 +281,40 @@ export default function UserManagement({ language }: UserManagementProps) {
       </AnimatePresence>
 
       {/* Part 1: Main Header Banner with Violet/Purple Tone */}
-      <div className="bg-gradient-to-r from-violet-600/10 via-purple-600/5 to-transparent p-5 rounded-2xl border-l-4 border-violet-500 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-xs">
-        <div className="flex items-center gap-3.5">
-          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white shadow-md shadow-violet-500/20 shrink-0">
-            <Users className="w-6 h-6" />
-          </div>
-          <div>
-            <h3 className="font-extrabold text-base md:text-lg text-slate-800 dark:text-slate-100 flex items-center gap-2">
-              <span>{t.usrManageUsers}</span>
-              <Sparkles className="w-4 h-4 text-violet-500 animate-pulse" />
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+      <div className="bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-700 rounded-3xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden border border-white/10">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
+        <div className="absolute bottom-0 right-1/3 w-64 h-64 bg-fuchsia-400/15 rounded-full blur-2xl pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-2 max-w-2xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-amber-300 text-[11px] font-extrabold uppercase tracking-wider shadow-xs">
+              <Sparkles className="w-3.5 h-3.5 animate-pulse" />
+              <span>{isLao ? "ຈັດການບັນຊີ ແລະ ສິດທິການເຂົ້າເຖິງລະບົບ" : "User Access Control & Directory"}</span>
+            </div>
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tight flex items-center gap-3">
+              <Users className="w-8 h-8 text-amber-300 shrink-0" />
+              <span>{isLao ? t.usrManageUsers : "User Account Management"}</span>
+            </h2>
+            <p className="text-xs sm:text-sm text-fuchsia-100 font-medium leading-relaxed">
               {isLao 
-                ? "ກວດສອບ, ເພີ່ມ, ແກ້ໄຂ, ລົບ ແລະ ກຳນົດສິດທິການເຂົ້າເຖິງລະບົບຂອງຜູ້ໃຊ້ງານທັງໝົດ" 
-                : "Manage, add, edit, delete, and control access permissions for all user accounts"}
+                ? "ກວດສອບ, ເພີ່ມ, ແກ້ໄຂ, ລົບ ແລະ ກຳນົດສິດທິການເຂົ້າເຖິງລະບົບຂອງພະນັກງານທັງໝົດໃນອົງກອນ" 
+                : "Manage, register, edit, and control system access levels or security privileges for all department staff accounts."}
             </p>
           </div>
-        </div>
 
-        <button
-          id="btn-open-add-user"
-          onClick={handleOpenAddModal}
-          className="flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all shadow-md shadow-violet-600/20 cursor-pointer self-start sm:self-center shrink-0 group"
-        >
-          <UserPlus className="w-4 h-4 transition-transform group-hover:scale-110" />
-          <span>{isLao ? "+ ເພີ່ມຜູ້ໃຊ້ໃໝ່" : "+ Add New User"}</span>
-        </button>
+          <div className="shrink-0 flex items-center">
+            <button
+              id="btn-open-add-user"
+              onClick={handleOpenAddModal}
+              className="flex items-center gap-2 bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-300 hover:to-orange-300 text-slate-950 px-5 sm:px-6 py-3.5 rounded-2xl text-xs sm:text-sm font-black transition-all shadow-[0_0_25px_rgba(251,191,36,0.4)] hover:shadow-[0_0_35px_rgba(251,191,36,0.6)] cursor-pointer active:scale-95 group shrink-0"
+            >
+              <div className="w-6 h-6 rounded-lg bg-slate-950/15 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <UserPlus className="w-4 h-4 font-black" />
+              </div>
+              <span>{isLao ? "➕ ເພີ່ມຜູ້ໃຊ້ໃໝ່" : t.usrAddUser || "+ Add New User"}</span>
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Part 2: Quick Statistics & Filter Cards */}
