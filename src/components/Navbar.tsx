@@ -343,9 +343,18 @@ export default function Navbar({ userProfile, language, setLanguage, onUpdatePro
                     <Mail className="w-4 h-4" /> 
                     <span>ອີເມວລະບົບ (Email Logs)</span>
                   </h3>
-                  <span className="text-[10px] bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-full font-bold">
-                    SMTP Active
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-full font-bold">
+                      SMTP Active
+                    </span>
+                    <button 
+                      onClick={() => setShowEmailLogs(false)}
+                      className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-all cursor-pointer"
+                      title={isLao ? "ປິດ" : "Close"}
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flex-1 overflow-y-auto space-y-3.5 mt-4 pr-1">
@@ -433,18 +442,27 @@ export default function Navbar({ userProfile, language, setLanguage, onUpdatePro
                 className="absolute right-0 mt-3 w-80 bg-white dark:bg-[#1e293b] rounded-3xl shadow-2xl p-5 border border-slate-100 dark:border-white/5 overflow-hidden z-40 max-h-[450px] flex flex-col"
               >
                 <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/5">
-                  <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
-                    {t.ntTitle}
-                  </h3>
-                  {unreadCount > 0 && (
-                    <button
-                      onClick={handleMarkAllAsRead}
-                      className="text-xs text-blue-500 hover:text-blue-600 flex items-center gap-1 font-semibold"
-                    >
-                      <CheckCheck className="w-3.5 h-3.5" />
-                      {t.ntMarkAllRead}
-                    </button>
-                  )}
+                  <div className="flex items-center gap-3">
+                    <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                      {t.ntTitle}
+                    </h3>
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={handleMarkAllAsRead}
+                        className="text-xs text-blue-500 hover:text-blue-600 flex items-center gap-1 font-semibold"
+                      >
+                        <CheckCheck className="w-3.5 h-3.5" />
+                        {t.ntMarkAllRead}
+                      </button>
+                    )}
+                  </div>
+                  <button 
+                    onClick={() => setShowNotifications(false)}
+                    className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-all cursor-pointer"
+                    title={isLao ? "ປິດ" : "Close"}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
 
                 <div className="flex-1 overflow-y-auto space-y-3 mt-4 pr-1">
