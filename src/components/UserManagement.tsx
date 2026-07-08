@@ -55,6 +55,8 @@ export default function UserManagement({ language }: UserManagementProps) {
   const [addPhone, setAddPhone] = useState("");
   const [addRole, setAddRole] = useState<UserRole>("user");
   const [addStatus, setAddStatus] = useState<UserStatus>("active");
+  const [addUsername, setAddUsername] = useState("");
+  const [addPassword, setAddPassword] = useState("");
   const [addLoading, setAddLoading] = useState(false);
 
   // Edit User Modal States
@@ -65,6 +67,8 @@ export default function UserManagement({ language }: UserManagementProps) {
   const [editPhone, setEditPhone] = useState("");
   const [editRole, setEditRole] = useState<UserRole>("user");
   const [editStatus, setEditStatus] = useState<UserStatus>("active");
+  const [editUsername, setEditUsername] = useState("");
+  const [editPassword, setEditPassword] = useState("");
   const [editLoading, setEditLoading] = useState(false);
 
   // Delete User Modal States
@@ -139,6 +143,8 @@ export default function UserManagement({ language }: UserManagementProps) {
     setAddPhone("");
     setAddRole("user");
     setAddStatus("active");
+    setAddUsername("");
+    setAddPassword("");
     setShowAddModal(true);
   };
 
@@ -156,6 +162,19 @@ export default function UserManagement({ language }: UserManagementProps) {
       return;
     }
 
+    const targetUsername = addUsername.trim();
+    if (targetUsername) {
+      if (targetUsername.toLowerCase() === "admin") {
+        triggerToast(isLao ? "ບໍ່ສາມາດໃຊ້ຊື່ຜູ້ໃຊ້ 'Admin' ໄດ້" : "Username 'Admin' is reserved", "error");
+        return;
+      }
+      const usernameExists = users.some(u => u.username?.toLowerCase() === targetUsername.toLowerCase());
+      if (usernameExists) {
+        triggerToast(isLao ? "ຊື່ຜູ້ໃຊ້ນີ້ມີໃນລະບົບແລ້ວ! ກະລຸນາໃຊ້ຊື່ຜູ້ໃຊ້ອື່ນ" : "Username already exists!", "error");
+        return;
+      }
+    }
+
     setAddLoading(true);
     try {
       const newUid = `user_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
@@ -167,6 +186,8 @@ export default function UserManagement({ language }: UserManagementProps) {
         phone: addPhone.trim(),
         role: addRole,
         status: addStatus,
+        username: targetUsername || undefined,
+        password: addPassword || undefined,
         createdAt: new Date().toISOString()
       };
 
@@ -190,6 +211,8 @@ export default function UserManagement({ language }: UserManagementProps) {
     setEditPhone(user.phone || "");
     setEditRole(user.role);
     setEditStatus(user.status);
+    setEditUsername(user.username || "");
+    setEditPassword(user.password || "");
   };
 
   const handleUpdateUser = async (e: React.FormEvent) => {
@@ -200,6 +223,19 @@ export default function UserManagement({ language }: UserManagementProps) {
       return;
     }
 
+    const targetUsername = editUsername.trim();
+    if (targetUsername) {
+      if (targetUsername.toLowerCase() === "admin" && editingUser.uid !== "admin_default") {
+        triggerToast(isLao ? "ບໍ່ສາມາດໃຊ້ຊື່ຜູ້ໃຊ້ 'Admin' ໄດ້" : "Username 'Admin' is reserved", "error");
+        return;
+      }
+      const usernameExists = users.some(u => u.uid !== editingUser.uid && u.username?.toLowerCase() === targetUsername.toLowerCase());
+      if (usernameExists) {
+        triggerToast(isLao ? "ຊື່ຜູ້ໃຊ້ນີ້ມີໃນລະບົບແລ້ວ! ກະລຸນາໃຊ້ຊື່ຜູ້ໃຊ້ອື່ນ" : "Username already exists!", "error");
+        return;
+      }
+    }
+
     setEditLoading(true);
     try {
       await updateUserProfile(editingUser.uid, {
@@ -208,7 +244,9 @@ export default function UserManagement({ language }: UserManagementProps) {
         department: editDepartment.trim(),
         phone: editPhone.trim(),
         role: editRole,
-        status: editStatus
+        status: editStatus,
+        username: targetUsername || "",
+        password: editPassword || ""
       });
       triggerToast(isLao ? "ບັນທຶກການແກ້ໄຂຂໍ້ມູນຜູ້ໃຊ້ສຳເລັດ!" : "User details updated successfully!", "success");
       setEditingUser(null);
@@ -678,6 +716,38 @@ export default function UserManagement({ language }: UserManagementProps) {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Username */}
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold opacity-80 uppercase tracking-wider flex items-center gap-1 text-slate-700 dark:text-slate-300">
+                      <UserCheck className="w-3.5 h-3.5 text-emerald-500" />
+                      <span>{isLao ? "ຊື່ບັນຊີຜູ້ໃຊ້ (Username)" : "Username"}</span>
+                    </label>
+                    <input 
+                      type="text" 
+                      value={addUsername}
+                      onChange={(e) => setAddUsername(e.target.value)}
+                      placeholder={isLao ? "ຕົວຢ່າງ: somphone" : "e.g. somphone"}
+                      className="w-full px-4 py-3 rounded-xl themed-input text-xs font-medium"
+                    />
+                  </div>
+
+                  {/* Password */}
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold opacity-80 uppercase tracking-wider flex items-center gap-1 text-slate-700 dark:text-slate-300">
+                      <Key className="w-3.5 h-3.5 text-emerald-500" />
+                      <span>{isLao ? "ລະຫັດຜ່ານ (Password)" : "Password"}</span>
+                    </label>
+                    <input 
+                      type="text" 
+                      value={addPassword}
+                      onChange={(e) => setAddPassword(e.target.value)}
+                      placeholder={isLao ? "ຕົວຢ່າງ: 123456" : "e.g. 123456"}
+                      className="w-full px-4 py-3 rounded-xl themed-input text-xs font-medium"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {/* Department */}
                   <div className="space-y-1">
                     <label className="text-[11px] font-bold opacity-80 uppercase tracking-wider flex items-center gap-1 text-slate-700 dark:text-slate-300">
@@ -840,6 +910,38 @@ export default function UserManagement({ language }: UserManagementProps) {
                       value={editEmail}
                       onChange={(e) => setEditEmail(e.target.value)}
                       required
+                      className="w-full px-4 py-3 rounded-xl themed-input text-xs font-medium"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Username */}
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold opacity-80 uppercase tracking-wider flex items-center gap-1 text-slate-700 dark:text-slate-300">
+                      <UserCheck className="w-3.5 h-3.5 text-amber-500" />
+                      <span>{isLao ? "ຊື່ບັນຊີຜູ້ໃຊ້ (Username)" : "Username"}</span>
+                    </label>
+                    <input 
+                      type="text" 
+                      value={editUsername}
+                      onChange={(e) => setEditUsername(e.target.value)}
+                      placeholder={isLao ? "ຕົວຢ່າງ: somphone" : "e.g. somphone"}
+                      className="w-full px-4 py-3 rounded-xl themed-input text-xs font-medium"
+                    />
+                  </div>
+
+                  {/* Password */}
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold opacity-80 uppercase tracking-wider flex items-center gap-1 text-slate-700 dark:text-slate-300">
+                      <Key className="w-3.5 h-3.5 text-amber-500" />
+                      <span>{isLao ? "ລະຫັດຜ່ານ (Password)" : "Password"}</span>
+                    </label>
+                    <input 
+                      type="text" 
+                      value={editPassword}
+                      onChange={(e) => setEditPassword(e.target.value)}
+                      placeholder={isLao ? "ຕົວຢ່າງ: 123456" : "e.g. 123456"}
                       className="w-full px-4 py-3 rounded-xl themed-input text-xs font-medium"
                     />
                   </div>
