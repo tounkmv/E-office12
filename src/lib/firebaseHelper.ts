@@ -339,3 +339,13 @@ export async function updateBooking(bookingId: string, updates: Partial<RoomBook
   const bookingRef = doc(db, "bookings", bookingId);
   await setDoc(bookingRef, updates, { merge: true });
 }
+
+export async function clearAllBookings(): Promise<void> {
+  const bookingsRef = collection(db, "bookings");
+  const querySnapshot = await getDocs(bookingsRef);
+  const deletePromises: Promise<void>[] = [];
+  querySnapshot.forEach((docSnap) => {
+    deletePromises.push(deleteDoc(doc(db, "bookings", docSnap.id)));
+  });
+  await Promise.all(deletePromises);
+}

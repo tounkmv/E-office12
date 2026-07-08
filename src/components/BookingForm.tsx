@@ -21,11 +21,14 @@ import {
   CalendarDays,
   Sparkles,
   ArrowRight,
-  Layers
+  Layers,
+  Search,
+  SlidersHorizontal,
+  RotateCcw
 } from "lucide-react";
 import { AppLanguage, MeetingRoom, RoomBooking, UserProfile } from "../types";
 import { translations } from "../lib/translations";
-import { addBooking, deleteBooking, updateBookingStatus, updateBooking } from "../lib/firebaseHelper";
+import { addBooking, deleteBooking, updateBookingStatus, updateBooking, clearAllBookings } from "../lib/firebaseHelper";
 import { showSystemToast } from "../utils/toast";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -59,6 +62,12 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
   // Admin Approval States
   const [adminFilter, setAdminFilter] = useState<"all" | "pending" | "approved" | "rejected">("pending");
   const [adminNotesText, setAdminNotesText] = useState<Record<string, string>>({});
+  const [adminSearchQuery, setAdminSearchQuery] = useState("");
+  const [adminRoomFilter, setAdminRoomFilter] = useState("all");
+  const [adminDateFilter, setAdminDateFilter] = useState("");
+  const [showPurgeConfirm, setShowPurgeConfirm] = useState(false);
+  const [purgeConfirmText, setPurgeConfirmText] = useState("");
+  const [isPurging, setIsPurging] = useState(false);
 
   // Editing Booking States
   const [editingBooking, setEditingBooking] = useState<RoomBooking | null>(null);
@@ -336,6 +345,33 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
       showSystemToast(err.message, "error", "ERROR");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePurgeDatabase = async () => {
+    if (purgeConfirmText !== "CONFIRM" && purgeConfirmText !== "ລ້າງຂໍ້ມູນ") {
+      const errorMsg = language === "lo" 
+        ? "ກະລຸນາພິມຄຳວ່າ 'ລ້າງຂໍ້ມູນ' ເພື່ອຢືນຢັນ" 
+        : "Please type 'CONFIRM' to verify";
+      showSystemToast(errorMsg, "warning", "Warning");
+      return;
+    }
+
+    setIsPurging(true);
+    try {
+      await clearAllBookings();
+      showSystemToast(
+        language === "lo" ? "ລ້າງຖານຂໍ້ມູນປະຫວັດການຈອງທັງໝົດສຳເລັດແລ້ວ!" : "All booking history has been purged successfully!",
+        "success",
+        "Success"
+      );
+      setShowPurgeConfirm(false);
+      setPurgeConfirmText("");
+    } catch (err: any) {
+      console.error("Error purging database:", err);
+      showSystemToast(err.message || "Failed to purge bookings", "error", "ERROR");
+    } finally {
+      setIsPurging(false);
     }
   };
 
@@ -1180,42 +1216,218 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
       </AnimatePresence>
 
       {/* Admin Approvals Board Section */}
-      {userProfile.role === "admin" && (
-        <div id="admin-approvals-panel" className="bg-white dark:bg-[#1e293b] p-6 rounded-3xl border border-slate-100 dark:border-white/5 shadow-xs space-y-6">
-          <div className="bg-gradient-to-r from-emerald-600/10 via-teal-600/5 to-transparent p-5 rounded-2xl border-l-4 border-emerald-500 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-xs">
-            <div className="flex items-center gap-3.5">
-              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-md shadow-emerald-500/20 shrink-0">
-                <ShieldCheck className="w-6 h-6" />
+      {userProfile.role === "admin" && (() => {
+        const totalDbBookings = bookings.length;
+        const pendingDbBookings = bookings.filter(b => b.status === "pending").length;
+        const approvedDbBookings = bookings.filter(b => b.status === "approved").length;
+        const rejectedDbBookings = bookings.filter(b => b.status === "rejected").length;
+
+        const adminFilteredBookings = bookings.filter((b) => {
+          // 1. Status Filter
+          const matchesStatus = adminFilter === "all" || b.status === adminFilter;
+          
+          // 2. Search Query (matches title, user name, department, or purpose)
+          const q = adminSearchQuery.toLowerCase().trim();
+          const matchesSearch = !q || 
+            b.title.toLowerCase().includes(q) || 
+            b.userName.toLowerCase().includes(q) || 
+            (b.department && b.department.toLowerCase().includes(q)) ||
+            (b.purpose && b.purpose.toLowerCase().includes(q));
+            
+          // 3. Room Filter
+          const matchesRoom = adminRoomFilter === "all" || !adminRoomFilter || b.roomId === adminRoomFilter;
+          
+          // 4. Date Filter
+          const matchesDate = !adminDateFilter || b.date === adminDateFilter || b.endDate === adminDateFilter;
+          
+          return matchesStatus && matchesSearch && matchesRoom && matchesDate;
+        });
+
+        return (
+          <div id="admin-approvals-panel" className="bg-white dark:bg-[#1e293b] p-6 rounded-3xl border border-slate-100 dark:border-white/5 shadow-xs space-y-6">
+            
+            {/* Header with Purge Database */}
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-4 border-b border-slate-100 dark:border-white/5">
+              <div className="flex items-center gap-3.5">
+                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-md shadow-emerald-500/20 shrink-0">
+                  <ShieldCheck className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-base md:text-lg text-slate-800 dark:text-slate-100">
+                    {language === "lo" ? "ສູນຄວບຄຸມ ແລະ ການຈັດການຈອງທັງໝົດ" : "Admin Bookings Control Center"}
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+                    {language === "lo" ? "ກວດສອບ, ແກ້ໄຂ, ລຶບ ຫຼື ລ້າງຂໍ້ມູນການຈອງທັງໝົດໃນລະບົບ" : "Verify, edit, delete, or clear all booking database records"}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-extrabold text-base md:text-lg text-slate-800 dark:text-slate-100">
-                  {language === "lo" ? "ລາຍການອະນຸມັດການຈອງທັງໝົດ (ສຳລັບ Admin)" : "All Bookings Approval Board (Admin)"}
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-                  {language === "lo" ? "ກວດສອບ, ອະນຸມັດ ຫຼື ປະຕິເສດ ຄຳຮ້ອງຂໍຈອງຫ້ອງປະຊຸມພາຍໃນລະບົບ" : "Verify, approve, or reject meeting room booking requests"}
-                </p>
+
+              {/* Purge Database Button */}
+              <div className="shrink-0">
+                {!showPurgeConfirm ? (
+                  <button
+                    onClick={() => setShowPurgeConfirm(true)}
+                    className="w-full lg:w-auto px-4 py-2.5 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 border border-red-500/20 hover:shadow-lg hover:shadow-red-500/20 cursor-pointer"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>{language === "lo" ? "ລ້າງຂໍ້ມູນການຈອງທັງໝົດ" : "Purge All Bookings"}</span>
+                  </button>
+                ) : null}
               </div>
             </div>
 
-            {/* Status Filters */}
-            <div className="flex flex-wrap gap-1.5 text-[10px] font-bold">
-              {(["pending", "approved", "rejected", "all"] as const).map((filter) => (
-                <button
-                  key={filter}
-                  onClick={() => setAdminFilter(filter)}
-                  className={`px-3 py-1.5 rounded-xl border transition-all cursor-pointer font-extrabold ${
-                    adminFilter === filter
-                      ? "bg-emerald-600 text-white border-emerald-500 shadow-md shadow-emerald-600/15"
-                      : "bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300"
-                  }`}
-                >
-                  {filter === "pending" ? t.bkStatusPending :
-                   filter === "approved" ? t.bkStatusApproved :
-                   filter === "rejected" ? t.bkStatusRejected : t.all}
-                </button>
-              ))}
+            {/* Purge Confirmation Alert Box */}
+            {showPurgeConfirm && (
+              <div className="bg-red-500/10 border border-red-500/20 p-5 rounded-2xl space-y-3.5 animate-pulse">
+                <div className="flex gap-3">
+                  <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-extrabold text-sm text-red-500">
+                      {language === "lo" ? "ຢືນຢັນການລ້າງຖານຂໍ້ມູນປະຫວັດການຈອງ!" : "Confirm booking history purge!"}
+                    </h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
+                      {language === "lo" 
+                        ? "ການກະທຳນີ້ຈະລຶບປະຫວັດການຈອງຫ້ອງປະຊຸມທັງໝົດອອກຈາກລະບົບແບບຖາວອນ ແລະ ບໍ່ສາມາດກູ້ຄືນໄດ້. ກະລຸນາພິມຄຳວ່າ 'ລ້າງຂໍ້ມູນ' ເພື່ອຢືນຢັນ."
+                        : "This action will permanently delete all meeting room booking history from the database and cannot be undone. Please type 'CONFIRM' to verify."}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3 items-end sm:items-center">
+                  <input 
+                    type="text"
+                    placeholder={language === "lo" ? "ພິມ 'ລ້າງຂໍ້ມູນ'" : "Type 'CONFIRM'"}
+                    value={purgeConfirmText}
+                    onChange={(e) => setPurgeConfirmText(e.target.value)}
+                    className="px-4 py-2.5 text-xs rounded-xl border border-red-500/30 bg-white dark:bg-slate-900 font-bold outline-none text-red-500 placeholder-red-500/40 w-full sm:w-60"
+                  />
+                  <div className="flex gap-2 w-full sm:w-auto">
+                    <button
+                      onClick={() => {
+                        setShowPurgeConfirm(false);
+                        setPurgeConfirmText("");
+                      }}
+                      className="px-4 py-2.5 rounded-xl text-xs font-bold border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer w-full sm:w-auto"
+                    >
+                      {language === "lo" ? "ຍົກເລີກ" : "Cancel"}
+                    </button>
+                    <button
+                      onClick={handlePurgeDatabase}
+                      disabled={isPurging || (purgeConfirmText !== "CONFIRM" && purgeConfirmText !== "ລ້າງຂໍ້ມູນ")}
+                      className="px-4 py-2.5 rounded-xl text-xs font-bold bg-red-600 hover:bg-red-700 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-1.5 cursor-pointer w-full sm:w-auto"
+                    >
+                      {isPurging ? (
+                        <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <Trash2 className="w-3.5 h-3.5" />
+                      )}
+                      <span>{language === "lo" ? "ຢືນຢັນການລຶບທັງໝົດ" : "Confirm Purge"}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Statistics Bento Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-slate-50 dark:bg-slate-900/40 p-4 rounded-2xl border border-slate-100 dark:border-white/5">
+                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-extrabold uppercase tracking-wider">{language === "lo" ? "ຈຳນວນທັງໝົດ" : "Total Bookings"}</span>
+                <p className="text-xl md:text-2xl font-black mt-1 text-slate-800 dark:text-white">{totalDbBookings}</p>
+              </div>
+              <div className="bg-amber-500/5 p-4 rounded-2xl border border-amber-500/10">
+                <span className="text-[10px] text-amber-500 font-extrabold uppercase tracking-wider">{language === "lo" ? "ລໍຖ້າການອະນຸມັດ" : "Pending"}</span>
+                <p className="text-xl md:text-2xl font-black mt-1 text-amber-500">{pendingDbBookings}</p>
+              </div>
+              <div className="bg-emerald-500/5 p-4 rounded-2xl border border-emerald-500/10">
+                <span className="text-[10px] text-emerald-500 font-extrabold uppercase tracking-wider">{language === "lo" ? "ອະນຸມັດແລ້ວ" : "Approved"}</span>
+                <p className="text-xl md:text-2xl font-black mt-1 text-emerald-500">{approvedDbBookings}</p>
+              </div>
+              <div className="bg-red-500/5 p-4 rounded-2xl border border-red-500/10">
+                <span className="text-[10px] text-red-500 font-extrabold uppercase tracking-wider">{language === "lo" ? "ປະຕິເສດແລ້ວ" : "Rejected"}</span>
+                <p className="text-xl md:text-2xl font-black mt-1 text-red-500">{rejectedDbBookings}</p>
+              </div>
             </div>
-          </div>
+
+            {/* Filtering Controls */}
+            <div className="bg-slate-50 dark:bg-slate-900/30 p-4 rounded-2xl border border-slate-100 dark:border-white/5 space-y-4">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+                <span className="text-xs font-black text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                  <SlidersHorizontal className="w-4 h-4 text-blue-500" />
+                  {language === "lo" ? "ຕົວຕອງ ແລະ ຄົ້ນຫາແບບລະອຽດ" : "Advanced Filtering & Search"}
+                </span>
+                
+                {/* Status Tab Filters */}
+                <div className="flex flex-wrap gap-1">
+                  {(["pending", "approved", "rejected", "all"] as const).map((filter) => (
+                    <button
+                      key={filter}
+                      onClick={() => setAdminFilter(filter)}
+                      className={`px-3 py-1.5 rounded-xl text-[10px] font-extrabold transition-all cursor-pointer ${
+                        adminFilter === filter
+                          ? "bg-blue-600 text-white shadow-md shadow-blue-600/10"
+                          : "bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/5"
+                      }`}
+                    >
+                      {filter === "pending" ? t.bkStatusPending :
+                       filter === "approved" ? t.bkStatusApproved :
+                       filter === "rejected" ? t.bkStatusRejected : t.all}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                {/* Search query input */}
+                <div className="relative flex-1">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input 
+                    type="text"
+                    placeholder={language === "lo" ? "ຄົ້ນຫາ ຫົວຂໍ້, ຜູ້ຈອງ, ພະແນກ..." : "Search title, user name, department..."}
+                    value={adminSearchQuery}
+                    onChange={(e) => setAdminSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 outline-none text-xs font-medium transition-all focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20"
+                  />
+                </div>
+
+                {/* Room Filter Select */}
+                <div className="w-full sm:w-48">
+                  <select
+                    value={adminRoomFilter}
+                    onChange={(e) => setAdminRoomFilter(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 outline-none text-xs font-bold transition-all cursor-pointer focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20"
+                  >
+                    <option value="all">{language === "lo" ? "ທຸກຫ້ອງປະຊຸມ" : "All Rooms"}</option>
+                    {rooms.map(room => (
+                      <option key={room.id} value={room.id}>{room.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Date Filter */}
+                <div className="w-full sm:w-44">
+                  <input 
+                    type="date"
+                    value={adminDateFilter}
+                    onChange={(e) => setAdminDateFilter(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 outline-none text-xs font-bold transition-all cursor-pointer focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20"
+                  />
+                </div>
+
+                {/* Reset Buttons */}
+                {(adminSearchQuery || adminRoomFilter !== "all" || adminDateFilter) && (
+                  <button
+                    onClick={() => {
+                      setAdminSearchQuery("");
+                      setAdminRoomFilter("all");
+                      setAdminDateFilter("");
+                    }}
+                    className="px-4 py-2.5 rounded-xl bg-slate-500/10 hover:bg-slate-500/20 transition-all text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 flex items-center justify-center gap-1.5 text-xs font-bold cursor-pointer"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    <span>{language === "lo" ? "ລ້າງ" : "Reset"}</span>
+                  </button>
+                )}
+              </div>
+            </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
@@ -1229,19 +1441,15 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
                   <th className="py-3 px-4 text-center" style={{ width: "240px" }}>{t.actions}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5 text-xs">
-                {bookings
-                  .filter(b => adminFilter === "all" || b.status === adminFilter)
-                  .length === 0 ? (
+              <tbody className="divide-y divide-slate-100 dark:divide-white/5 text-xs">
+                {adminFilteredBookings.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center opacity-60 font-semibold">
-                      {t.noData}
+                    <td colSpan={6} className="py-12 text-center opacity-60 font-semibold text-slate-500">
+                      {language === "lo" ? "ບໍ່ພົບຂໍ້ມູນການຈອງທີ່ກົງກັບເງື່ອນໄຂ" : "No booking data matches selected criteria"}
                     </td>
                   </tr>
                 ) : (
-                  bookings
-                    .filter(b => adminFilter === "all" || b.status === adminFilter)
-                    .map((booking) => (
+                  adminFilteredBookings.map((booking) => (
                       <tr key={booking.id} id={`admin-booking-row-${booking.id}`} className="hover:bg-slate-500/5 transition-colors">
                         <td className="py-4 px-4 font-bold text-slate-800 dark:text-slate-200">
                           {booking.roomName}
@@ -1373,7 +1581,8 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
             </table>
           </div>
         </div>
-      )}
+      );
+    })()}
 
       {/* Part 3: Personal booking log ("My Booking History") */}
       <div id="personal-bookings-panel" className="bg-white dark:bg-[#1e293b] p-6 rounded-3xl border border-slate-100 dark:border-white/5 shadow-xs space-y-6">
