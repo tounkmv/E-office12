@@ -69,10 +69,64 @@ export default function Settings({
     }
   };
 
-  const themesList: { id: AppTheme; label: string; bg: string; border: string; text: string }[] = [
-    { id: "light", label: t.stThemeLight, bg: "bg-white", border: "border-slate-200", text: "text-slate-900" },
-    { id: "dark", label: t.stThemeDark, bg: "bg-slate-900", border: "border-slate-800", text: "text-white" },
-    { id: "glass", label: t.stThemeGlass, bg: "bg-gradient-to-br from-indigo-950 via-slate-900 to-purple-950", border: "border-white/15", text: "text-slate-100" }
+  const themesList: { 
+    id: AppTheme; 
+    label: string; 
+    bg: string; 
+    border: string; 
+    text: string; 
+    previewBg: string;
+    description: string;
+    dots: string[];
+  }[] = [
+    { 
+      id: "light", 
+      label: t.stThemeLight, 
+      bg: "bg-white", 
+      border: "border-slate-200", 
+      text: "text-slate-950",
+      previewBg: "bg-slate-50",
+      description: language === "lo" 
+        ? "ໂໝດສະຫວ່າງ ໂທນສີຂາວສະອາດຕາ ເໝາະສົມໃນເວລາກາງເວັນ" 
+        : "Clean and bright canvas suitable for well-lit environments",
+      dots: ["#f8fafc", "#ffffff", "#3b82f6"]
+    },
+    { 
+      id: "dark", 
+      label: t.stThemeDark, 
+      bg: "bg-slate-900", 
+      border: "border-slate-800", 
+      text: "text-slate-100",
+      previewBg: "bg-[#0b0f19]",
+      description: language === "lo" 
+        ? "ໂໝດມືດ ໂທນສີເທົາມືດຫຼູຫຼາ ຊ່ວຍຫຼຸດຜ່ອນແສງຈ້າຂອງໜ້າຈໍ" 
+        : "Elegant, eye-friendly slate dark canvas to minimize eye strain",
+      dots: ["#0b0f19", "#1f2937", "#6366f1"]
+    },
+    { 
+      id: "forest", 
+      label: t.stThemeForest || "ໂໝດທຳມະຊາດ (Forest / Comfort Green)", 
+      bg: "bg-[#0a2a22]", 
+      border: "border-emerald-900/40", 
+      text: "text-emerald-50",
+      previewBg: "bg-[#061c17]",
+      description: language === "lo" 
+        ? "ໂໝດທຳມະຊາດ ສີຂຽວມະລຶກົດ ຖະໜອມສາຍຕາ ເບິ່ງແລ້ວສະບາຍຕາ" 
+        : "Nature-inspired therapeutic deep emerald green to rest your eyes",
+      dots: ["#061c17", "#0c3128", "#10b981"]
+    },
+    { 
+      id: "glass", 
+      label: t.stThemeGlass, 
+      bg: "bg-slate-950", 
+      border: "border-white/10", 
+      text: "text-slate-100",
+      previewBg: "bg-gradient-to-br from-[#101827] via-[#1a1b3a] to-[#2e1042]",
+      description: language === "lo" 
+        ? "ໂໝດໂປ່ງໃສ ຫຼູຫຼາ ທັນສະໄໝ ພ້ອມມິຕິແສງສີ ແລະ ເອັບເຟັກມົວ" 
+        : "Futuristic visual style with active cosmic backdrop and blur effects",
+      dots: ["#101827", "#1a1b3a", "#a855f7"]
+    }
   ];
 
   return (
@@ -158,13 +212,20 @@ export default function Settings({
           </div>
 
           {/* Theme Preset Selection Card */}
-          <div id="settings-theme-card" className="bg-white dark:bg-[#1e293b] p-6 rounded-3xl border border-slate-100 dark:border-white/5 shadow-xs space-y-4">
-            <h4 className="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2 border-b border-slate-100 dark:border-white/5 pb-3">
-              <Paintbrush className="w-5 h-5 text-blue-500" />
-              <span>{t.stTheme}</span>
-            </h4>
+          <div id="settings-theme-card" className="bg-white dark:bg-[#1e293b] p-6 rounded-3xl border border-slate-100 dark:border-white/5 shadow-xs space-y-6">
+            <div className="flex flex-col gap-1 border-b border-slate-100 dark:border-white/5 pb-4">
+              <h4 className="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <Paintbrush className="w-5 h-5 text-blue-500" />
+                <span>{t.stTheme}</span>
+              </h4>
+              <p className="text-[11px] opacity-60 font-medium">
+                {language === "lo"
+                  ? "ເລືອກໂທນສີ ແລະ ຮູບແບບການສະແດງຜົນທີ່ສະບາຍຕາ ເພື່ອສ້າງປະສົບການໃຊ້ງານທີ່ດີທີ່ສຸດ"
+                  : "Choose a visual mode that best suits your viewing comfort and workplace atmosphere."}
+              </p>
+            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {themesList.map((th) => {
                 const isSelected = theme === th.id;
                 return (
@@ -172,24 +233,59 @@ export default function Settings({
                     key={th.id}
                     id={`btn-theme-${th.id}`}
                     onClick={() => setTheme(th.id)}
-                    className={`p-4 rounded-2xl border flex flex-col justify-between items-start text-left h-28 relative overflow-hidden group transition-all duration-300 hover:scale-102 cursor-pointer ${
+                    className={`p-5 rounded-2xl border text-left relative overflow-hidden group transition-all duration-300 hover:scale-[1.01] flex flex-col justify-between min-h-[160px] cursor-pointer ${
                       isSelected 
-                        ? "border-blue-500 ring-2 ring-blue-500/20 shadow-lg shadow-blue-500/5" 
-                        : "border-white/5 hover:border-blue-500/30"
-                    } ${th.bg}`}
+                        ? "border-blue-500 ring-4 ring-blue-500/10 shadow-lg shadow-blue-500/5 bg-slate-500/5" 
+                        : "border-slate-100 dark:border-white/5 hover:border-blue-500/30 bg-white dark:bg-slate-900/30"
+                    }`}
                   >
-                    <span className={`font-extrabold text-[11px] leading-snug ${th.text}`}>
-                      {th.label}
-                    </span>
-                    <div className="flex gap-1">
-                      <span className="w-4 h-4 rounded-full bg-blue-500" />
-                      <span className="w-4 h-4 rounded-full bg-emerald-500" />
-                      <span className="w-4 h-4 rounded-full bg-violet-500" />
+                    <div className="w-full space-y-2 relative z-10">
+                      <div className="flex items-center justify-between">
+                        <span className={`font-black text-xs ${th.text} flex items-center gap-2`}>
+                          <span className={`w-2.5 h-2.5 rounded-full`} style={{ backgroundColor: th.dots[2] }} />
+                          {th.label}
+                        </span>
+                        
+                        {isSelected ? (
+                          <span className="text-blue-500 bg-blue-500/10 p-1 rounded-full">
+                            <CheckCircle className="w-4 h-4 fill-current text-blue-500" />
+                          </span>
+                        ) : (
+                          <span className="w-4 h-4 rounded-full border border-slate-300 dark:border-white/10 group-hover:border-blue-500/40" />
+                        )}
+                      </div>
+
+                      <p className="text-[10.5px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
+                        {th.description}
+                      </p>
                     </div>
+
+                    {/* Miniature Theme Style Visual Block */}
+                    <div className="w-full mt-4 flex items-center justify-between relative z-10 pt-3 border-t border-slate-100 dark:border-white/5">
+                      <div className="flex gap-1.5">
+                        {th.dots.map((c, i) => (
+                          <span 
+                            key={i} 
+                            className="w-4 h-4 rounded-full border border-white/20 shadow-xs" 
+                            style={{ backgroundColor: c }} 
+                            title={c}
+                          />
+                        ))}
+                      </div>
+
+                      {/* Small visual card preview component mock */}
+                      <div className={`w-24 h-10 rounded-lg p-1.5 flex flex-col gap-1 shadow-xs border border-white/5 ${th.previewBg}`}>
+                        <div className="h-1.5 w-10 bg-blue-500 rounded-full animate-pulse" />
+                        <div className="flex justify-between items-center mt-1">
+                          <div className="h-1 w-6 bg-slate-400/30 rounded-full" />
+                          <div className="h-2 w-2 rounded-full bg-emerald-500" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Gradient background decorations */}
                     {isSelected && (
-                      <span className="absolute bottom-2 right-2 text-blue-500">
-                        <CheckCircle className="w-4 h-4 fill-current text-white dark:text-slate-900" />
-                      </span>
+                      <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full blur-xl pointer-events-none" />
                     )}
                   </button>
                 );

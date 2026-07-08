@@ -61,7 +61,7 @@ export interface SystemNotification {
   createdAt: string;
 }
 
-export type AppTheme = "light" | "dark" | "glass";
+export type AppTheme = "light" | "dark" | "glass" | "forest";
 export type AppLanguage = "lo" | "en";
 
 export interface SystemSettings {

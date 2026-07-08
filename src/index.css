@@ -43,6 +43,18 @@
   --shadow-sm: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
 }
 
+[data-theme="forest"] {
+  --bg-app: #061c17;
+  --text-primary: #f0fdf4;
+  --text-secondary: #a7f3d0;
+  --card-bg: rgba(10, 42, 35, 0.95);
+  --card-border: rgba(16, 185, 129, 0.25);
+  --sidebar-bg: #041411;
+  --input-bg: #0c3128;
+  --input-border: rgba(16, 185, 129, 0.35);
+  --shadow-sm: 0 4px 12px 0 rgba(0, 0, 0, 0.45);
+}
+
 body {
   font-family: var(--font-sans);
   background: var(--bg-app);
