@@ -1,4 +1,4 @@
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useEffect } from "react";
 import { 
   Settings as SettingsIcon, 
   Languages, 
@@ -11,11 +11,16 @@ import {
   Info,
   ShieldCheck,
   MailCheck,
-  Sparkles
+  Sparkles,
+  Key,
+  UserCheck,
+  Eye,
+  EyeOff
 } from "lucide-react";
 import { AppLanguage, AppTheme, UserProfile } from "../types";
 import { translations } from "../lib/translations";
 import { updateUserProfile } from "../lib/firebaseHelper";
+import { db, collection, query, where, getDocs } from "../lib/firebase";
 import { motion, AnimatePresence } from "motion/react";
 
 interface SettingsProps {
@@ -41,6 +46,17 @@ export default function Settings({
   const [displayName, setDisplayName] = useState(userProfile.displayName || "");
   const [department, setDepartment] = useState(userProfile.department || "");
   const [phone, setPhone] = useState(userProfile.phone || "");
+  const [username, setUsername] = useState(userProfile.username || "");
+  const [password, setPassword] = useState(userProfile.password || "");
+  const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    setDisplayName(userProfile.displayName || "");
+    setDepartment(userProfile.department || "");
+    setPhone(userProfile.phone || "");
+    setUsername(userProfile.username || "");
+    setPassword(userProfile.password || "");
+  }, [userProfile]);
 
   const [notifInApp, setNotifInApp] = useState(true);
   const [notifEmail, setNotifEmail] = useState(true);
@@ -56,8 +72,39 @@ export default function Settings({
   const handleSaveProfile = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    const isLao = language === "lo";
     try {
-      const updates = { displayName, department, phone };
+      // 1. Check if trying to claim "admin" username but they are not an admin
+      const normalUsername = username.trim().toLowerCase();
+      if (normalUsername === "admin" && userProfile.role !== "admin") {
+        throw new Error(isLao ? "ບໍ່ສາມາດໃຊ້ຊື່ບັນຊີ 'admin' ນີ້ໄດ້ (ສະຫງວນໄວ້ໃຫ້ແອດມິນ)" : "Cannot use reserved 'admin' username");
+      }
+
+      // 2. Query Firestore to see if this username is already taken by ANOTHER user
+      if (normalUsername !== "") {
+        const usersRef = collection(db, "users");
+        const q = query(usersRef, where("username", "==", normalUsername));
+        const querySnapshot = await getDocs(q);
+        
+        let takenByOther = false;
+        querySnapshot.forEach((doc) => {
+          if (doc.id !== userProfile.uid) {
+            takenByOther = true;
+          }
+        });
+
+        if (takenByOther) {
+          throw new Error(isLao ? "ຊື່ບັນຊີຜູ້ໃຊ້ນີ້ມີຄົນໃຊ້ອື່ນແລ້ວ! ກະລຸນາປ່ຽນຊື່ໃໝ່" : "Username is already taken by another user!");
+        }
+      }
+
+      const updates = { 
+        displayName, 
+        department, 
+        phone,
+        username: normalUsername,
+        password: password.trim()
+      };
       await updateUserProfile(userProfile.uid, updates);
       onUpdateProfile({ ...userProfile, ...updates });
       triggerToast(t.usrSaveSuccess);
@@ -399,6 +446,45 @@ export default function Settings({
                   placeholder="ເຊັ່ນ: 020 9XXXXXXX"
                   className="w-full px-4 py-3 rounded-xl themed-input text-xs"
                 />
+              </div>
+
+              {/* Username */}
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold opacity-80 uppercase tracking-wider flex items-center gap-1.5">
+                  <UserCheck className="w-3.5 h-3.5 text-blue-500" />
+                  <span>{language === "lo" ? "ຊື່ບັນຊີຜູ້ໃຊ້ (Username)" : "Username"}</span>
+                </label>
+                <input 
+                  type="text" 
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder={language === "lo" ? "ຕົວຢ່າງ: somphone" : "e.g. somphone"}
+                  className="w-full px-4 py-3 rounded-xl themed-input text-xs"
+                />
+              </div>
+
+              {/* Password */}
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold opacity-80 uppercase tracking-wider flex items-center gap-1.5">
+                  <Key className="w-3.5 h-3.5 text-blue-500" />
+                  <span>{language === "lo" ? "ລະຫັດຜ່ານ (Password)" : "Password"}</span>
+                </label>
+                <div className="relative">
+                  <input 
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder={language === "lo" ? "ຕົວຢ່າງ: 123456" : "e.g. 123456"}
+                    className="w-full px-4 py-3 pr-10 rounded-xl themed-input text-xs"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-1 cursor-pointer"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
 
               {/* Read Only Email */}

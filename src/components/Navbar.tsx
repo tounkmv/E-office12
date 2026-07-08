@@ -19,9 +19,13 @@ import {
   Sparkles,
   ShieldAlert,
   CalendarDays,
-  Upload
+  Upload,
+  UserCheck,
+  Key,
+  Eye,
+  EyeOff
 } from "lucide-react";
-import { db, collection, query, where, orderBy, onSnapshot, doc, updateDoc } from "../lib/firebase";
+import { db, collection, query, where, orderBy, onSnapshot, doc, updateDoc, getDocs } from "../lib/firebase";
 import { AppLanguage, SystemNotification, UserProfile } from "../types";
 import { translations } from "../lib/translations";
 import { EmailLog, updateUserProfile, markEmailAsRead } from "../lib/firebaseHelper";
@@ -68,6 +72,10 @@ export default function Navbar({ userProfile, language, setLanguage, onUpdatePro
   const [bio, setBio] = useState("");
   const [avatar, setAvatar] = useState("");
   const [customAvatarUrl, setCustomAvatarUrl] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [uploadedFileName, setUploadedFileName] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState("");
 
@@ -118,6 +126,7 @@ export default function Navbar({ userProfile, language, setLanguage, onUpdatePro
           const compressedBase64 = canvas.toDataURL("image/jpeg", 0.92);
           setAvatar(compressedBase64);
           setCustomAvatarUrl(""); // Reset preset/url fields
+          setUploadedFileName(file.name);
           showSystemToast(
             isLao ? "ອັບໂຫຼດຮູບໂປຣຟາຍສຳເລັດແລ້ວ! ກົດປຸ່ມ 'ບັນທຶກການຕັ້ງຄ່າ' ດ້ານລຸ່ມເພື່ອຢືນຢັນ" : "Profile picture uploaded! Click 'Save Changes' below to confirm",
             "success",
@@ -161,6 +170,9 @@ export default function Navbar({ userProfile, language, setLanguage, onUpdatePro
       setPhone(userProfile.phone || "");
       setBio(userProfile.bio || "");
       setAvatar(userProfile.avatar || "");
+      setUsername(userProfile.username || "");
+      setPassword(userProfile.password || "");
+      setUploadedFileName("");
     }
   }, [userProfile, showProfileDrawer]);
 
@@ -247,13 +259,53 @@ export default function Navbar({ userProfile, language, setLanguage, onUpdatePro
     setSaveSuccessMsg("");
 
     try {
+      const targetUsername = username.trim();
+      const targetPassword = password.trim();
+
+      if (targetUsername) {
+        if (targetUsername.toLowerCase() === "admin" && userProfile.uid !== "admin_default") {
+          showSystemToast(
+            isLao ? "ບໍ່ສາມາດໃຊ້ຊື່ຜູ້ໃຊ້ 'Admin' ໄດ້" : "Username 'Admin' is reserved",
+            "error",
+            isLao ? "ຂໍ້ຜິດພາດ" : "Error"
+          );
+          setSavingProfile(false);
+          return;
+        }
+
+        // Check unique username
+        const q = query(
+          collection(db, "users"),
+          where("username", "==", targetUsername)
+        );
+        const snapshot = await getDocs(q);
+        let exists = false;
+        snapshot.forEach((docSnap) => {
+          if (docSnap.id !== userProfile.uid) {
+            exists = true;
+          }
+        });
+
+        if (exists) {
+          showSystemToast(
+            isLao ? "ຊື່ຜູ້ໃຊ້ນີ້ມີໃນລະບົບແລ້ວ! ກະລຸນາໃຊ້ຊື່ຜູ້ໃຊ້ອື່ນ" : "Username already exists! Please choose another one",
+            "error",
+            isLao ? "ຂໍ້ຜິດພາດ" : "Error"
+          );
+          setSavingProfile(false);
+          return;
+        }
+      }
+
       const finalAvatar = customAvatarUrl.trim() !== "" ? customAvatarUrl.trim() : avatar;
       const updates = {
         displayName,
         department,
         phone,
         bio,
-        avatar: finalAvatar
+        avatar: finalAvatar,
+        username: targetUsername || "",
+        password: targetPassword || ""
       };
 
       await updateUserProfile(userProfile.uid, updates);
@@ -742,7 +794,7 @@ export default function Navbar({ userProfile, language, setLanguage, onUpdatePro
                     <div className="w-6 h-6 rounded-lg bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
                       <Camera className="w-3.5 h-3.5" />
                     </div>
-                    <span>{isLao ? "ຮູບພາບໂປຣຟາຍຂອງລະບົບ (Avatar Profile)" : "Select or Upload Profile Picture"}</span>
+                    <span>{isLao ? "ຮູບພາບໂປຣຟາຍ (Avatar Profile Picture)" : "Select or Upload Profile Picture"}</span>
                   </label>
 
                   {/* Hero Showcase Card */}
@@ -786,17 +838,16 @@ export default function Navbar({ userProfile, language, setLanguage, onUpdatePro
                       </span>
                     </div>
 
-                    {/* Right: Prominent Drag & Drop PC File Upload Box */}
+                    {/* Right: Prominent Drag & Drop PC File Upload Box with clear button */}
                     <div className="flex-1 w-full flex flex-col justify-center min-w-0">
                       <div
                         onDragOver={handleDragOver}
                         onDragLeave={handleDragLeave}
                         onDrop={handleDrop}
-                        onClick={() => fileInputRef.current?.click()}
-                        className={`border-2 border-dashed rounded-2xl p-4 text-center transition-all duration-300 cursor-pointer flex flex-col items-center justify-center gap-2 group/upload ${
+                        className={`border-2 border-dashed rounded-2xl p-4 text-center transition-all duration-300 flex flex-col items-center justify-center gap-2 group/upload ${
                           isDragging
                             ? "border-amber-400 bg-amber-400/15 text-amber-600 dark:text-amber-300 scale-[1.02] shadow-md"
-                            : "border-indigo-400/80 hover:border-indigo-600 bg-white/80 dark:bg-slate-900/60 hover:bg-indigo-50/80 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 shadow-xs hover:shadow-md"
+                            : "border-indigo-400/80 bg-white/80 dark:bg-slate-900/60 text-slate-700 dark:text-slate-200 shadow-xs"
                         }`}
                       >
                         <input
@@ -806,16 +857,33 @@ export default function Navbar({ userProfile, language, setLanguage, onUpdatePro
                           accept="image/*"
                           className="hidden"
                         />
-                        <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-600 to-purple-600 text-white flex items-center justify-center shadow-md group-hover/upload:scale-110 group-hover/upload:rotate-6 transition-all duration-300">
+                        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-600 to-purple-600 text-white flex items-center justify-center shadow-md">
                           <Upload className={`w-5 h-5 ${isDragging ? "animate-bounce text-amber-300" : ""}`} />
                         </div>
-                        <div>
-                          <p className="text-xs sm:text-sm font-black text-indigo-700 dark:text-indigo-300 group-hover/upload:text-indigo-600">
+                        <div className="space-y-1">
+                          <p className="text-xs sm:text-sm font-black text-indigo-700 dark:text-indigo-300">
                             {isLao ? "ອັບໂຫຼດຮູບຈາກຄອມພິວເຕີ" : "Upload Image from PC"}
                           </p>
-                          <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-                            {isLao ? "ຄລິກ ຫຼື ລາກຮູບມາວາງ (PNG, JPG, WebP ປັບຂະໜາດອັດຕະໂນມັດ)" : "Click or drag file here (PNG, JPG, WebP - auto resized)"}
-                          </p>
+                          
+                          <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer my-1"
+                          >
+                            <Camera className="w-3.5 h-3.5" />
+                            <span>{isLao ? "ເລືອກໄຟລ໌ຮູບພາບ..." : "Choose Image File..."}</span>
+                          </button>
+
+                          {uploadedFileName ? (
+                            <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1">
+                              <CheckCircle className="w-3 h-3 text-emerald-500 shrink-0" />
+                              <span className="truncate max-w-[180px]">{uploadedFileName}</span>
+                            </p>
+                          ) : (
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
+                              {isLao ? "ຄລິກປຸ່ມ ຫຼື ລາກໄຟລ໌ຮູບມາວາງໃສ່ນີ້" : "Click button or drag and drop file here"}
+                            </p>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -836,6 +904,7 @@ export default function Navbar({ userProfile, language, setLanguage, onUpdatePro
                           onClick={() => {
                             setAvatar(av.url);
                             setCustomAvatarUrl("");
+                            setUploadedFileName("");
                           }}
                           className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden border-2 transition-all duration-200 hover:scale-110 cursor-pointer ${
                             avatar === av.url && customAvatarUrl === ""
@@ -855,7 +924,10 @@ export default function Navbar({ userProfile, language, setLanguage, onUpdatePro
                         type="url"
                         placeholder={isLao ? "ຫຼື ວາງລິ້ງ URL ຮູບພາບຈາກອິນເຕີເນັດ..." : "Or paste image Link URL from internet..."}
                         value={customAvatarUrl}
-                        onChange={(e) => setCustomAvatarUrl(e.target.value)}
+                        onChange={(e) => {
+                          setCustomAvatarUrl(e.target.value);
+                          setUploadedFileName("");
+                        }}
                         className="w-full px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-xs focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
                       />
                     </div>
@@ -931,7 +1003,58 @@ export default function Navbar({ userProfile, language, setLanguage, onUpdatePro
                   </div>
                 </div>
 
-                {/* 3. Short Bio / Description */}
+                {/* 3. Account Credentials Fields */}
+                <div className="space-y-3">
+                  <label className="text-xs font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+                      <UserCheck className="w-3.5 h-3.5" />
+                    </div>
+                    <span>{isLao ? "ຂໍ້ມູນບັນຊີຜູ້ໃຊ້ງານ (Account Credentials)" : "Account Credentials"}</span>
+                  </label>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-900/40 p-4 rounded-2xl border border-slate-200/80 dark:border-white/5">
+                    {/* Username */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1">
+                        <UserCheck className="w-3 h-3 text-indigo-500" />
+                        <span>{isLao ? "ຊື່ບັນຊີຜູ້ໃຊ້ (Username)" : "Username"}</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-xs font-medium focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
+                        placeholder={isLao ? "ຕົວຢ່າງ: somphone" : "e.g. somphone"}
+                      />
+                    </div>
+
+                    {/* Password */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1">
+                        <Key className="w-3 h-3 text-indigo-500" />
+                        <span>{isLao ? "ລະຫັດຜ່ານ (Password)" : "Password"}</span>
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          className="w-full px-3.5 py-2.5 pr-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-xs font-medium focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
+                          placeholder={isLao ? "ຕົວຢ່າງ: 123456" : "e.g. 123456"}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-1 cursor-pointer"
+                        >
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4. Short Bio / Description */}
                 <div className="space-y-2">
                   <label className="text-xs font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2">
                     <div className="w-6 h-6 rounded-lg bg-indigo-500/10 text-indigo-500 flex items-center justify-center">
@@ -948,7 +1071,7 @@ export default function Navbar({ userProfile, language, setLanguage, onUpdatePro
                   />
                 </div>
 
-                {/* 4. Credentials metadata block */}
+                {/* 5. Credentials metadata block */}
                 <div className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-slate-900/60 dark:to-slate-900/40 rounded-2xl p-4 border border-indigo-100 dark:border-white/10 space-y-2.5 text-xs">
                   <div className="flex justify-between items-center">
                     <span className="font-bold text-slate-600 dark:text-slate-400">{isLao ? "ລະດັບສິດທິການເຂົ້າເຖິງ:" : "Access Role Privilege:"}</span>
