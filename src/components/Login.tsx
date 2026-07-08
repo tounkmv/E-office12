@@ -1,9 +1,10 @@
-import { useState, FormEvent } from "react";
-import { Building2, AlertCircle, Sparkles, Mail, Lock, ShieldCheck, UserCheck, Eye, EyeOff } from "lucide-react";
-import { auth, googleProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "../lib/firebase";
+import { useState, FormEvent, useEffect } from "react";
+import { Building2, AlertCircle, Sparkles, Lock, ShieldCheck, UserCheck, Eye, EyeOff, User, Briefcase, Phone, CheckCircle2 } from "lucide-react";
+import { db, collection, getDocs, query, where, doc, setDoc, getDoc } from "../lib/firebase";
+import { seedDefaultAdmin } from "../lib/firebaseHelper";
 import { translations } from "../lib/translations";
-import { AppLanguage } from "../types";
-import { motion } from "motion/react";
+import { AppLanguage, UserProfile } from "../types";
+import { motion, AnimatePresence } from "motion/react";
 import emblemLogo from "../assets/images/emblem.png";
 import emblemSvg from "../assets/images/emblem.svg";
 import sakuraBg from "../assets/images/sakura_login_background_1783052918576.jpg";
@@ -11,148 +12,224 @@ import sakuraBg from "../assets/images/sakura_login_background_1783052918576.jpg
 interface LoginProps {
   language: AppLanguage;
   setLanguage: (lang: AppLanguage) => void;
-  onLocalLogin?: (profile: any) => void;
+  onLocalLogin?: (profile: UserProfile) => void;
 }
 
 export default function Login({ language, setLanguage, onLocalLogin }: LoginProps) {
   const t = translations[language];
   const [error, setError] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [authTab, setAuthTab] = useState<"google" | "email">("google");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
 
-  const handleGoogleLogin = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      await signInWithPopup(auth, googleProvider);
-    } catch (err: any) {
-      console.error("Google Auth Error:", err);
-      if (err.code === "auth/popup-blocked") {
-        setError(language === "lo" ? "ປັອບອັບຖືກບລັອກ! ກະລຸນາອະນຸຍາດປັອບອັບໃນບຣາວເຊີຂອງທ່ານ." : "Popup blocked! Please enable popups for this site.");
-      } else if (err.code === "auth/internal-error") {
-        setError(language === "lo" ? "ພົບຂໍ້ຜິດພາດພາຍໃນຂອງ Google Auth (ອາດເກີດຈາກ iframe ບລັອກປັອບອັບ). ກະລຸນາໃຊ້ແທັບ 'ບັນຊີຕົວຢ່າງ / ອີເມວ' ເພື່ອເຂົ້າສູ່ລະບົບ." : "Google Auth internal error (likely due to iframe popups blocked). Please use the 'Demo / Email' tab to log in.");
-      } else {
-        setError(err.message || "Authentication failed");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Form input states
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
-  const handleEmailAuth = async (e: FormEvent) => {
+  // Sign Up additional states
+  const [displayName, setDisplayName] = useState("");
+  const [department, setDepartment] = useState("");
+  const [phone, setPhone] = useState("");
+
+  // Seed default admin on mount
+  useEffect(() => {
+    seedDefaultAdmin();
+  }, []);
+
+  const handleLoginSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
-      setError(language === "lo" ? "ກະລຸນາປ້ອນອີເມວ ແລະ ລະຫັດຜ່ານ" : "Please enter email and password");
+    if (!username.trim() || !password) {
+      setError(language === "lo" ? "ກະລຸນາປ້ອນຊື່ຜູ້ໃຊ້ ແລະ ລະຫັດຜ່ານ" : "Please enter username and password");
       return;
     }
+
     setLoading(true);
     setError(null);
+    setSuccessMsg(null);
+
     try {
-      if (isSignUp) {
-        await createUserWithEmailAndPassword(auth, email, password);
-      } else {
-        await signInWithEmailAndPassword(auth, email, password);
-      }
-    } catch (err: any) {
-      if (err.code === "auth/operation-not-allowed" && onLocalLogin) {
-        // Fall back to local login gracefully without noisy console.error
-        console.log("Email/Password Auth is disabled in Firebase console. Falling back to local offline session.");
-        const isDefaultAdmin = email === "tounkmv99@gmail.com";
-        const isDefaultUser = email === "staff.houaphanh@gmail.com";
-        const mockProfile = {
-          uid: "demo-local-" + email.replace(/[^a-zA-Z0-9]/g, ""),
-          displayName: isDefaultUser ? "ພະນັກງານຕົວຢ່າງ (Staff)" : (isDefaultAdmin ? "ຜູ້ດູແລລະບົບ (Admin)" : email.split("@")[0]),
-          email: email,
-          role: isDefaultAdmin ? ("admin" as const) : ("user" as const),
-          department: isDefaultAdmin ? "ຫ້ອງວ່າການແຂວງ" : "ພະແນກທົ່ວໄປ",
-          status: (isDefaultAdmin || isDefaultUser) ? ("active" as const) : ("pending" as const),
-          createdAt: new Date().toISOString()
-        };
-        onLocalLogin(mockProfile);
-        setLoading(false);
-        return;
+      // Ensure admin is seeded
+      await seedDefaultAdmin();
+
+      const inputUser = username.trim();
+
+      // 1. Direct short-circuit check for default Admin account to prevent any DB lag or offline issues
+      if (inputUser.toLowerCase() === "admin") {
+        if (password === "admin123") {
+          const userRef = doc(db, "users", "admin_default");
+          const userSnap = await getDoc(userRef);
+          let adminProfile: UserProfile;
+
+          if (userSnap.exists()) {
+            adminProfile = userSnap.data() as UserProfile;
+          } else {
+            // Seed instantly if deleted
+            adminProfile = {
+              uid: "admin_default",
+              username: "Admin",
+              password: "admin123",
+              displayName: "ຜູ້ດູແລລະບົບ (Admin)",
+              email: "admin@eoffice.gov.la",
+              role: "admin",
+              department: "ຫ້ອງວ່າການແຂວງ",
+              phone: "020 5555 5555",
+              status: "active",
+              createdAt: new Date().toISOString()
+            };
+            await setDoc(userRef, adminProfile);
+          }
+
+          if (onLocalLogin) {
+            onLocalLogin(adminProfile);
+          }
+          setLoading(false);
+          return;
+        } else {
+          setError(language === "lo" ? "ລະຫັດຜ່ານຂອງ Admin ບໍ່ຖືກຕ້ອງ" : "Incorrect password for Admin");
+          setLoading(false);
+          return;
+        }
       }
 
-      console.error("Email Auth Error:", err);
-      let errMsg = err.message || "Authentication failed";
-      if (err.code === "auth/user-not-found") {
-        errMsg = language === "lo" ? "ບໍ່ພົບຜູ້ໃຊ້ນີ້, ທ່ານສາມາດກົດ 'ລົງທະບຽນ' ໄດ້" : "User not found, you can click 'Sign Up'";
-      } else if (err.code === "auth/wrong-password" || err.code === "auth/invalid-credential") {
-        errMsg = language === "lo" ? "ອີເມວ ຫຼື ລະຫັດຜ່ານບໍ່ຖືກຕ້ອງ" : "Incorrect email or password";
-      } else if (err.code === "auth/email-already-in-use") {
-        errMsg = language === "lo" ? "ອີເມວນີ້ຖືກໃຊ້ແລ້ວ" : "Email already in use";
-      } else if (err.code === "auth/invalid-email") {
-        errMsg = language === "lo" ? "ຮູບແບບອີເມວບໍ່ຖືກຕ້ອງ" : "Invalid email format";
-      } else if (err.code === "auth/weak-password") {
-        errMsg = language === "lo" ? "ລະຫັດຜ່ານຕ້ອງມີຢ່າງໜ້ອຍ 6 ຕົວອັກສອນ" : "Password should be at least 6 characters";
+      // 2. Database query for other registered users
+      const usersRef = collection(db, "users");
+      const q = query(usersRef, where("username", "==", inputUser));
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        // Fallback lowercase search
+        const qLower = query(usersRef, where("username", "==", inputUser.toLowerCase()));
+        const snapLower = await getDocs(qLower);
+        
+        if (snapLower.empty) {
+          setError(language === "lo" ? "ບໍ່ພົບຊື່ຜູ້ໃຊ້ນີ້ໃນລະບົບ" : "Username not found in system");
+          setLoading(false);
+          return;
+        }
+        
+        const matchedUser = snapLower.docs[0].data() as UserProfile;
+        if (matchedUser.password !== password) {
+          setError(language === "lo" ? "ລະຫັດຜ່ານບໍ່ຖືກຕ້ອງ" : "Incorrect password");
+          setLoading(false);
+          return;
+        }
+
+        // Account Status Guards
+        if (matchedUser.status === "pending") {
+          setError(language === "lo" ? "ບັນຊີຂອງທ່ານກຳລັງລໍຖ້າການອະນຸມັດຈາກຜູ້ດູແລລະບົບ" : "Your account is pending approval by the administrator.");
+          setLoading(false);
+          return;
+        }
+        if (matchedUser.status === "inactive") {
+          setError(language === "lo" ? "ບັນຊີຂອງທ່ານຖືກລະງັບການໃຊ້ງານຊົ່ວຄາວ" : "Your account has been suspended.");
+          setLoading(false);
+          return;
+        }
+
+        if (onLocalLogin) {
+          onLocalLogin(matchedUser);
+        }
+      } else {
+        const matchedUser = querySnapshot.docs[0].data() as UserProfile;
+        if (matchedUser.password !== password) {
+          setError(language === "lo" ? "ລະຫັດຜ່ານບໍ່ຖືກຕ້ອງ" : "Incorrect password");
+          setLoading(false);
+          return;
+        }
+
+        // Account Status Guards
+        if (matchedUser.status === "pending") {
+          setError(language === "lo" ? "ບັນຊີຂອງທ່ານກຳລັງລໍຖ້າການອະນຸມັດຈາກຜູ້ດູແລລະບົບ" : "Your account is pending approval by the administrator.");
+          setLoading(false);
+          return;
+        }
+        if (matchedUser.status === "inactive") {
+          setError(language === "lo" ? "ບັນຊີຂອງທ່ານຖືກລະງັບການໃຊ້ງານຊົ່ວຄາວ" : "Your account has been suspended.");
+          setLoading(false);
+          return;
+        }
+
+        if (onLocalLogin) {
+          onLocalLogin(matchedUser);
+        }
       }
-      setError(errMsg);
+    } catch (err: any) {
+      console.error("Login Error:", err);
+      setError(err.message || "Authentication failed");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDemoLogin = async (role: "admin" | "user") => {
+  const handleSignUpSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!username.trim() || !password || !displayName.trim() || !department.trim()) {
+      setError(language === "lo" ? "ກະລຸນາປ້ອນຂໍ້ມູນທີ່ຈຳເປັນໃຫ້ຄົບຖ້ວນ" : "Please fill in all required fields");
+      return;
+    }
+
+    if (password.length < 6) {
+      setError(language === "lo" ? "ລະຫັດຜ່ານຕ້ອງມີຢ່າງໜ້ອຍ 6 ຕົວອັກສອນ" : "Password should be at least 6 characters");
+      return;
+    }
+
     setLoading(true);
     setError(null);
-    const demoEmail = role === "admin" ? "tounkmv99@gmail.com" : "staff.houaphanh@gmail.com";
-    const demoPassword = "houaphanh_password_2026";
+    setSuccessMsg(null);
+
+    const targetUsername = username.trim();
+
     try {
-      await signInWithEmailAndPassword(auth, demoEmail, demoPassword);
-    } catch (err: any) {
-      if (err.code === "auth/operation-not-allowed" && onLocalLogin) {
-        console.log("Firebase auth/operation-not-allowed detected. Falling back to local demo login.");
-        const mockProfile = {
-          uid: role === "admin" ? "demo-admin-uid" : "demo-staff-uid",
-          displayName: role === "admin" ? "ຜູ້ດູແລລະບົບ (Admin)" : "ພະນັກງານຕົວຢ່າງ (Staff)",
-          email: demoEmail,
-          role: role,
-          department: role === "admin" ? "ຫ້ອງວ່າການແຂວງ" : "ພະແນກທົ່ວໄປ",
-          status: "active" as const,
-          createdAt: new Date().toISOString()
-        };
-        onLocalLogin(mockProfile);
+      // 1. Check if username is already taken
+      if (targetUsername.toLowerCase() === "admin") {
+        setError(language === "lo" ? "ບໍ່ສາມາດໃຊ້ຊື່ຜູ້ໃຊ້ 'Admin' ໄດ້" : "Username 'Admin' is reserved");
         setLoading(false);
         return;
       }
 
-      console.error("Demo login error:", err);
+      const usersRef = collection(db, "users");
+      const q = query(usersRef, where("username", "==", targetUsername));
+      const querySnapshot = await getDocs(q);
 
-      // If the demo user doesn't exist yet, automatically register them
-      if (
-        err.code === "auth/user-not-found" || 
-        err.code === "auth/invalid-credential" || 
-        err.code === "auth/wrong-password"
-      ) {
-        try {
-          await createUserWithEmailAndPassword(auth, demoEmail, demoPassword);
-        } catch (createErr: any) {
-          if (createErr.code === "auth/operation-not-allowed" && onLocalLogin) {
-            console.log("Firebase registration operation-not-allowed detected. Falling back to local registration session.");
-            const mockProfile = {
-              uid: role === "admin" ? "demo-admin-uid" : "demo-staff-uid",
-              displayName: role === "admin" ? "ຜູ້ດູແລລະບົບ (Admin)" : "ພະນັກງານຕົວຢ່າງ (Staff)",
-              email: demoEmail,
-              role: role,
-              department: role === "admin" ? "ຫ້ອງວ່າການແຂວງ" : "ພະແນກທົ່ວໄປ",
-              status: "active" as const,
-              createdAt: new Date().toISOString()
-            };
-            onLocalLogin(mockProfile);
-            setLoading(false);
-            return;
-          }
-          console.error("Demo registration failed:", createErr);
-          setError(language === "lo" ? "ບໍ່ສາມາດສ້າງບັນຊີຕົວຢ່າງໄດ້" : "Failed to create demo account");
-        }
-      } else {
-        console.error("Demo login failed:", err);
-        setError(err.message || "Failed to log in with demo account");
+      if (!querySnapshot.empty) {
+        setError(language === "lo" ? "ຊື່ຜູ້ໃຊ້ນີ້ມີໃນລະບົບແລ້ວ! ກະລຸນາໃຊ້ຊື່ຜູ້ໃຊ້ອື່ນ" : "Username already exists! Please use another username.");
+        setLoading(false);
+        return;
       }
+
+      // 2. Create the user profile in Firestore
+      const newUid = "usr_local_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
+      const newProfile: UserProfile = {
+        uid: newUid,
+        username: targetUsername,
+        password: password,
+        displayName: displayName.trim(),
+        email: `${targetUsername}@eoffice.gov.la`, // System fallback email
+        role: "user",
+        department: department.trim(),
+        phone: phone.trim(),
+        status: "pending", // Set as pending for admin approval
+        createdAt: new Date().toISOString()
+      };
+
+      await setDoc(doc(db, "users", newUid), newProfile);
+
+      setSuccessMsg(
+        language === "lo" 
+          ? "ລົງທະບຽນສຳເລັດແລ້ວ! ບັນຊີຂອງທ່ານກຳລັງລໍຖ້າການອະນຸມັດຈາກ Admin ຄວາມປອດໄພ" 
+          : "Registration successful! Your account is pending administrator approval."
+      );
+
+      // Reset form states and switch back to Login view
+      setIsSignUp(false);
+      setPassword("");
+      setDisplayName("");
+      setDepartment("");
+      setPhone("");
+    } catch (err: any) {
+      console.error("Sign up error:", err);
+      setError(err.message || "Registration failed");
     } finally {
       setLoading(false);
     }
@@ -160,7 +237,7 @@ export default function Login({ language, setLanguage, onLocalLogin }: LoginProp
 
   return (
     <div id="login-page" className="min-h-screen flex flex-col items-center justify-center bg-slate-950 text-white overflow-x-hidden relative font-sans p-4 sm:p-6 md:p-8 selection:bg-amber-400 selection:text-slate-900">
-      {/* Fullscreen Sakura Wallpaper Background with smooth zoom animation */}
+      {/* Fullscreen Sakura Wallpaper Background with slow zoom animation */}
       <div className="absolute inset-0 z-0 overflow-hidden">
         <img 
           src={sakuraBg} 
@@ -172,29 +249,29 @@ export default function Login({ language, setLanguage, onLocalLogin }: LoginProp
             e.currentTarget.src = "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=2000&q=80";
           }}
         />
-        {/* Clear & Vibrant Overlay: Light edge vignette so the Sakura blossoms stay vivid and crisp */}
+        {/* Subtle overlay */}
         <div className="absolute inset-0 bg-gradient-to-b from-slate-950/30 via-transparent to-slate-950/60" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_transparent_30%,_rgba(15,23,42,0.7)_100%)]" />
       </div>
 
-      {/* Decorative Ambient Sakura Glow Blobs (Rose, Amber, Indigo) */}
+      {/* Decorative Ambient Glowing Blurs */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-gradient-to-tr from-rose-500/25 via-purple-600/20 to-amber-400/20 rounded-full blur-[140px] pointer-events-none animate-pulse z-0" style={{ animationDuration: '8s' }} />
       <div className="absolute bottom-10 left-10 w-80 h-80 bg-pink-500/20 rounded-full blur-[120px] pointer-events-none z-0" />
       <div className="absolute top-10 right-10 w-80 h-80 bg-indigo-500/20 rounded-full blur-[120px] pointer-events-none z-0" />
 
-      {/* Main Centered Wrapper */}
+      {/* Main Centered Content */}
       <div className="w-full max-w-lg flex flex-col items-center justify-center relative z-10 my-auto">
         
-        {/* CENTERED LOGO & BRAND HEADER SECTION */}
-        <div className="flex flex-col items-center text-center mb-8 space-y-4">
-          {/* Laos National Emblem Logo with Golden & Sakura Rose Glow Container */}
+        {/* LOGO & BRAND BANNER */}
+        <div className="flex flex-col items-center text-center mb-6 space-y-3">
+          {/* Laos National Emblem Container */}
           <div className="relative group cursor-default">
             <div className="absolute -inset-2 bg-gradient-to-r from-amber-400 via-rose-400 to-amber-600 rounded-full blur-xl opacity-50 group-hover:opacity-85 transition duration-700 animate-pulse" />
-            <div className="relative p-4 bg-slate-900/85 backdrop-blur-2xl rounded-full border-2 border-amber-400/50 shadow-[0_0_35px_rgba(251,191,36,0.35)] flex items-center justify-center transform group-hover:scale-105 transition-all duration-500">
+            <div className="relative p-3 bg-slate-900/85 backdrop-blur-2xl rounded-full border-2 border-amber-400/50 shadow-[0_0_35px_rgba(251,191,36,0.35)] flex items-center justify-center transform group-hover:scale-105 transition-all duration-500">
               <img 
                 src={emblemLogo} 
                 alt="Laos National Emblem" 
-                className="w-24 h-24 md:w-28 md:h-28 object-contain filter drop-shadow-[0_4px_12px_rgba(251,191,36,0.5)]"
+                className="w-20 h-20 md:w-24 md:h-24 object-contain filter drop-shadow-[0_4px_12px_rgba(251,191,36,0.5)]"
                 referrerPolicy="no-referrer"
                 onError={(e) => { 
                   if (e.currentTarget.src !== emblemSvg) {
@@ -207,241 +284,281 @@ export default function Login({ language, setLanguage, onLocalLogin }: LoginProp
             </div>
           </div>
 
-          {/* Prominent Centered System Name & Office Title Underneath Logo */}
-          <div className="space-y-4 max-w-2xl px-2 flex flex-col items-center">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-[40px] font-black tracking-tight leading-[1.25] text-center text-white drop-shadow-[0_4px_16px_rgba(0,0,0,0.9)]">
+          {/* Title Headers */}
+          <div className="space-y-2 px-2 flex flex-col items-center">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight leading-tight text-center text-white drop-shadow-[0_4px_16px_rgba(0,0,0,0.9)]">
               {language === "lo" ? "ລະບົບຈອງຫ້ອງປະຊຸມທັນສະໄໝ" : "Modern Meeting Room Booking System"}
             </h1>
 
-            <div className="flex items-center justify-center gap-2 sm:gap-4 md:gap-5 w-full pt-1">
-              <div className="h-[3px] w-8 sm:w-16 md:w-20 bg-gradient-to-r from-transparent via-amber-400/80 to-amber-400 rounded-full shadow-sm shadow-amber-400 shrink-0" />
-              <p className="text-lg sm:text-2xl md:text-3xl lg:text-[34px] font-black text-amber-300 tracking-wider text-center whitespace-nowrap drop-shadow-[0_4px_16px_rgba(0,0,0,0.9)]">
+            <div className="flex items-center justify-center gap-2 sm:gap-3 w-full">
+              <div className="h-[2px] w-6 sm:w-12 bg-gradient-to-r from-transparent via-amber-400/80 to-amber-400 rounded-full" />
+              <p className="text-base sm:text-lg md:text-xl font-black text-amber-300 tracking-wider text-center whitespace-nowrap drop-shadow-[0_4px_16px_rgba(0,0,0,0.9)]">
                 {language === "lo" ? "ຫ້ອງວ່າການແຂວງຫົວພັນ" : "Houaphanh Provincial Office"}
               </p>
-              <div className="h-[3px] w-8 sm:w-16 md:w-20 bg-gradient-to-l from-transparent via-amber-400/80 to-amber-400 rounded-full shadow-sm shadow-amber-400 shrink-0" />
+              <div className="h-[2px] w-6 sm:w-12 bg-gradient-to-l from-transparent via-amber-400/80 to-amber-400 rounded-full" />
             </div>
 
-            <p className="text-sm sm:text-base md:text-lg font-black text-white/95 uppercase tracking-[0.2em] pt-1.5 block drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)] text-center">
+            <p className="text-[10px] sm:text-xs font-black text-white/95 tracking-[0.15em] drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)] text-center uppercase">
               SMART E-OFFICE GOVERNANCE PLATFORM
             </p>
           </div>
         </div>
 
-        {/* CENTERED GLASSMORPHIC LOGIN CARD */}
+        {/* GLASSMORPHIC CREDENTIALS CARD */}
         <div className="w-full bg-white/95 dark:bg-slate-950/85 backdrop-blur-3xl rounded-3xl border border-white/30 dark:border-rose-400/30 shadow-[0_25px_70px_-15px_rgba(0,0,0,0.85),0_0_40px_rgba(244,114,182,0.15)] p-6 md:p-8 relative overflow-hidden transition-all duration-300">
           
-          {/* Ambient card corner glow */}
           <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-bl from-rose-500/20 to-purple-500/10 rounded-full blur-2xl pointer-events-none" />
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-amber-500/15 to-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
 
-          <div className="space-y-6 relative z-10">
-            {/* Card Header & Title */}
-            <div className="text-center space-y-1.5 border-b border-slate-200/80 dark:border-white/10 pb-4">
-              <h2 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center justify-center gap-2">
-                <span>{language === "lo" ? "ເຂົ້າສູ່ລະບົບ" : "Sign In to Account"}</span>
+          <div className="space-y-5 relative z-10">
+            {/* Header / Mode Indicator */}
+            <div className="text-center space-y-1 border-b border-slate-200/80 dark:border-white/10 pb-3">
+              <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center justify-center gap-2">
+                <span>
+                  {isSignUp 
+                    ? (language === "lo" ? "ລົງທະບຽນບັນຊີຜູ້ໃຊ້" : "Register New Account")
+                    : (language === "lo" ? "ເຂົ້າສູ່ລະບົບ" : "Sign In to Account")
+                  }
+                </span>
               </h2>
-              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                {authTab === "google" 
-                  ? t.loginSubtitle 
-                  : (language === "lo" ? "ເຂົ້າສູ່ລະບົບດ້ວຍບັນຊີຕົວຢ່າງ ຫຼື ປ້ອນອີເມວ" : "Log in with a demo account or custom email")
+              <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                {isSignUp 
+                  ? (language === "lo" ? "ປ້ອນຂໍ້ມູນເພື່ອສ້າງບັນຊີຜູ້ໃຊ້ ແລະ ລໍຖ້າອະນຸມັດ" : "Fill in details to register and await activation")
+                  : (language === "lo" ? "ປ້ອນຊື່ຜູ້ໃຊ້ ແລະ ລະຫັດຜ່ານເພື່ອເຂົ້າເຖິງລະບົບ" : "Enter username and password to log in")
                 }
               </p>
             </div>
 
-            {/* Modern Tab Switcher */}
-            <div className="flex bg-slate-100 dark:bg-slate-950/80 p-1.5 rounded-2xl border border-slate-200/80 dark:border-white/10">
-              <button
-                type="button"
-                onClick={() => { setAuthTab("google"); setError(null); }}
-                className={`flex-1 py-2.5 text-xs md:text-sm font-extrabold rounded-xl transition-all duration-300 cursor-pointer ${
-                  authTab === "google" 
-                    ? "bg-gradient-to-r from-rose-600 via-indigo-600 to-purple-600 text-white shadow-md shadow-rose-500/25 scale-[1.01]" 
-                    : "text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-amber-300 hover:bg-white/50 dark:hover:bg-white/5"
-                }`}
-              >
-                Google Auth
-              </button>
-              <button
-                type="button"
-                onClick={() => { setAuthTab("email"); setError(null); }}
-                className={`flex-1 py-2.5 text-xs md:text-sm font-extrabold rounded-xl transition-all duration-300 cursor-pointer ${
-                  authTab === "email" 
-                    ? "bg-gradient-to-r from-rose-600 via-indigo-600 to-purple-600 text-white shadow-md shadow-rose-500/25 scale-[1.01]" 
-                    : "text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-amber-300 hover:bg-white/50 dark:hover:bg-white/5"
-                }`}
-              >
-                {language === "lo" ? "ບັນຊີຕົວຢ່າງ / ອີເມວ" : "Demo / Email"}
-              </button>
-            </div>
+            {/* Success Toast / Notification */}
+            {successMsg && (
+              <div id="login-success-alert" className="p-3.5 bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 rounded-2xl flex items-start gap-2.5 text-left text-xs font-bold shadow-xs">
+                <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-500" />
+                <span className="leading-relaxed">{successMsg}</span>
+              </div>
+            )}
 
             {/* Error Notification Alert */}
             {error && (
-              <div id="login-error-alert" className="p-4 bg-red-500/15 border border-red-500/30 text-red-600 dark:text-red-300 rounded-2xl flex items-start gap-3 text-left text-xs md:text-sm font-bold shadow-sm animate-shake">
-                <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-red-500" />
+              <div id="login-error-alert" className="p-3.5 bg-red-500/15 border border-red-500/30 text-red-600 dark:text-red-300 rounded-2xl flex items-start gap-2.5 text-left text-xs font-bold shadow-xs animate-shake">
+                <AlertCircle className="w-5 h-5 shrink-0 text-red-500" />
                 <span className="leading-relaxed">{error}</span>
               </div>
             )}
 
-            {/* Auth Tab Content */}
-            {authTab === "google" ? (
-              <div className="space-y-4 pt-2">
-                <button
-                  id="btn-google-login"
-                  disabled={loading}
-                  onClick={handleGoogleLogin}
-                  className="w-full flex items-center justify-center gap-3.5 bg-white dark:bg-slate-800/90 text-slate-800 dark:text-white border-2 border-slate-200 dark:border-indigo-500/30 hover:border-indigo-500 dark:hover:border-amber-400/50 hover:bg-slate-50 dark:hover:bg-slate-800 px-6 py-4 rounded-2xl font-black text-sm md:text-base shadow-md hover:shadow-xl hover:shadow-indigo-500/15 hover:scale-[1.02] active:scale-95 transition-all duration-300 disabled:opacity-50 cursor-pointer group"
-                >
-                  <svg className="w-6 h-6 shrink-0 group-hover:scale-110 transition-transform duration-300" viewBox="0 0 24 24">
-                    <path
-                      fill="#4285F4"
-                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                    />
-                    <path
-                      fill="#34A853"
-                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                    />
-                    <path
-                      fill="#FBBC05"
-                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                    />
-                    <path
-                      fill="#EA4335"
-                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                    />
-                  </svg>
-                  <span>{loading ? t.loading : t.signInWithGoogle}</span>
-                </button>
-
-                <p className="text-center text-[11px] text-slate-500 dark:text-slate-400 font-semibold">
-                  {language === "lo" ? "ຄລິກເພື່ອເຊື່ອມຕໍ່ດ້ວຍບັນຊີ Google Workspace ຫຼື ອີເມວທົ່ວໄປ" : "Click to connect with Google Workspace or personal Gmail"}
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-5 text-left">
-                {/* Demo Accounts Panel */}
-                <div className="space-y-3 p-4 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 rounded-2xl shadow-inner">
-                  <div className="text-xs font-black text-indigo-600 dark:text-amber-300 tracking-wider uppercase flex items-center gap-1.5">
-                    <ShieldCheck className="w-4 h-4 text-amber-400" />
-                    <span>{language === "lo" ? "ທາງລັດເຂົ້າສູ່ລະບົບຕົວຢ່າງ (Demo Quick Login)" : "Demo Quick Access"}</span>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-2.5">
-                    <button
-                      type="button"
-                      disabled={loading}
-                      onClick={() => handleDemoLogin("admin")}
-                      className="flex flex-col items-center justify-center p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 hover:border-indigo-500 dark:hover:border-amber-400 rounded-xl transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md hover:scale-105 active:scale-95 group text-center"
-                    >
-                      <UserCheck className="w-5 h-5 text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition-transform mb-1" />
-                      <span className="text-xs font-extrabold text-slate-800 dark:text-white block group-hover:text-indigo-600 dark:group-hover:text-amber-300">Admin</span>
-                      <span className="text-[10px] text-slate-400 mt-0.5 font-mono">tounkmv99@...</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      disabled={loading}
-                      onClick={() => handleDemoLogin("user")}
-                      className="flex flex-col items-center justify-center p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 hover:border-emerald-500 dark:hover:border-emerald-400 rounded-xl transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md hover:scale-105 active:scale-95 group text-center"
-                    >
-                      <UserCheck className="w-5 h-5 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform mb-1" />
-                      <span className="text-xs font-extrabold text-slate-800 dark:text-white block group-hover:text-emerald-600 dark:group-hover:text-emerald-400">Staff User</span>
-                      <span className="text-[10px] text-slate-400 mt-0.5 font-mono">staff.houaphanh@...</span>
-                    </button>
-                  </div>
+            {/* Form Content */}
+            {!isSignUp ? (
+              // LOGIN FORM
+              <form onSubmit={handleLoginSubmit} className="space-y-4 text-left">
+                {/* Username Input */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                    <User className="w-3.5 h-3.5 text-indigo-500" />
+                    <span>{language === "lo" ? "ຊື່ຜູ້ໃຊ້ (Username)" : "Username"} *</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder={language === "lo" ? "ຕົວຢ່າງ: Admin" : "e.g. Admin"}
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-white/15 rounded-xl text-xs md:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 dark:focus:border-amber-400 focus:ring-2 focus:ring-indigo-500/20 transition-all font-semibold"
+                  />
                 </div>
 
-                <div className="relative flex py-1 items-center">
-                  <div className="flex-grow border-t border-slate-200 dark:border-white/10"></div>
-                  <span className="flex-shrink mx-3 text-[11px] text-slate-400 dark:text-slate-400 font-extrabold uppercase tracking-widest">
-                    {language === "lo" ? "ຫຼື ປ້ອນອີເມວດ້ວຍຕົນເອງ" : "Or Custom Email"}
-                  </span>
-                  <div className="flex-grow border-t border-slate-200 dark:border-white/10"></div>
-                </div>
-
-                {/* Custom Email Auth Form */}
-                <form onSubmit={handleEmailAuth} className="space-y-4">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                      <Mail className="w-3.5 h-3.5 text-indigo-500" />
-                      <span>{language === "lo" ? "ອີເມວ (Email)" : "Email"}</span>
-                    </label>
+                {/* Password Input */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                    <Lock className="w-3.5 h-3.5 text-indigo-500" />
+                    <span>{language === "lo" ? "ລະຫັດຜ່ານ (Password)" : "Password"} *</span>
+                  </label>
+                  <div className="relative">
                     <input
-                      type="email"
+                      type={showPassword ? "text" : "password"}
                       required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="example@gmail.com"
-                      className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-white/15 rounded-xl text-xs md:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 dark:focus:border-amber-400 focus:ring-2 focus:ring-indigo-500/20 transition-all font-semibold"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full pl-4 pr-10 py-2.5 bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-white/15 rounded-xl text-xs md:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 dark:focus:border-amber-400 focus:ring-2 focus:ring-indigo-500/20 transition-all font-semibold"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-amber-400 transition-colors cursor-pointer"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
                   </div>
+                </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                      <Lock className="w-3.5 h-3.5 text-indigo-500" />
-                      <span>{language === "lo" ? "ລະຫັດຜ່ານ (Password)" : "Password"}</span>
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={showPassword ? "text" : "password"}
-                        required
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="••••••••"
-                        className="w-full pl-4 pr-10 py-3 bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-white/15 rounded-xl text-xs md:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 dark:focus:border-amber-400 focus:ring-2 focus:ring-indigo-500/20 transition-all font-semibold"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-amber-400 transition-colors cursor-pointer"
-                      >
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
+                {/* Submit Action */}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-gradient-to-r from-rose-600 via-indigo-600 to-purple-600 hover:from-rose-500 hover:to-purple-500 text-white py-3 rounded-xl font-black text-xs md:text-sm shadow-lg shadow-rose-500/25 hover:shadow-xl hover:shadow-rose-500/40 hover:scale-[1.01] active:scale-95 transition-all duration-300 cursor-pointer disabled:opacity-50 border border-rose-400/30 flex items-center justify-center gap-2"
+                >
+                  {loading ? t.loading : (language === "lo" ? "ເຂົ້າສູ່ລະບົບ" : "Sign In")}
+                </button>
+              </form>
+            ) : (
+              // REGISTRATION / SIGN UP FORM
+              <form onSubmit={handleSignUpSubmit} className="space-y-3.5 text-left max-h-[420px] overflow-y-auto pr-1">
+                {/* Username */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                    <User className="w-3.5 h-3.5 text-pink-500" />
+                    <span>{language === "lo" ? "ຊື່ຜູ້ໃຊ້ (Username)" : "Username"} *</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder={language === "lo" ? "ຕົວຢ່າງ: somphone (ພາສາອັງກິດເທົ່ານັ້ນ)" : "e.g. somphone (alphanumeric)"}
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-white/15 rounded-xl text-xs md:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all font-semibold"
+                  />
+                </div>
+
+                {/* Password */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                    <Lock className="w-3.5 h-3.5 text-pink-500" />
+                    <span>{language === "lo" ? "ລະຫັດຜ່ານ (Password)" : "Password"} *</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="•••••••• (ຢ່າງໜ້ອຍ 6 ຕົວ)"
+                      className="w-full pl-4 pr-10 py-2.5 bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-white/15 rounded-xl text-xs md:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all font-semibold"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-pink-400 transition-colors cursor-pointer"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
                   </div>
+                </div>
 
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full bg-gradient-to-r from-rose-600 via-indigo-600 to-purple-600 hover:from-rose-500 hover:to-purple-500 text-white py-3.5 rounded-xl font-black text-sm shadow-lg shadow-rose-500/25 hover:shadow-xl hover:shadow-rose-500/40 hover:scale-[1.01] active:scale-95 transition-all duration-300 cursor-pointer disabled:opacity-50 border border-rose-400/30"
-                  >
-                    {loading ? t.loading : (isSignUp ? (language === "lo" ? "ລົງທະບຽນບັນຊີໃໝ່" : "Sign Up Account") : (language === "lo" ? "ເຂົ້າສູ່ລະບົບດ້ວຍອີເມວ" : "Sign In with Email"))}
-                  </button>
-                </form>
+                {/* Display Name */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                    <UserCheck className="w-3.5 h-3.5 text-pink-500" />
+                    <span>{language === "lo" ? "ຊື່ ແລະ ນາມສະກຸນ (Full Name)" : "Full Name"} *</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    placeholder={language === "lo" ? "ຕົວຢ່າງ: ສົມພອນ ແກ້ວມະນີ" : "e.g. Somphone Keomany"}
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-white/15 rounded-xl text-xs md:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all font-semibold"
+                  />
+                </div>
 
-                <div className="text-center pt-1">
-                  <button
-                    type="button"
-                    onClick={() => setIsSignUp(!isSignUp)}
-                    className="text-xs md:text-sm text-indigo-600 dark:text-amber-300 hover:underline font-extrabold transition-all cursor-pointer"
-                  >
-                    {isSignUp 
-                      ? (language === "lo" ? "ມີບັນຊີຢູ່ແລ້ວ? ກົດທີ່ນີ້ເພື່ອເຂົ້າສູ່ລະບົບ" : "Already have an account? Sign In") 
-                      : (language === "lo" ? "ຍັງບໍ່ມີບັນຊີ? ກົດທີ່ນີ້ເພື່ອລົງທະບຽນໃໝ່" : "No account? Sign up here")
-                    }
-                  </button>
+                {/* Department */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                    <Briefcase className="w-3.5 h-3.5 text-pink-500" />
+                    <span>{language === "lo" ? "ພະແນກ / ຫ້ອງການ (Department)" : "Department"} *</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={department}
+                    onChange={(e) => setDepartment(e.target.value)}
+                    placeholder={language === "lo" ? "ຕົວຢ່າງ: ພະແນກແຜນການ ແລະ ການລົງທຶນ" : "e.g. Planning Department"}
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-white/15 rounded-xl text-xs md:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all font-semibold"
+                  />
+                </div>
+
+                {/* Phone */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                    <Phone className="w-3.5 h-3.5 text-pink-500" />
+                    <span>{language === "lo" ? "ເບີໂທລະສັບຕິດຕໍ່ (Phone)" : "Phone Number"}</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="020 xxxx xxxx"
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-white/15 rounded-xl text-xs md:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all font-semibold"
+                  />
+                </div>
+
+                {/* Submit Sign Up */}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white py-3 rounded-xl font-black text-xs md:text-sm shadow-lg shadow-pink-500/20 hover:shadow-xl hover:scale-[1.01] active:scale-95 transition-all duration-300 cursor-pointer disabled:opacity-50 border border-pink-400/30 flex items-center justify-center gap-2"
+                >
+                  {loading ? t.loading : (language === "lo" ? "ລົງທະບຽນບັນຊີໃໝ່" : "Register Account")}
+                </button>
+              </form>
+            )}
+
+            {/* Toggle Sign In / Sign Up Link */}
+            <div className="text-center pt-1.5 border-t border-slate-200/50 dark:border-white/10">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSignUp(!isSignUp);
+                  setError(null);
+                  setSuccessMsg(null);
+                }}
+                className="text-xs md:text-sm text-indigo-600 dark:text-amber-300 hover:underline font-extrabold transition-all cursor-pointer"
+              >
+                {isSignUp 
+                  ? (language === "lo" ? "ມີບັນຊີຢູ່ແລ້ວ? ກົດທີ່ນີ້ເພື່ອເຂົ້າສູ່ລະບົບ" : "Already have an account? Sign In") 
+                  : (language === "lo" ? "ຍັງບໍ່ມີບັນຊີ? ກົດທີ່ນີ້ເພື່ອລົງທະບຽນໃໝ່" : "No account yet? Register here")
+                }
+              </button>
+            </div>
+
+            {/* Default Admin Quick Reference Panel */}
+            {!isSignUp && (
+              <div className="p-3 bg-slate-100 dark:bg-slate-900/60 rounded-2xl border border-dashed border-indigo-500/30 text-left space-y-1.5 shadow-inner">
+                <div className="text-[10px] md:text-xs font-black text-indigo-600 dark:text-amber-300 tracking-wider uppercase flex items-center gap-1">
+                  <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+                  <span>{language === "lo" ? "ຂໍ້ມູນຜູ້ດູແລລະບົບເລີ່ມຕົ້ນ (Default Admin)" : "Default Admin Account"}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-[10px] sm:text-xs text-slate-700 dark:text-slate-300 font-mono">
+                  <div className="flex items-center gap-1 bg-white/50 dark:bg-slate-900/50 px-2 py-1 rounded-lg">
+                    <span className="text-slate-400">User:</span>
+                    <span className="font-black text-slate-950 dark:text-amber-400">Admin</span>
+                  </div>
+                  <div className="flex items-center gap-1 bg-white/50 dark:bg-slate-900/50 px-2 py-1 rounded-lg">
+                    <span className="text-slate-400">Pass:</span>
+                    <span className="font-black text-slate-950 dark:text-amber-400">admin123</span>
+                  </div>
                 </div>
               </div>
             )}
 
             {/* Security Note */}
-            <div className="text-center border-t border-slate-200/80 dark:border-white/10 pt-4">
-              <span className="text-[11px] text-slate-500 dark:text-slate-400 block font-bold leading-relaxed">
-                * {language === "lo" ? "ສະຫງວນສິດສະເພາະພະນັກງານ ແລະ ບຸກຄະລາກອນ ຫ້ອງວ່າການແຂວງຫົວພັນ ເທົ່ານັ້ນ" : "For Houaphanh Provincial Office personnel only"}
+            <div className="text-center pt-2">
+              <span className="text-[10px] md:text-[11px] text-slate-400 dark:text-slate-500 block font-bold leading-relaxed">
+                * {language === "lo" ? "ສະຫງວນສິດສະເພາະພະນັກງານ ຫ້ອງວ່າການແຂວງຫົວພັນ ເທົ່ານັ້ນ" : "For Houaphanh Provincial Office personnel only"}
               </span>
             </div>
+
           </div>
         </div>
 
-        {/* CENTERED FOOTER: LANGUAGE SWITCHER & COPYRIGHT */}
-        <div className="mt-8 flex flex-col items-center space-y-4 text-center">
-          {/* Language Switch Pills */}
-          <div className="flex items-center gap-3 bg-slate-900/60 dark:bg-slate-900/80 p-1.5 rounded-2xl border border-white/10 backdrop-blur-md shadow-lg">
+        {/* FOOTER & LANGUAGE SWITCHER */}
+        <div className="mt-6 flex flex-col items-center space-y-3.5 text-center">
+          {/* Language selection pills */}
+          <div className="flex items-center gap-3 bg-slate-900/60 dark:bg-slate-900/80 p-1 rounded-xl border border-white/10 backdrop-blur-md shadow-lg">
             <button
               onClick={() => setLanguage("lo")}
-              className={`px-4 py-1.5 rounded-xl text-xs md:text-sm font-black transition-all duration-300 cursor-pointer flex items-center gap-1.5 ${
+              className={`px-3 py-1 rounded-lg text-xs font-black transition-all duration-300 cursor-pointer flex items-center gap-1 ${
                 language === "lo"
                   ? "bg-amber-400 text-slate-950 shadow-md shadow-amber-400/30 scale-105"
-                  : "text-slate-300 hover:text-white hover:bg-white/10"
+                  : "text-slate-300 hover:text-white"
               }`}
             >
               <span>🇱🇦</span>
@@ -449,10 +566,10 @@ export default function Login({ language, setLanguage, onLocalLogin }: LoginProp
             </button>
             <button
               onClick={() => setLanguage("en")}
-              className={`px-4 py-1.5 rounded-xl text-xs md:text-sm font-black transition-all duration-300 cursor-pointer flex items-center gap-1.5 ${
+              className={`px-3 py-1 rounded-lg text-xs font-black transition-all duration-300 cursor-pointer flex items-center gap-1 ${
                 language === "en"
                   ? "bg-indigo-500 text-white shadow-md shadow-indigo-500/30 scale-105"
-                  : "text-slate-300 hover:text-white hover:bg-white/10"
+                  : "text-slate-300 hover:text-white"
               }`}
             >
               <span>🇬🇧</span>
@@ -460,8 +577,7 @@ export default function Login({ language, setLanguage, onLocalLogin }: LoginProp
             </button>
           </div>
 
-          {/* Copyright text */}
-          <p className="text-xs text-slate-400 dark:text-slate-500 font-semibold tracking-wider">
+          <p className="text-[10px] md:text-xs text-slate-400 dark:text-slate-500 font-semibold tracking-wider">
             © 2026 {t.officeName} • E-Office Digital Platform
           </p>
         </div>

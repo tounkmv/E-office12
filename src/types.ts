@@ -15,6 +15,8 @@ export interface UserProfile {
   createdAt: string;
   avatar?: string;
   bio?: string;
+  username?: string;
+  password?: string;
 }
 
 export interface MeetingRoom {

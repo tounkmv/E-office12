@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { auth, onAuthStateChanged, signOut, collection, db, onSnapshot } from "./lib/firebase";
-import { syncUserProfile, getRooms } from "./lib/firebaseHelper";
+import { auth, signOut, collection, db, onSnapshot, doc } from "./lib/firebase";
+import { seedDefaultAdmin, getRooms } from "./lib/firebaseHelper";
 import { UserProfile, MeetingRoom, RoomBooking, AppTheme, AppLanguage } from "./types";
 import { translations } from "./lib/translations";
 import { Building2, LogOut, Clock, ShieldAlert } from "lucide-react";
@@ -61,35 +61,50 @@ export default function App() {
     localStorage.setItem("office-lang", language);
   }, [language]);
 
-  // Auth Listener
+  // Auth Loader & Profile Synchronizer
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      const hasLocalAuth = localStorage.getItem("local-auth-user");
-      if (!hasLocalAuth) {
-        setAuthLoading(true);
-      }
-      if (user) {
-        setFirebaseUser(user);
-        try {
-          const profile = await syncUserProfile(user);
-          setUserProfile(profile);
-          // If user becomes active, pre-fetch rooms to seed if needed
-          if (profile.status === "active") {
-            await getRooms();
-          }
-        } catch (err) {
-          console.error("Error loading user profile:", err);
-        }
-      } else {
-        if (!hasLocalAuth) {
-          setFirebaseUser(null);
-          setUserProfile(null);
-        }
-      }
-      setAuthLoading(false);
-    });
+    // Proactively seed Admin credentials
+    seedDefaultAdmin();
 
-    return () => unsubscribe();
+    const localUser = localStorage.getItem("local-auth-user");
+    const localProfile = localStorage.getItem("local-auth-profile");
+
+    if (localUser && localProfile) {
+      try {
+        const user = JSON.parse(localUser);
+        const profile = JSON.parse(localProfile) as UserProfile;
+        
+        setFirebaseUser(user);
+        setUserProfile(profile);
+
+        // Pre-fetch rooms if they are active
+        if (profile.status === "active") {
+          getRooms().catch(console.error);
+        }
+
+        // Establish real-time sync with user document in Firestore
+        const userRef = doc(db, "users", profile.uid);
+        const unsubscribe = onSnapshot(userRef, (docSnap) => {
+          if (docSnap.exists()) {
+            const updatedProfile = docSnap.data() as UserProfile;
+            setUserProfile(updatedProfile);
+            localStorage.setItem("local-auth-profile", JSON.stringify(updatedProfile));
+          }
+        }, (err) => {
+          console.error("Real-time user sync failed:", err);
+        });
+
+        setAuthLoading(false);
+        return () => unsubscribe();
+      } catch (err) {
+        console.error("Local profile parse error:", err);
+        setAuthLoading(false);
+      }
+    } else {
+      setFirebaseUser(null);
+      setUserProfile(null);
+      setAuthLoading(false);
+    }
   }, []);
 
   const handleLocalLogin = (profile: UserProfile) => {
@@ -104,6 +119,18 @@ export default function App() {
     setUserProfile(profile);
     localStorage.setItem("local-auth-user", JSON.stringify(mockUser));
     localStorage.setItem("local-auth-profile", JSON.stringify(profile));
+
+    // Listen to profile updates after login
+    const userRef = doc(db, "users", profile.uid);
+    const unsubscribe = onSnapshot(userRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const updatedProfile = docSnap.data() as UserProfile;
+        setUserProfile(updatedProfile);
+        localStorage.setItem("local-auth-profile", JSON.stringify(updatedProfile));
+      }
+    });
+
+    // In React 18+ we can store the unsubscribe in a state/ref if we want, but since they are logging in fresh, reload/mount will take care of it too.
   };
 
   // Real-time Firestore Sync (Rooms & Bookings)

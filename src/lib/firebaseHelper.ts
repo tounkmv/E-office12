@@ -70,6 +70,32 @@ export async function seedDefaultRooms() {
   }
 }
 
+// Seed default admin if none exists
+export async function seedDefaultAdmin() {
+  try {
+    const userRef = doc(db, "users", "admin_default");
+    const userSnap = await getDoc(userRef);
+    if (!userSnap.exists()) {
+      const defaultAdmin: UserProfile = {
+        uid: "admin_default",
+        username: "Admin",
+        password: "admin123",
+        displayName: "ຜູ້ດູແລລະບົບ (Admin)",
+        email: "admin@eoffice.gov.la",
+        role: "admin",
+        department: "ຫ້ອງວ່າການແຂວງ",
+        phone: "020 5555 5555",
+        status: "active",
+        createdAt: new Date().toISOString()
+      };
+      await setDoc(userRef, defaultAdmin);
+      console.log("Seeded default Admin account successfully in Firestore");
+    }
+  } catch (err) {
+    console.error("Error seeding default admin:", err);
+  }
+}
+
 // Sync User Profile on Login
 export async function syncUserProfile(user: FirebaseUser): Promise<UserProfile> {
   const userRef = doc(db, "users", user.uid);
