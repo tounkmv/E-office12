@@ -519,25 +519,7 @@ export default function Login({ language, setLanguage, onLocalLogin }: LoginProp
               </button>
             </div>
 
-            {/* Default Admin Quick Reference Panel */}
-            {!isSignUp && (
-              <div className="p-3 bg-slate-100 dark:bg-slate-900/60 rounded-2xl border border-dashed border-indigo-500/30 text-left space-y-1.5 shadow-inner">
-                <div className="text-[10px] md:text-xs font-black text-indigo-600 dark:text-amber-300 tracking-wider uppercase flex items-center gap-1">
-                  <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-                  <span>{language === "lo" ? "ຂໍ້ມູນຜູ້ດູແລລະບົບເລີ່ມຕົ້ນ (Default Admin)" : "Default Admin Account"}</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-[10px] sm:text-xs text-slate-700 dark:text-slate-300 font-mono">
-                  <div className="flex items-center gap-1 bg-white/50 dark:bg-slate-900/50 px-2 py-1 rounded-lg">
-                    <span className="text-slate-400">User:</span>
-                    <span className="font-black text-slate-950 dark:text-amber-400">Admin</span>
-                  </div>
-                  <div className="flex items-center gap-1 bg-white/50 dark:bg-slate-900/50 px-2 py-1 rounded-lg">
-                    <span className="text-slate-400">Pass:</span>
-                    <span className="font-black text-slate-950 dark:text-amber-400">admin123</span>
-                  </div>
-                </div>
-              </div>
-            )}
+
 
             {/* Security Note */}
             <div className="text-center pt-2">
