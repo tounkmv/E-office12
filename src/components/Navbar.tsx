@@ -333,7 +333,7 @@ export default function Navbar({ userProfile, language, setLanguage, onUpdatePro
   };
 
   return (
-    <header id="navbar-header" className="min-h-20 md:min-h-22 py-3 w-full flex items-center justify-between px-4 sm:px-6 md:px-8 border-b-2 border-amber-400/50 bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-950 text-white sticky top-0 z-30 shadow-[0_10px_35px_rgba(0,0,0,0.65)] backdrop-blur-3xl relative overflow-visible">
+    <header id="navbar-header" className="h-28 w-full flex items-center justify-between px-4 sm:px-6 md:px-8 border-b-2 border-amber-400/50 bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-950 text-white sticky top-0 z-30 shadow-[0_10px_35px_rgba(0,0,0,0.65)] backdrop-blur-3xl relative overflow-visible">
       
       {/* Decorative animated bottom glowing ribbon */}
       <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-400 to-transparent opacity-80 pointer-events-none" />

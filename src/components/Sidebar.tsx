@@ -41,9 +41,12 @@ export default function Sidebar({ activeTab, setActiveTab, language, userRole, o
       <div className="absolute bottom-1/3 right-0 w-48 h-48 bg-indigo-500/10 dark:bg-indigo-600/15 rounded-full blur-3xl pointer-events-none" />
 
       {/* Sleek Brand Header Block */}
-      <div id="sidebar-header" className="p-5 bg-gradient-to-br from-[#1e1b4b] via-[#312e81] to-[#1e1b4b] text-white flex flex-col gap-2 border-b border-indigo-950/40 relative overflow-hidden shadow-md">
+      <div id="sidebar-header" className="p-5 h-28 bg-gradient-to-br from-[#1e1b4b] via-[#312e81] to-[#1e1b4b] text-white flex flex-col justify-center border-b-2 border-amber-400/50 relative overflow-hidden shadow-md">
         {/* Subtle background glow */}
-        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/20 rounded-full blur-2xl pointer-events-none animate-pulse" />
+        <div className="absolute top-0 right-0 w-32 h-32 bg-amber-400/10 rounded-full blur-2xl pointer-events-none animate-pulse" />
+        
+        {/* Decorative bottom glowing ribbon */}
+        <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-400 to-transparent opacity-80 pointer-events-none" />
         
         <div className="flex items-center gap-3.5 z-10">
           <div className="p-2 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-lg shrink-0 flex items-center justify-center">
