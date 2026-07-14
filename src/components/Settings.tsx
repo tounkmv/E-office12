@@ -1,4 +1,4 @@
-import { useState, FormEvent, useEffect } from "react";
+import { useState, FormEvent, useEffect, useRef, ChangeEvent, DragEvent } from "react";
 import { 
   Settings as SettingsIcon, 
   Languages, 
@@ -15,7 +15,9 @@ import {
   Key,
   UserCheck,
   Eye,
-  EyeOff
+  EyeOff,
+  Camera,
+  Upload
 } from "lucide-react";
 import { AppLanguage, AppTheme, UserProfile } from "../types";
 import { translations } from "../lib/translations";
@@ -41,6 +43,7 @@ export default function Settings({
   onUpdateProfile
 }: SettingsProps) {
   const t = translations[language];
+  const isLao = language === "lo";
 
   // User Profile Form States
   const [displayName, setDisplayName] = useState(userProfile.displayName || "");
@@ -49,6 +52,12 @@ export default function Settings({
   const [username, setUsername] = useState(userProfile.username || "");
   const [password, setPassword] = useState(userProfile.password || "");
   const [showPassword, setShowPassword] = useState(false);
+  
+  // Profile picture upload states
+  const [avatar, setAvatar] = useState(userProfile.avatar || "");
+  const [uploadedFileName, setUploadedFileName] = useState("");
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setDisplayName(userProfile.displayName || "");
@@ -56,7 +65,77 @@ export default function Settings({
     setPhone(userProfile.phone || "");
     setUsername(userProfile.username || "");
     setPassword(userProfile.password || "");
+    setAvatar(userProfile.avatar || "");
+    setUploadedFileName("");
   }, [userProfile]);
+
+  const processFile = (file: File) => {
+    const isLao = language === "lo";
+    if (!file.type.startsWith("image/")) {
+      alert(isLao ? "ກະລຸນາເລືອກໄຟລ໌ຮູບພາບເທົ່ານັ້ນ (PNG, JPG, WebP)!" : "Please select an image file only!");
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const MAX_WIDTH = 300;
+        const MAX_HEIGHT = 300;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedBase64 = canvas.toDataURL("image/jpeg", 0.92);
+          setAvatar(compressedBase64);
+          setUploadedFileName(file.name);
+          triggerToast(isLao ? "ອັບໂຫຼດຮູບໂປຣຟາຍສຳເລັດແລ້ວ! ຢ່າລືມກົດບັນທຶກດ້ານລຸ່ມ" : "Profile picture uploaded! Don't forget to click save below.");
+        }
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      processFile(e.target.files[0]);
+    }
+  };
+
+  const handleDragOver = (e: DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      processFile(e.dataTransfer.files[0]);
+    }
+  };
 
   const [notifInApp, setNotifInApp] = useState(true);
   const [notifEmail, setNotifEmail] = useState(true);
@@ -103,7 +182,8 @@ export default function Settings({
         department, 
         phone,
         username: normalUsername,
-        password: password.trim()
+        password: password.trim(),
+        avatar: avatar
       };
       await updateUserProfile(userProfile.uid, updates);
       onUpdateProfile({ ...userProfile, ...updates });
@@ -400,6 +480,57 @@ export default function Settings({
             </div>
 
             <form onSubmit={handleSaveProfile} className="space-y-4">
+              
+              {/* Profile Avatar Upload Slot */}
+              <div className="space-y-2">
+                <label className="text-[11px] font-bold opacity-80 uppercase tracking-wider flex items-center gap-1.5">
+                  <Camera className="w-3.5 h-3.5 text-blue-500" />
+                  <span>{isLao ? "ຮູບພາບໂປຣຟາຍ (Profile Picture)" : "Profile Picture"}</span>
+                </label>
+                
+                <div className="flex flex-col sm:flex-row items-center gap-4 p-4 bg-slate-500/5 rounded-2xl border border-slate-100 dark:border-white/5">
+                  {/* Left: Round image preview */}
+                  <div className="relative group shrink-0">
+                    <div className="w-16 h-16 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-800 border-2 border-blue-500 shadow-md">
+                      {avatar ? (
+                        <img src={avatar} alt="Avatar" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-lg font-black text-blue-600 dark:text-blue-400 uppercase">
+                          {displayName ? displayName.charAt(0) : "U"}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Right: Drag-and-drop / Select PC box */}
+                  <div 
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    onClick={() => fileInputRef.current?.click()}
+                    className={`flex-1 w-full p-3.5 rounded-xl border border-dashed text-center cursor-pointer transition-all ${
+                      isDragging 
+                        ? "border-amber-400 bg-amber-400/10 text-amber-500" 
+                        : "border-slate-300 dark:border-white/10 hover:border-blue-500/50 hover:bg-slate-500/10"
+                    }`}
+                  >
+                    <input 
+                      type="file" 
+                      ref={fileInputRef} 
+                      onChange={handleFileChange} 
+                      accept="image/*" 
+                      className="hidden" 
+                    />
+                    <Upload className="w-5 h-5 mx-auto mb-1 text-blue-500" />
+                    <p className="text-[10px] font-bold">
+                      {isLao ? "ລາກໄຟລ໌ຮູບມານີ້ ຫຼື ຄລິກເພື່ອອັບໂຫຼດ" : "Drag image here or click to upload"}
+                    </p>
+                    <p className="text-[8px] opacity-60 mt-0.5">
+                      {uploadedFileName ? `${isLao ? "ໄຟລ໌:" : "File:"} ${uploadedFileName}` : "PNG, JPG, WebP (Max 300x300)"}
+                    </p>
+                  </div>
+                </div>
+              </div>
               
               {/* Display Name */}
               <div className="space-y-1">

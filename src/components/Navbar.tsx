@@ -31,6 +31,8 @@ import { translations } from "../lib/translations";
 import { EmailLog, updateUserProfile, markEmailAsRead } from "../lib/firebaseHelper";
 import { showSystemToast } from "../utils/toast";
 import { motion, AnimatePresence } from "motion/react";
+import emblemLogo from "../assets/images/emblem.png";
+import emblemSvg from "../assets/images/emblem.svg";
 
 interface NavbarProps {
   userProfile: UserProfile | null;
@@ -338,9 +340,33 @@ export default function Navbar({ userProfile, language, setLanguage, onUpdatePro
       {/* Decorative animated bottom glowing ribbon */}
       <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-400 to-transparent opacity-80 pointer-events-none" />
 
-      {/* 1. LEFT COLUMN: Sleek System Status & Online Indicator (Clean UI without logos or titles) */}
-      <div id="navbar-left" className="flex items-center gap-3">
-        <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white/10 border border-white/15 text-xs sm:text-sm text-amber-300 font-black shadow-xs">
+      {/* Redesigned bottom-left glowing color bar/stripe that is equal/aligned with the logo section */}
+      <div className="absolute bottom-0 left-0 w-24 h-[3.5px] bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 shadow-[0_0_12px_rgba(251,191,36,0.9)] z-10 rounded-r-full" />
+
+      {/* 1. LEFT COLUMN: Sleek Logo & System Status */}
+      <div id="navbar-left" className="flex items-center gap-3 md:gap-4 z-10">
+        {/* System Emblem Logo */}
+        <div className="p-1.5 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 shadow-md shrink-0 flex items-center justify-center">
+          <img 
+            src={emblemLogo} 
+            alt="Laos State Emblem" 
+            className="w-10 h-10 object-contain filter drop-shadow-[0_1.5px_4px_rgba(251,191,36,0.4)]"
+            referrerPolicy="no-referrer"
+            onError={(e) => { 
+              if (e.currentTarget.src !== emblemSvg) {
+                e.currentTarget.src = emblemSvg;
+              } else {
+                e.currentTarget.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Emblem_of_Laos_%282025-%29.svg/800px-Emblem_of_Laos_%282025-%29.svg.png";
+              }
+            }}
+          />
+        </div>
+        
+        {/* Color stripe/accent bar matching the logo */}
+        <div className="h-8 w-[3px] bg-gradient-to-b from-amber-400 via-amber-300 to-amber-500 rounded-full shrink-0" />
+
+        {/* System Online Status */}
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/10 border border-white/15 text-xs text-amber-300 font-black shadow-xs">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block shrink-0" />
           <span className="tracking-wide">{isLao ? "ລະບົບອອນລາຍ (ONLINE)" : "SYSTEM ONLINE"}</span>
         </div>

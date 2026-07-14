@@ -18,7 +18,11 @@ import {
   FileSpreadsheet,
   Filter,
   CalendarDays,
-  Award
+  Award,
+  X,
+  Check,
+  Eye,
+  Settings
 } from "lucide-react";
 import { 
   BarChart, 
@@ -63,6 +67,32 @@ export default function Dashboard({ bookings, rooms, language, setActiveTab }: D
   const [reportDate, setReportDate] = useState(todayStr);
   const [reportRoomId, setReportRoomId] = useState<string>("all");
   const [reportStatus, setReportStatus] = useState<string>("all");
+
+  // Official Document Print Configuration States
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
+  const [docNumber, setDocNumber] = useState("໑໔໒/ຫວກ.ຮພ");
+  const [provinceName, setProvinceName] = useState("ແຂວງຫົວພັນ");
+  const [officeNameState, setOfficeNameState] = useState("ຫ້ອງວ່າການແຂວງຫົວພັນ");
+  const [compilerName, setCompilerName] = useState("ທ້າວ ຄຳມັ້ນ ແກ້ວປະເສີດ");
+  const [compilerTitle, setCompilerTitle] = useState("ວິຊາການ ຂະແໜງເຕັກໂນໂລຊີ");
+  const [approverName, setApproverName] = useState("ທ່ານ ປອ. ສົມພອນ ແກ້ວມະນີ");
+  const [approverTitle, setApproverTitle] = useState("ຫົວໜ້າຫ້ອງວ່າການແຂວງຫົວພັນ");
+  const [showSeal, setShowSeal] = useState(true);
+  const [showDistribution, setShowDistribution] = useState(true);
+  const [docDate, setDocDate] = useState(todayStr);
+  const formattedDocDate = (() => {
+    if (!docDate) return "";
+    const parts = docDate.split("-");
+    if (parts.length === 3) {
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    return docDate;
+  })();
+  const [customPreface, setCustomPreface] = useState(
+    isLao
+      ? "ອີງຕາມສະຖິຕິການນຳໃຊ້ຫ້ອງປະຊຸມຂອງຫ້ອງວ່າການແຂວງຫົວພັນ, ຂະແໜງເຕັກໂນໂລຊີ ແລະ ຂໍ້ມູນຂ່າວສານ ຂໍສັງລວມບົດລາຍງານການຈອງຫ້ອງປະຊຸມ ດັ່ງນີ້:"
+      : "Based on the meeting room usage statistics of the Houaphanh Provincial Office, the Technology and Information Division summarizes the booking report as follows:"
+  );
 
   const calculateDuration = (start: string, end: string): number => {
     if (!start || !end) return 0;
@@ -498,7 +528,7 @@ export default function Dashboard({ bookings, rooms, language, setActiveTab }: D
           </div>
           
           <button
-            onClick={triggerPrint}
+            onClick={() => setIsPrintModalOpen(true)}
             className="flex items-center gap-2 bg-white hover:bg-slate-100 text-indigo-700 active:scale-95 px-5 py-2.5 rounded-xl text-xs font-black transition-all shadow-sm cursor-pointer shrink-0 group"
           >
             <Printer className="w-4 h-4 transition-transform group-hover:rotate-12" />
@@ -624,7 +654,7 @@ export default function Dashboard({ bookings, rooms, language, setActiveTab }: D
         </div>
 
         {/* Dynamic Micro Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           
           <div className="bg-slate-50 dark:bg-slate-900/30 p-3.5 rounded-2xl border border-slate-100 dark:border-white/5 text-center">
             <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold block mb-1 uppercase tracking-wider">{isLao ? "ຈຳນວນຈອງທັງໝົດ" : "Total Bookings"}</span>
@@ -641,20 +671,12 @@ export default function Dashboard({ bookings, rooms, language, setActiveTab }: D
             <span className="text-xl font-extrabold text-blue-500 dark:text-blue-400">{rPending}</span>
           </div>
 
-          <div className="bg-amber-500/5 p-3.5 rounded-2xl border border-amber-500/10 text-center col-span-1">
-            <span className="text-[10px] text-amber-600/70 dark:text-amber-400/60 font-bold block mb-1 uppercase tracking-wider leading-tight">{t.rpTotalHours || "ຊົ່ວໂມງໃຊ້ງານລວມ"}</span>
-            <span className="text-xl font-extrabold text-amber-500 dark:text-amber-400 flex items-center justify-center gap-0.5 mt-1">
-              <span>{rTotalHours}</span>
-              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">h</span>
-            </span>
-          </div>
-
-          <div className="bg-purple-500/5 p-3.5 rounded-2xl border border-purple-500/10 text-center col-span-1 lg:col-span-1">
+          <div className="bg-purple-500/5 p-3.5 rounded-2xl border border-purple-500/10 text-center col-span-1">
             <span className="text-[10px] text-purple-600/70 dark:text-purple-400/60 font-bold block mb-1 uppercase tracking-wider leading-tight truncate">{t.rpPopularRoom || "ຫ້ອງທີ່ໃຊ້ຫຼາຍສຸດ"}</span>
             <span className="text-xs font-black text-purple-600 dark:text-purple-400 block truncate mt-1">{rMostPopularRoom}</span>
           </div>
 
-          <div className="bg-pink-500/5 p-3.5 rounded-2xl border border-pink-500/10 text-center col-span-1 lg:col-span-1">
+          <div className="bg-pink-500/5 p-3.5 rounded-2xl border border-pink-500/10 text-center col-span-2 md:col-span-1 lg:col-span-1">
             <span className="text-[10px] text-pink-600/70 dark:text-pink-400/60 font-bold block mb-1 uppercase tracking-wider leading-tight truncate">{t.rpActiveDept || "ພາກສ່ວນຈອງຫຼາຍສຸດ"}</span>
             <span className="text-xs font-black text-pink-600 dark:text-pink-400 block truncate mt-1">{rMostActiveDept}</span>
           </div>
@@ -817,16 +839,448 @@ export default function Dashboard({ bookings, rooms, language, setActiveTab }: D
 
       </div> {/* Closing of print:hidden */}
 
+      {/* 3. OFFICIAL LAO REPORT CONFIGURATOR & PRINT PREVIEW MODAL */}
+      {isPrintModalOpen && (
+        <div className="fixed inset-0 z-[10000] bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 overflow-y-auto print:hidden">
+          <div className="bg-slate-50 dark:bg-[#0f172a] border border-slate-200 dark:border-white/10 rounded-3xl shadow-2xl w-full max-w-7xl flex flex-col h-[90vh] overflow-hidden animate-in fade-in zoom-in duration-200">
+            
+            {/* Modal Header */}
+            <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-white/5 p-4 sm:p-5 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-indigo-500/10 text-indigo-500 rounded-xl">
+                  <Printer className="w-5 h-5 animate-pulse" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-slate-950 dark:text-white text-base sm:text-lg">
+                    {isLao ? "ປັບແຕ່ງ ແລະ ພິມລາຍງານສະຫຼຸບທາງການ" : "Official Report Customizer"}
+                  </h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                    {isLao ? "ປັບແຕ່ງຂໍ້ມູນຫົວຂໍ້, ເລກທີເອກະສານ, ຜູ້ລົງລາຍເຊັນ ແລະ ກວດສອບໃບຕົວຢ່າງກ່ອນສັ່ງພິມ" : "Configure titles, references, sign-offs, and inspect live preview"}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsPrintModalOpen(false)}
+                className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body (Left Form, Right Document Preview) */}
+            <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden">
+              
+              {/* Left Column: Config Form */}
+              <div className="lg:col-span-5 p-5 sm:p-6 overflow-y-auto space-y-6 bg-white dark:bg-[#131b2e] border-r border-slate-200 dark:border-white/5">
+                
+                {/* Section I: Admin Metadata */}
+                <div className="space-y-4">
+                  <h4 className="text-[11px] font-black uppercase text-indigo-500 dark:text-indigo-400 tracking-wider flex items-center gap-1.5 border-b border-slate-100 dark:border-white/5 pb-1">
+                    <Building className="w-4 h-4" />
+                    <span>{isLao ? "1. ຂໍ້ມູນສະຖາບັນ & ເລກທີເອກະສານ" : "1. Organization & Document Refs"}</span>
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex flex-col space-y-1">
+                      <label className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">{isLao ? "ແຂວງອ້າງອີງ" : "Province Name"}</label>
+                      <input
+                        type="text"
+                        value={provinceName}
+                        onChange={(e) => setProvinceName(e.target.value)}
+                        className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                      />
+                    </div>
+                    <div className="flex flex-col space-y-1">
+                      <label className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">{isLao ? "ຊື່ຫ້ອງການ / ພະແນກ" : "Office/Department"}</label>
+                      <input
+                        type="text"
+                        value={officeNameState}
+                        onChange={(e) => setOfficeNameState(e.target.value)}
+                        className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex flex-col space-y-1">
+                      <label className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">{isLao ? "ເລກທີເອກະສານ" : "Document Reference Number"}</label>
+                      <input
+                        type="text"
+                        value={docNumber}
+                        onChange={(e) => setDocNumber(e.target.value)}
+                        className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                      />
+                    </div>
+                    <div className="flex flex-col space-y-1">
+                      <label className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">{isLao ? "ວັນທີສະຫຼຸບ" : "Reference Date"}</label>
+                      <input
+                        type="date"
+                        value={docDate}
+                        onChange={(e) => setDocDate(e.target.value)}
+                        className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section II: Signatories */}
+                <div className="space-y-4">
+                  <h4 className="text-[11px] font-black uppercase text-indigo-500 dark:text-indigo-400 tracking-wider flex items-center gap-1.5 border-b border-slate-100 dark:border-white/5 pb-1">
+                    <Users className="w-4 h-4" />
+                    <span>{isLao ? "2. ຜູ້ລົງນາມ & ວິຊາການ" : "2. Signatures & Staff"}</span>
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex flex-col space-y-1">
+                      <label className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">{isLao ? "ຊື່ຜູ້ສະຫຼຸບລາຍງານ" : "Compiler Name"}</label>
+                      <input
+                        type="text"
+                        value={compilerName}
+                        onChange={(e) => setCompilerName(e.target.value)}
+                        className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                      />
+                    </div>
+                    <div className="flex flex-col space-y-1">
+                      <label className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">{isLao ? "ຕຳແໜ່ງຜູ້ສະຫຼຸບ" : "Compiler Title"}</label>
+                      <input
+                        type="text"
+                        value={compilerTitle}
+                        onChange={(e) => setCompilerTitle(e.target.value)}
+                        className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex flex-col space-y-1">
+                      <label className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">{isLao ? "ຊື່ຜູ້ມີອຳນາດອະນຸມັດ" : "Approver Name"}</label>
+                      <input
+                        type="text"
+                        value={approverName}
+                        onChange={(e) => setApproverName(e.target.value)}
+                        className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                      />
+                    </div>
+                    <div className="flex flex-col space-y-1">
+                      <label className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">{isLao ? "ຕຳແໜ່ງຜູ້ອະນຸມັດ" : "Approver Title"}</label>
+                      <input
+                        type="text"
+                        value={approverTitle}
+                        onChange={(e) => setApproverTitle(e.target.value)}
+                        className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section III: Custom Preface Paragraph */}
+                <div className="space-y-4">
+                  <h4 className="text-[11px] font-black uppercase text-indigo-500 dark:text-indigo-400 tracking-wider flex items-center gap-1.5 border-b border-slate-100 dark:border-white/5 pb-1">
+                    <FileText className="w-4 h-4" />
+                    <span>{isLao ? "3. ຄຳກ່າວເບື້ອງຕົ້ນ / ບົດນຳ" : "3. Introduction/Preface Paragraph"}</span>
+                  </h4>
+                  <div className="flex flex-col space-y-1">
+                    <label className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">{isLao ? "ຄຳເກີ່ນນຳໃນເອກະສານ" : "Preface text paragraph"}</label>
+                    <textarea
+                      value={customPreface}
+                      onChange={(e) => setCustomPreface(e.target.value)}
+                      rows={3}
+                      className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none leading-relaxed resize-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Section IV: Visual Toggles */}
+                <div className="space-y-4">
+                  <h4 className="text-[11px] font-black uppercase text-indigo-500 dark:text-indigo-400 tracking-wider flex items-center gap-1.5 border-b border-slate-100 dark:border-white/5 pb-1">
+                    <Settings className="w-4 h-4" />
+                    <span>{isLao ? "4. ການສະແດງຜົນເພີ່ມເຕີມ" : "4. Display & Styling Toggles"}</span>
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <button
+                      onClick={() => setShowSeal(!showSeal)}
+                      className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex items-center justify-between ${
+                        showSeal
+                          ? "border-indigo-500 bg-indigo-500/10 text-indigo-600 dark:text-indigo-300"
+                          : "border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 text-slate-500"
+                      }`}
+                    >
+                      <div className="flex flex-col">
+                        <span className="text-xs font-bold">{isLao ? "ກາປະທັບທາງການ" : "Official Seal"}</span>
+                        <span className="text-[9px] opacity-80">{isLao ? "ສະແດງກາປະທັບສີແດງ" : "Show round stamp seal"}</span>
+                      </div>
+                      <div className={`w-5 h-5 rounded-full flex items-center justify-center ${showSeal ? "bg-indigo-600 text-white" : "bg-slate-300 dark:bg-slate-700"}`}>
+                        {showSeal && <Check className="w-3.5 h-3.5" />}
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={() => setShowDistribution(!showDistribution)}
+                      className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex items-center justify-between ${
+                        showDistribution
+                          ? "border-indigo-500 bg-indigo-500/10 text-indigo-600 dark:text-indigo-300"
+                          : "border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800 text-slate-500"
+                      }`}
+                    >
+                      <div className="flex flex-col">
+                        <span className="text-xs font-bold">{isLao ? "ບ່ອນນຳສົ່ງ" : "Distribution List"}</span>
+                        <span className="text-[9px] opacity-80">{isLao ? "ສະແດງບັນຊີບ່ອນນຳສົ່ງ" : "Show copy-to lists"}</span>
+                      </div>
+                      <div className={`w-5 h-5 rounded-full flex items-center justify-center ${showDistribution ? "bg-indigo-600 text-white" : "bg-slate-300 dark:bg-slate-700"}`}>
+                        {showDistribution && <Check className="w-3.5 h-3.5" />}
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Right Column: Live Paper Document Preview */}
+              <div className="lg:col-span-7 p-4 sm:p-6 bg-slate-200 dark:bg-slate-950 overflow-y-auto flex flex-col items-center justify-start">
+                <div className="text-[10px] text-slate-400 dark:text-slate-500 font-extrabold uppercase tracking-widest mb-3 flex items-center gap-1.5 self-start">
+                  <Eye className="w-4 h-4" />
+                  <span>{isLao ? "ຕົວຢ່າງເອກະສານທີ່ຈະພິມ (Live A4 Preview)" : "Live Print Sheet Preview"}</span>
+                </div>
+
+                {/* Highly polished, responsive official paper frame mockup */}
+                <div className="w-full bg-white text-slate-950 shadow-2xl rounded-3xl p-6 sm:p-10 border border-slate-300 relative overflow-hidden select-none text-left flex flex-col justify-between" style={{ minHeight: "840px" }}>
+                  
+                  {/* Glowing vertical stamp indicating live preview only */}
+                  <div className="absolute right-4 top-24 origin-top-right rotate-95 text-[9px] font-black tracking-widest text-indigo-500/10 dark:text-indigo-400/10 select-none pointer-events-none uppercase">
+                    LIVE SYSTEM PREVIEW • LIVE SYSTEM PREVIEW
+                  </div>
+
+                  {/* Top National Header block */}
+                  <div>
+                    <div className="flex justify-between items-start font-sans border-b border-slate-300 pb-4 mb-4">
+                      <div className="text-left space-y-1 leading-normal w-[35%]">
+                        <p className="font-bold text-[10px] uppercase tracking-wide">{provinceName}</p>
+                        <p className="font-bold text-[10px] text-slate-800">{officeNameState}</p>
+                        <p className="text-[8px] text-slate-500 font-medium">ລະບົບຄຸ້ມຄອງຫ້ອງປະຊຸມທັນສະໄໝ</p>
+                        <p className="text-[9px] font-bold mt-2 text-indigo-600">ເລກທີ: {docNumber}</p>
+                      </div>
+                      
+                      <div className="flex flex-col items-center justify-center w-[25%]">
+                        <svg className="w-10 h-10 text-slate-900" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <circle cx="50" cy="50" r="42" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 2" />
+                          <circle cx="50" cy="50" r="38" stroke="currentColor" strokeWidth="2" />
+                          <path d="M22 65 C 20 45, 30 25, 50 20 C 70 25, 80 45, 78 65" stroke="currentColor" strokeWidth="2" fill="none" />
+                          <rect x="42" y="65" width="16" height="12" fill="none" stroke="currentColor" strokeWidth="2" />
+                          <polygon points="50,22 53,28 60,28 55,32 57,38 50,34 43,38 45,32 40,28 47,28" fill="currentColor" />
+                          <path d="M 18 68 Q 50 82 82 68" stroke="currentColor" strokeWidth="2" fill="none" />
+                        </svg>
+                        <span className="text-[7px] text-slate-700 font-bold tracking-widest mt-1 uppercase">ກາໝາຍຊາດ</span>
+                      </div>
+
+                      <div className="text-right space-y-0.5 leading-normal w-[40%]">
+                        <p className="font-bold text-[10px] tracking-tight">ສາທາລະນະລັດ ປະຊາທິປະໄຕ ປະຊາຊົນລາວ</p>
+                        <p className="font-bold text-[8px] text-slate-700 leading-tight">ສັນຕິພາບ ເອກະລາດ ປະຊາທິປະໄຕ ເອກະພາບ ວັດທະນະຖາວອນ</p>
+                        <p className="text-[8px] text-right font-light tracking-widest text-slate-400">-----------------</p>
+                        <p className="text-[9px] font-bold mt-2 text-slate-800">ວັນທີ: {formattedDocDate}</p>
+                      </div>
+                    </div>
+
+                    {/* Report Title */}
+                    <div className="text-center my-4 space-y-1">
+                      <h2 className="text-sm font-black uppercase tracking-tight text-slate-900">{isLao ? "ໃບສະຫຼຸບລາຍງານ ແລະ ສະຖິຕິທາງການ" : "Official Analytical Summary Report"}</h2>
+                      <h3 className="text-[11px] font-bold text-slate-700">{isLao ? `ການນຳໃຊ້ ແລະ ຈອງຫ້ອງປະຊຸມ ${officeNameState}` : `Meeting Room Utilization Registry - ${officeNameState}`}</h3>
+                      <p className="text-[9px] font-bold text-slate-500 italic">
+                        {reportPeriod === "day" && `( ປະຈຳວັນທີ: ${reportDate} )`}
+                        {reportPeriod === "week" && `( ປະຈຳອາທິດ: ວັນທີ ${getWeekRange(reportDate).start} ຫາ ວັນທີ ${getWeekRange(reportDate).end} )`}
+                        {reportPeriod === "month" && `( ປະຈຳເດືອນ: ${reportDate.substring(0, 7)} )`}
+                        {reportPeriod === "year" && `( ປະຈຳປີ: ${reportDate.substring(0, 4)} )`}
+                      </p>
+                    </div>
+
+                    {/* Report Preface */}
+                    <div className="mb-4 text-[10px] text-slate-700 leading-relaxed text-justify">
+                      <p>{customPreface}</p>
+                    </div>
+
+                    {/* I. Statistics Table */}
+                    <div className="mb-4 space-y-1">
+                      <h4 className="text-[9px] font-black text-slate-900 border-l-2 border-slate-900 pl-1.5 uppercase">
+                        I. ຕົວເລກສະຖິຕິສັງລວມ (CONSOLIDATED STATISTICS)
+                      </h4>
+                      <div className="grid grid-cols-3 gap-0 border border-slate-400 text-[9px] text-slate-900 bg-slate-50/40">
+                        <div className="border-r border-b border-slate-400 p-2 text-center">
+                          <p className="font-bold text-slate-500 uppercase text-[8px]">{isLao ? "ການຈອງທັງໝົດ" : "Total Bookings"}</p>
+                          <p className="text-sm font-black text-slate-900 mt-0.5">{rTotal} ລາຍການ</p>
+                        </div>
+                        <div className="border-r border-b border-slate-400 p-2 text-center">
+                          <p className="font-bold text-slate-500 uppercase text-[8px]">{t.bkStatusApproved}</p>
+                          <p className="text-sm font-black text-emerald-700 mt-0.5">{rApproved} ລາຍການ</p>
+                        </div>
+                        <div className="border-b border-slate-400 p-2 text-center">
+                          <p className="font-bold text-slate-500 uppercase text-[8px]">{isLao ? "ລໍຖ້າ / ປະຕິເສດ" : "Pending/Rejected"}</p>
+                          <p className="text-sm font-black text-slate-700 mt-0.5">{rPending} / {rRejected} ລາຍການ</p>
+                        </div>
+                        <div className="col-span-1 border-r border-slate-400 p-2">
+                          <p className="font-bold text-slate-500 uppercase text-[8px]">{isLao ? "ຫ້ອງທີ່ໃຊ້ຫຼາຍສຸດ" : "Most Utilized Room"}</p>
+                          <p className="font-bold text-[10px] mt-0.5 text-indigo-700 truncate">{rMostPopularRoom}</p>
+                        </div>
+                        <div className="col-span-2 p-2">
+                          <p className="font-bold text-slate-500 uppercase text-[8px]">{isLao ? "ພາກສ່ວນຈອງຫຼາຍສຸດ" : "Most Active Dept"}</p>
+                          <p className="font-bold text-[10px] mt-0.5 text-slate-900 truncate">{rMostActiveDept}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* II. Detailed table */}
+                    <div className="mb-4 space-y-1">
+                      <h4 className="text-[9px] font-black text-slate-900 border-l-2 border-slate-900 pl-1.5 uppercase">
+                        II. ບັນຊີລາຍລະອຽດການເຄື່ອນໄຫວ (DETAILED REGISTRY)
+                      </h4>
+                      <table className="w-full text-left border-collapse border border-slate-400 text-[8px] text-slate-900">
+                        <thead>
+                          <tr className="bg-slate-100 text-slate-950 border-b border-slate-400 font-bold">
+                            <th className="py-1 px-1 border-r border-slate-400 text-center w-8">ລຳດັບ</th>
+                            <th className="py-1 px-1.5 border-r border-slate-400 w-16">ຫ້ອງປະຊຸມ</th>
+                            <th className="py-1 px-1.5 border-r border-slate-400">ຫົວຂໍ້ກອງປະຊຸມ</th>
+                            <th className="py-1 px-1 border-r border-slate-400 text-center w-16">ວັນທີປະຊຸມ</th>
+                            <th className="py-1 px-1 border-r border-slate-400 text-center w-14">ເວລາ</th>
+                            <th className="py-1 px-1.5 border-r border-slate-400 w-20">ພາກສ່ວນຈອງ</th>
+                            <th className="py-1 px-1 text-center w-14">ສະຖານະ</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredReportBookings.length === 0 ? (
+                            <tr>
+                              <td colSpan={7} className="py-4 text-center text-slate-400">{t.noData}</td>
+                            </tr>
+                          ) : (
+                            filteredReportBookings.slice(0, 8).map((b, idx) => (
+                              <tr key={b.id} className="border-b border-slate-400">
+                                <td className="py-1 px-1 border-r border-slate-400 text-center">{idx + 1}</td>
+                                <td className="py-1 px-1.5 border-r border-slate-400 font-bold truncate max-w-[70px]">{b.roomName}</td>
+                                <td className="py-1 px-1.5 border-r border-slate-400 truncate max-w-[150px]">{b.title}</td>
+                                <td className="py-1 px-1 border-r border-slate-400 text-center text-[7px]">{b.date}</td>
+                                <td className="py-1 px-1 border-r border-slate-400 text-center text-[7px]">{b.startTime}-{b.endTime}</td>
+                                <td className="py-1 px-1.5 border-r border-slate-400 font-bold truncate max-w-[80px]">{b.department || "ທົ່ວໄປ"}</td>
+                                <td className="py-1 px-1 text-center font-semibold text-[7px]">
+                                  {b.status === "approved" ? "ອະນຸມັດ" : b.status === "rejected" ? "ປະຕິເສດ" : "ລໍຖ້າ"}
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                          {filteredReportBookings.length > 8 && (
+                            <tr>
+                              <td colSpan={7} className="py-1 text-center text-[7px] bg-slate-50 italic text-slate-500">
+                                {isLao ? `... ແລະ ມີອີກ ${filteredReportBookings.length - 8} ລາຍການອື່ນໆ ທີ່ສະແດງໃນສະບັບພິມເຕັມ ...` : `... and ${filteredReportBookings.length - 8} more entries showing in the full print document ...`}
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* III. Sign-off Blocks */}
+                  <div className="flex justify-between items-start text-[8px] text-slate-900 font-sans pt-4 border-t border-slate-200">
+                    
+                    {/* Distribution */}
+                    <div className="w-[45%] text-left space-y-1">
+                      {showDistribution ? (
+                        <div>
+                          <p className="font-bold underline uppercase text-[7px]">ບ່ອນນຳສົ່ງ (Distribution):</p>
+                          <ul className="text-[7px] list-none pl-0 space-y-0.5 text-slate-600 mt-1">
+                            <li>- ທ່ານເຈົ້າແຂວງ{provinceName}</li>
+                            <li>- ຫ້ອງວ່າການ{provinceName}</li>
+                            <li>- ຂະແໜງເຕັກໂນໂລຊີ</li>
+                            <li>- ເກັບມ້ຽນສຳເນົາ</li>
+                          </ul>
+                        </div>
+                      ) : (
+                        <div className="h-6"></div>
+                      )}
+                      
+                      <div className="pt-4">
+                        <p className="font-bold">{isLao ? "ຜູ້ສະຫຼຸບລາຍງານ" : "Report Compiler"}</p>
+                        <div className="h-6"></div>
+                        <p className="font-semibold text-slate-400">......................................................</p>
+                        <p className="font-bold text-slate-800">{compilerName}</p>
+                        <p className="text-[7px] text-slate-500">{compilerTitle}</p>
+                      </div>
+                    </div>
+
+                    {/* Approver & Seal */}
+                    <div className="w-[45%] text-center flex flex-col items-center justify-between">
+                      <div className="space-y-0.5">
+                        <p className="font-bold uppercase text-[9px] text-slate-950">{approverTitle}</p>
+                        <p className="text-[7px] text-slate-400">{isLao ? "(ເຊັນ ແລະ ປະທັບຕາເປັນທາງການ)" : "(Signature & Seal)"}</p>
+                      </div>
+                      
+                      {/* Red Stamp mockup representation in Live Preview */}
+                      {showSeal ? (
+                        <div className="relative my-2 scale-75 select-none">
+                          <div className="w-16 h-16 rounded-full border-2 border-dashed border-red-500/50 flex flex-col items-center justify-center p-0.5">
+                            <div className="w-14 h-14 rounded-full border border-double border-red-500/60 flex flex-col items-center justify-center text-center">
+                              <span className="text-[5px] text-red-500 font-bold">ຫ້ອງວ່າການ</span>
+                              <span className="text-[6px] text-red-500 font-black tracking-tighter leading-none my-0.5">ແຂວງຫົວພັນ</span>
+                              <span className="text-[4px] text-red-500">STAMP SEAL</span>
+                            </div>
+                          </div>
+                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[6px] text-red-500 font-bold border border-red-500/30 px-1 rotate-[-12deg] bg-white/95">
+                            APPROVED
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="h-10"></div>
+                      )}
+
+                      <div className="pt-1">
+                        <p className="font-semibold text-slate-400">......................................................</p>
+                        <p className="font-bold text-slate-900 text-[9px]">{approverName}</p>
+                      </div>
+                    </div>
+
+                  </div>
+
+                </div>
+              </div>
+
+            </div>
+
+            {/* Modal Footer */}
+            <div className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-white/5 p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shrink-0">
+              <p className="text-[10px] text-slate-400 dark:text-slate-500 text-center sm:text-left leading-relaxed font-bold max-w-lg">
+                * {isLao 
+                  ? "ຂໍ້ມູນທັງໝົດຈະຖືກສັງເຄາະຈາກຖານຂໍ້ມູນຈິງໃນລະບົບ ໂດຍອີງໃສ່ຕົວເລືອກໄລຍະເວລາ ແລະ ການກອງຂໍ້ມູນທີ່ທ່ານເລືອກໄວ້ຫຼ້າສຸດ."
+                  : "All statistical records are generated directly from live system storage based on your selected active filter values."}
+              </p>
+              
+              <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+                <button
+                  onClick={() => setIsPrintModalOpen(false)}
+                  className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-slate-200 text-xs font-black transition-all cursor-pointer w-1/2 sm:w-auto text-center"
+                >
+                  {isLao ? "ຍົກເລີກ" : "Cancel"}
+                </button>
+                <button
+                  onClick={() => {
+                    setIsPrintModalOpen(false);
+                    setTimeout(() => {
+                      window.print();
+                    }, 250);
+                  }}
+                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-black shadow-md shadow-indigo-500/20 hover:shadow-indigo-500/35 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 w-1/2 sm:w-auto"
+                >
+                  <Printer className="w-4 h-4" />
+                  <span>{isLao ? "ສັ່ງພິມລາຍງານທາງການ" : "Print Official Report"}</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
+
       {/* PRINT-ONLY OFFICIAL LAO DOCUMENT */}
       <div id="print-report-sheet" className="hidden print:block bg-white text-slate-950 p-6 min-h-screen font-sans border-t-8 border-slate-900">
         
         {/* LAO PDR NATIONAL EMBLEM & FORMAL ADMINISTRATIVE HEADER */}
         <div className="flex justify-between items-start text-slate-950 font-sans border-b-2 border-slate-900 pb-5 mb-6">
           <div className="text-left space-y-1.5 leading-relaxed w-[35%]">
-            <p className="font-bold text-[12px] uppercase tracking-wide">ແຂວງຫົວພັນ</p>
-            <p className="font-bold text-[12px]">ຫ້ອງວ່າການແຂວງຫົວພັນ</p>
+            <p className="font-bold text-[12px] uppercase tracking-wide">{provinceName}</p>
+            <p className="font-bold text-[12px]">{officeNameState}</p>
             <p className="text-[10px] text-slate-600 font-medium">ລະບົບຄຸ້ມຄອງຫ້ອງປະຊຸມທັນສະໄໝ</p>
-            <p className="text-[11px] font-bold mt-3">ເລກທີ: ................./ຫວກ.ຮພ</p>
+            <p className="text-[11px] font-bold mt-3 text-indigo-700">ເລກທີ: {docNumber}</p>
           </div>
           
           <div className="flex flex-col items-center justify-center w-[25%] mt-1">
@@ -846,14 +1300,14 @@ export default function Dashboard({ bookings, rooms, language, setActiveTab }: D
             <p className="font-bold text-[13px] tracking-wide">ສາທາລະນະລັດ ປະຊາທິປະໄຕ ປະຊາຊົນລາວ</p>
             <p className="font-bold text-[11px]">ສັນຕິພາບ ເອກະລາດ ປະຊາທິປະໄຕ ເອກະພາບ ວັດທະນະຖາວອນ</p>
             <p className="text-[10px] text-right font-light tracking-widest mt-[-4px] text-slate-500">-----------------</p>
-            <p className="text-[11px] font-bold mt-3">ຫົວພັນ, ວັນທີ: {new Date().toLocaleDateString('lo-LA', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+            <p className="text-[11px] font-bold mt-3">ຫົວພັນ, ວັນທີ: {formattedDocDate}</p>
           </div>
         </div>
 
         {/* DOCUMENT TITLE & SUBTITLE */}
         <div className="text-center my-6 space-y-1.5">
           <h2 className="text-base sm:text-lg font-bold uppercase tracking-tight text-slate-950">ໃບສະຫຼຸບລາຍງານ ແລະ ສະຖິຕິ</h2>
-          <h3 className="text-sm font-bold text-slate-800">ການນຳໃຊ້ ແລະ ຈອງຫ້ອງປະຊຸມ ຫ້ອງວ່າການແຂວງຫົວພັນ</h3>
+          <h3 className="text-sm font-bold text-slate-800">ການນຳໃຊ້ ແລະ ຈອງຫ້ອງປະຊຸມ {officeNameState}</h3>
           <p className="text-xs font-semibold text-slate-700 italic">
             {reportPeriod === "day" && `( ປະຈຳວັນທີ: ${reportDate} )`}
             {reportPeriod === "week" && `( ປະຈຳອາທິດ: ວັນທີ ${getWeekRange(reportDate).start} ຫາ ວັນທີ ${getWeekRange(reportDate).end} )`}
@@ -862,31 +1316,32 @@ export default function Dashboard({ bookings, rooms, language, setActiveTab }: D
           </p>
         </div>
 
+        {/* Preface Text */}
+        <div className="mb-6 text-xs text-slate-800 leading-relaxed text-justify font-medium">
+          <p>{customPreface}</p>
+        </div>
+
         {/* SECTION I: CONSOLIDATED STATISTICS */}
         <div className="mb-6 space-y-2">
           <h3 className="text-xs font-bold uppercase text-slate-950 border-l-4 border-slate-950 pl-2">
             I. ຕົວເລກສະຖິຕິສັງລວມ (CONSOLIDATED STATISTICS SUMMARY)
           </h3>
-          <div className="grid grid-cols-4 gap-0 border border-slate-950 text-xs text-slate-950 bg-white">
-            <div className="border-r border-b border-slate-950 p-3 bg-slate-50">
+          <div className="grid grid-cols-3 gap-0 border border-slate-950 text-xs text-slate-950 bg-white">
+            <div className="border-r border-b border-slate-950 p-3 bg-slate-50 text-center">
               <p className="font-bold text-[10px] text-slate-600 uppercase">ການຈອງທັງໝົດ</p>
               <p className="text-base font-extrabold mt-1">{rTotal} ລາຍການ</p>
             </div>
-            <div className="border-r border-b border-slate-950 p-3 bg-slate-50">
+            <div className="border-r border-b border-slate-950 p-3 bg-slate-50 text-center">
               <p className="font-bold text-[10px] text-slate-600 uppercase">ອະນຸມັດແລ້ວ</p>
-              <p className="text-base font-extrabold mt-1 text-slate-900">{rApproved} ລາຍການ</p>
+              <p className="text-base font-extrabold mt-1 text-emerald-800">{rApproved} ລາຍການ</p>
             </div>
-            <div className="border-r border-b border-slate-950 p-3 bg-slate-50">
+            <div className="border-b border-slate-950 p-3 bg-slate-50 text-center">
               <p className="font-bold text-[10px] text-slate-600 uppercase">ລໍຖ້າກວດສອບ / ປະຕິເສດ</p>
               <p className="text-base font-extrabold mt-1">{rPending} / {rRejected} ລາຍການ</p>
             </div>
-            <div className="border-b border-slate-950 p-3 bg-slate-50">
-              <p className="font-bold text-[10px] text-slate-600 uppercase">ຊົ່ວໂມງໃຊ້ງານລວມ</p>
-              <p className="text-base font-extrabold mt-1">{rTotalHours} ຊົ່ວໂມງ</p>
-            </div>
-            <div className="col-span-2 border-r border-slate-950 p-3">
+            <div className="col-span-1 border-r border-slate-950 p-3">
               <p className="font-bold text-[10px] text-slate-600 uppercase">ຫ້ອງປະຊຸມທີ່ມີການນຳໃຊ້ຫຼາຍທີ່ສຸດ</p>
-              <p className="font-bold text-xs mt-1 text-slate-900">{rMostPopularRoom}</p>
+              <p className="font-bold text-xs mt-1 text-indigo-700">{rMostPopularRoom}</p>
             </div>
             <div className="col-span-2 p-3">
               <p className="font-bold text-[10px] text-slate-600 uppercase">ພາກສ່ວນ/ພະແນກ ທີ່ມີການເຄື່ອນໄຫວສູງສຸດ</p>
@@ -942,47 +1397,58 @@ export default function Dashboard({ bookings, rooms, language, setActiveTab }: D
           {/* Distribution list and Compiler Signature */}
           <div className="w-[45%] text-left space-y-1 flex flex-col justify-between min-h-[220px]">
             <div>
-              <p className="font-bold underline text-[10px] uppercase">ບ່ອນນຳສົ່ງ (Distribution List):</p>
-              <ul className="text-[9px] list-none pl-0 space-y-0.5 font-medium text-slate-700 mt-1.5">
-                <li>- ທ່ານເຈົ້າແຂວງຫົວພັນ (ເພື່ອລາຍງານ)</li>
-                <li>- ຫົວໜ້າຫ້ອງວ່າການແຂວງ (ເພື່ອຕິດຕາມ)</li>
-                <li>- ບັນດາພະແນກການອ້ອມຂ້າງ (ເພື່ອຊາບ)</li>
-                <li>- ເກັບມ້ຽນສຳເນົາ (ຂະແໜງເຕັກໂນໂລຊີ)</li>
-              </ul>
+              {showDistribution ? (
+                <div>
+                  <p className="font-bold underline text-[10px] uppercase">ບ່ອນນຳສົ່ງ (Distribution List):</p>
+                  <ul className="text-[9px] list-none pl-0 space-y-0.5 font-medium text-slate-700 mt-1.5">
+                    <li>- ທ່ານເຈົ້າແຂວງ{provinceName} (ເພື່ອລາຍງານ)</li>
+                    <li>- ຫ້ອງວ່າການ{provinceName} (ເພື່ອຕິດຕາມ)</li>
+                    <li>- ບັນດາພະແນກການອ້ອມຂ້າງ (ເພື່ອຊາບ)</li>
+                    <li>- ເກັບມ້ຽນສຳເນົາ (ຂະແໜງເຕັກໂນໂລຊີ)</li>
+                  </ul>
+                </div>
+              ) : (
+                <div className="h-10"></div>
+              )}
             </div>
             
             <div className="pt-6">
               <p className="font-bold">ຜູ້ສະຫຼຸບ ແລະ ບັນທຶກລາຍງານ</p>
               <div className="h-14"></div> {/* Signature line placeholder spacer */}
               <p className="font-bold text-slate-800">......................................................</p>
-              <p className="text-[9px] text-slate-500 mt-1 font-medium">( ເຊັນ ແລະ ຂຽນຊື່ແຈ້ງ )</p>
+              <p className="font-bold text-slate-900">{compilerName}</p>
+              <p className="text-[9px] text-slate-500 font-medium">{compilerTitle}</p>
             </div>
           </div>
 
           {/* Approver & Official Stamp Seal Block */}
           <div className="w-[45%] text-center flex flex-col items-center justify-between min-h-[220px]">
             <div className="space-y-1 text-center">
-              <p className="font-bold uppercase tracking-wide">ຫົວໜ້າຫ້ອງວ່າການແຂວງຫົວພັນ</p>
+              <p className="font-bold uppercase tracking-wide">{approverTitle}</p>
               <p className="text-[10px] text-slate-500 font-medium">(ເຊັນ ແລະ ປະທັບຕາເປັນທາງການ)</p>
             </div>
             
             {/* Elegant Circle Wet Stamp Seal Placement Marker */}
-            <div className="relative my-3 flex items-center justify-center">
-              <div className="w-24 h-24 rounded-full border-4 border-dashed border-red-500/40 flex flex-col items-center justify-center p-1 select-none pointer-events-none">
-                <div className="w-20 h-20 rounded-full border-2 border-double border-red-500/50 flex flex-col items-center justify-center text-center">
-                  <span className="text-[7px] text-red-500 font-bold leading-none">ຫ້ອງວ່າການ</span>
-                  <span className="text-[8px] text-red-500 font-black leading-tight my-0.5">ແຂວງຫົວພັນ</span>
-                  <span className="text-[6px] text-red-500 font-semibold leading-none">OFFICIAL SEAL</span>
+            {showSeal ? (
+              <div className="relative my-3 flex items-center justify-center">
+                <div className="w-24 h-24 rounded-full border-4 border-dashed border-red-500/40 flex flex-col items-center justify-center p-1 select-none pointer-events-none">
+                  <div className="w-20 h-20 rounded-full border-2 border-double border-red-500/50 flex flex-col items-center justify-center text-center">
+                    <span className="text-[7px] text-red-500 font-bold leading-none">ຫ້ອງວ່າການ</span>
+                    <span className="text-[8px] text-red-500 font-black leading-tight my-0.5">ແຂວງຫົວພັນ</span>
+                    <span className="text-[6px] text-red-500 font-semibold leading-none">OFFICIAL SEAL</span>
+                  </div>
+                </div>
+                <div className="absolute text-[8px] text-red-500 font-bold border border-red-500/30 px-1 py-0.5 rotate-[-12deg] bg-white/95">
+                  บ່ອນປະທັບຕາ
                 </div>
               </div>
-              <div className="absolute text-[8px] text-red-500 font-bold border border-red-500/30 px-1 py-0.5 rotate-[-12deg] bg-white/95">
-                ບ່ອນປະທັບຕາ
-              </div>
-            </div>
+            ) : (
+              <div className="h-16"></div>
+            )}
 
             <div className="pt-2 text-center">
               <p className="font-bold text-slate-800">......................................................</p>
-              <p className="text-[10px] text-slate-500 mt-1 font-semibold">( ທ່ານ ປອ. ສົມພອນ ແກ້ວມະນີ )</p>
+              <p className="text-[10px] text-slate-500 mt-1 font-semibold">( {approverName} )</p>
             </div>
           </div>
 
