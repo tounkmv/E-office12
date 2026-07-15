@@ -406,12 +406,26 @@ export default function App() {
 
               {/* Welcoming Text Content */}
               <div className="space-y-6">
-                <div className="space-y-1">
-                  <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-amber-200 to-white leading-relaxed drop-shadow-md">
-                    {language === "lo" 
-                      ? "ຍີນດີຕ້ອນຮັບເຂົ້າສູ່ ລະບົບຈອງຫ້ອງປະຊຸມທັນສະໄໝ ຫ້ອງວ່າການແຂວງຫົວພັນ" 
-                      : "Welcome to the Modern Meeting Room Booking System of Houaphanh Province"}
-                  </h3>
+                <div className="space-y-3">
+                  {language === "lo" ? (
+                    <>
+                      <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-white leading-snug drop-shadow-md">
+                        ຍີນດີຕ້ອນຮັບເຂົ້າສູ່ ລະບົບຈອງຫ້ອງປະຊຸມທັນສະໄໝ
+                      </h3>
+                      <h4 className="text-lg sm:text-xl md:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-amber-400 to-amber-500 leading-snug drop-shadow-md">
+                        ຫ້ອງວ່າການແຂວງຫົວພັນ
+                      </h4>
+                    </>
+                  ) : (
+                    <>
+                      <h3 className="text-lg sm:text-xl md:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-white leading-snug drop-shadow-md uppercase tracking-wide">
+                        Welcome to the Modern Meeting Room Booking System
+                      </h3>
+                      <h4 className="text-base sm:text-lg md:text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-amber-400 to-amber-500 leading-snug drop-shadow-md uppercase tracking-wider">
+                        Houaphanh Provincial Office
+                      </h4>
+                    </>
+                  )}
                 </div>
 
                 {/* Divider Line */}
