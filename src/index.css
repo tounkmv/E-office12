@@ -133,10 +133,10 @@ p, span, select, input, textarea {
 
 /* --- PRINTING STYLES --- */
 @media print {
-  /* Set page setup options */
+  /* Set page setup options - margin 0 removes default browser headers/footers */
   @page {
     size: A4 portrait;
-    margin: 15mm 15mm 15mm 15mm;
+    margin: 0;
   }
 
   /* Reset all HTML / body backgrounds for printing */
@@ -162,7 +162,7 @@ p, span, select, input, textarea {
     visibility: visible !important;
   }
 
-  /* Position the print-report-sheet container at the top of the printable area */
+  /* Position the print-report-sheet container with proper margins on physical paper */
   #print-report-sheet {
     display: block !important;
     position: absolute !important;
@@ -170,7 +170,8 @@ p, span, select, input, textarea {
     top: 0 !important;
     width: 100% !important;
     margin: 0 !important;
-    padding: 0 !important;
+    padding: 20mm 20mm 20mm 20mm !important;
+    box-sizing: border-box !important;
     border: none !important;
     background: transparent !important;
     box-shadow: none !important;
