@@ -4,7 +4,9 @@ import { seedDefaultAdmin, getRooms } from "./lib/firebaseHelper";
 import { UserProfile, MeetingRoom, RoomBooking, AppTheme, AppLanguage } from "./types";
 import { translations } from "./lib/translations";
 import { Building2, LogOut, Clock, ShieldAlert } from "lucide-react";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
+import emblemLogo from "./assets/images/emblem.png";
+import emblemSvg from "./assets/images/emblem.svg";
 
 // Components
 import Sidebar from "./components/Sidebar";
@@ -36,6 +38,17 @@ export default function App() {
     }
   });
   const [authLoading, setAuthLoading] = useState(true);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+
+  // Auto-close welcome modal after 5 seconds
+  useEffect(() => {
+    if (showWelcomeModal) {
+      const timer = setTimeout(() => {
+        setShowWelcomeModal(false);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [showWelcomeModal]);
 
   // System Configurations with localStorage persistence
   const [theme, setTheme] = useState<AppTheme>(() => {
@@ -119,6 +132,7 @@ export default function App() {
     setUserProfile(profile);
     localStorage.setItem("local-auth-user", JSON.stringify(mockUser));
     localStorage.setItem("local-auth-profile", JSON.stringify(profile));
+    setShowWelcomeModal(true);
 
     // Listen to profile updates after login
     const userRef = doc(db, "users", profile.uid);
@@ -344,6 +358,120 @@ export default function App() {
         </div>
       </div>
       <ToastContainer />
+
+      {/* GORGEOUS SUCCESS WELCOME MODAL WITH CENTERED STATE EMBLEM AND TYPOGRAPHY */}
+      <AnimatePresence>
+        {showWelcomeModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md"
+          >
+            {/* Click backdrop to close */}
+            <div className="absolute inset-0" onClick={() => setShowWelcomeModal(false)} />
+
+            {/* Glowing background light */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-amber-500/20 rounded-full blur-[100px] pointer-events-none animate-pulse" />
+
+            <motion.div
+              initial={{ scale: 0.9, y: 20, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.9, y: 20, opacity: 0 }}
+              transition={{ type: "spring", duration: 0.6 }}
+              className="relative w-full max-w-lg bg-slate-900/95 dark:bg-slate-950/95 border-2 border-amber-400/40 shadow-[0_0_50px_rgba(251,191,36,0.3)] rounded-[32px] p-8 md:p-10 text-center overflow-hidden"
+            >
+              {/* Decorative top color stripe (Red, Amber, Blue) matching high-class official look */}
+              <div className="absolute top-0 left-0 right-0 h-[4.5px] bg-gradient-to-r from-red-600 via-amber-400 to-blue-600 shadow-sm" />
+              
+              {/* Emblem Centered at the top */}
+              <div className="relative mb-6 flex justify-center">
+                <div className="absolute -inset-1.5 bg-gradient-to-r from-amber-400 via-rose-400 to-amber-600 rounded-full blur-lg opacity-60 animate-pulse" />
+                <div className="relative p-3 bg-slate-950/90 rounded-full border border-amber-400/50 shadow-md">
+                  <img
+                    src={emblemLogo}
+                    alt="Laos National Emblem"
+                    className="w-20 h-20 md:w-24 md:h-24 object-contain filter drop-shadow-[0_4px_10px_rgba(251,191,36,0.5)]"
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      if (e.currentTarget.src !== emblemSvg) {
+                        e.currentTarget.src = emblemSvg;
+                      } else {
+                        e.currentTarget.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Emblem_of_Laos_%282025-%29.svg/800px-Emblem_of_Laos_%282025-%29.svg.png";
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Welcoming Text Content */}
+              <div className="space-y-4">
+                <p className="text-[11px] font-black text-amber-300 tracking-[0.2em] uppercase">
+                  {language === "lo" ? "ລະບົບຈອງຫ້ອງປະຊຸມທັນສະໄໝ" : "MODERN MEETING ROOM BOOKING SYSTEM"}
+                </p>
+
+                <div className="space-y-2">
+                  <h3 className="text-xl sm:text-2xl font-black text-white leading-relaxed drop-shadow-md">
+                    ຍີນດີຕ້ອນຮັບເຂົ້າສູ່ ລະບົບຈອງຫ້ອງປະຊຸມທັນສະໄໝ
+                  </h3>
+                  <h4 className="text-lg sm:text-xl font-extrabold text-amber-400 leading-snug">
+                    ຫ້ອງວ່າການແຂວງຫົວພັນ
+                  </h4>
+                </div>
+
+                {/* Subtitle in English if English is selected */}
+                {language === "en" && (
+                  <p className="text-xs text-slate-400 font-bold italic tracking-wide">
+                    "Welcome to the Modern Meeting Room Booking System of the Houaphanh Provincial Office"
+                  </p>
+                )}
+
+                {/* Divider Line */}
+                <div className="flex items-center justify-center gap-2 py-1">
+                  <div className="h-[1px] w-12 bg-gradient-to-r from-transparent to-slate-700" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                  <div className="h-[1px] w-12 bg-gradient-to-l from-transparent to-slate-700" />
+                </div>
+
+                {/* Personalized greet with name */}
+                {userProfile && (
+                  <div className="bg-white/5 backdrop-blur-xs rounded-2xl px-4 py-2.5 border border-white/5 inline-block mx-auto max-w-xs">
+                    <p className="text-xs text-slate-300 font-bold">
+                      {language === "lo" ? "ສະບາຍດີ, ທ່ານ" : "Hello,"}{" "}
+                      <span className="text-amber-300 font-black">{userProfile.displayName}</span>
+                    </p>
+                    {userProfile.department && (
+                      <p className="text-[10px] text-slate-400 mt-1.5 font-semibold">
+                        {userProfile.department}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Action Proceed Button with Visual Timer Progress */}
+              <div className="mt-8 space-y-4">
+                <button
+                  onClick={() => setShowWelcomeModal(false)}
+                  className="w-full sm:w-auto px-10 py-3 bg-gradient-to-r from-amber-500 via-amber-400 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 rounded-xl font-black text-xs md:text-sm shadow-lg shadow-amber-400/20 hover:shadow-xl hover:shadow-amber-400/35 hover:scale-[1.02] active:scale-95 transition-all duration-300 cursor-pointer flex items-center justify-center gap-2 mx-auto border border-amber-300/30"
+                >
+                  <span>{language === "lo" ? "ເຂົ້າສູ່ໜ້າຫຼັກ" : "Proceed to Dashboard"}</span>
+                </button>
+
+                {/* Countdown animation progress bar */}
+                <div className="w-32 mx-auto h-1 bg-slate-800 rounded-full overflow-hidden">
+                  <motion.div
+                    initial={{ width: "100%" }}
+                    animate={{ width: "0%" }}
+                    transition={{ duration: 5, ease: "linear" }}
+                    className="h-full bg-gradient-to-r from-amber-400 to-amber-500"
+                  />
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }
