@@ -40,6 +40,8 @@ import { AppLanguage, RoomBooking, MeetingRoom } from "../types";
 import { translations } from "../lib/translations";
 import { motion } from "motion/react";
 import DashboardCalendar from "./DashboardCalendar";
+import emblemLogo from "../assets/images/emblem.png";
+import emblemSvg from "../assets/images/emblem.svg";
 
 interface DashboardProps {
   bookings: RoomBooking[];
@@ -1048,38 +1050,54 @@ export default function Dashboard({ bookings, rooms, language, setActiveTab }: D
 
                   {/* Top National Header block */}
                   <div>
-                    <div className="flex justify-between items-start font-sans border-b border-slate-300 pb-4 mb-4">
-                      <div className="text-left space-y-1 leading-normal w-[35%]">
-                        <p className="font-bold text-[10px] uppercase tracking-wide">{provinceName}</p>
-                        <p className="font-bold text-[10px] text-slate-800">{officeNameState}</p>
-                        <p className="text-[8px] text-slate-500 font-medium">ລະບົບຄຸ້ມຄອງຫ້ອງປະຊຸມທັນສະໄໝ</p>
-                        <p className="text-[9px] font-bold mt-2 text-indigo-600">ເລກທີ: {docNumber}</p>
-                      </div>
-                      
-                      <div className="flex flex-col items-center justify-center w-[25%]">
-                        <svg className="w-10 h-10 text-slate-900" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="2.5">
-                          <circle cx="50" cy="50" r="42" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 2" />
-                          <circle cx="50" cy="50" r="38" stroke="currentColor" strokeWidth="2" />
-                          <path d="M22 65 C 20 45, 30 25, 50 20 C 70 25, 80 45, 78 65" stroke="currentColor" strokeWidth="2" fill="none" />
-                          <rect x="42" y="65" width="16" height="12" fill="none" stroke="currentColor" strokeWidth="2" />
-                          <polygon points="50,22 53,28 60,28 55,32 57,38 50,34 43,38 45,32 40,28 47,28" fill="currentColor" />
-                          <path d="M 18 68 Q 50 82 82 68" stroke="currentColor" strokeWidth="2" fill="none" />
-                        </svg>
-                        <span className="text-[7px] text-slate-700 font-bold tracking-widest mt-1 uppercase">ກາໝາຍຊາດ</span>
+                    <div className="border-b border-slate-300 pb-4 mb-4 text-center font-sans">
+                      {/* Centered Emblem Logo and National Motto matching the user's provided image */}
+                      <div className="flex flex-col items-center justify-center mb-2">
+                        <img
+                          src={emblemLogo}
+                          alt="Laos National Emblem"
+                          className="w-16 h-16 object-contain filter mb-1.5"
+                          referrerPolicy="no-referrer"
+                          onError={(e) => {
+                            if (e.currentTarget.src !== emblemSvg) {
+                              e.currentTarget.src = emblemSvg;
+                            } else {
+                              e.currentTarget.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Emblem_of_Laos_%282025-%29.svg/800px-Emblem_of_Laos_%282025-%29.svg.png";
+                            }
+                          }}
+                        />
+                        <h4 className="text-[10px] sm:text-[11px] font-black tracking-wide text-slate-950 uppercase leading-none">
+                          ສາທາລະນະລັດ ປະຊາທິປະໄຕ ປະຊາຊົນລາວ
+                        </h4>
+                        <h5 className="text-[8px] sm:text-[9px] font-bold text-slate-800 tracking-tight leading-normal mt-1">
+                          ສັນຕິພາບ ເອກະລາດ ປະຊາທິປະໄຕ ເອກະພາບ ວັດທະນະຖາວອນ
+                        </h5>
+                        <span className="text-[8px] text-slate-400 font-light block leading-none mt-[-1px]">-----------------</span>
                       </div>
 
-                      <div className="text-right space-y-0.5 leading-normal w-[40%]">
-                        <p className="font-bold text-[10px] tracking-tight">ສາທາລະນະລັດ ປະຊາທິປະໄຕ ປະຊາຊົນລາວ</p>
-                        <p className="font-bold text-[8px] text-slate-700 leading-tight">ສັນຕິພາບ ເອກະລາດ ປະຊາທິປະໄຕ ເອກະພາບ ວັດທະນະຖາວອນ</p>
-                        <p className="text-[8px] text-right font-light tracking-widest text-slate-400">-----------------</p>
-                        <p className="text-[9px] font-bold mt-2 text-slate-800">ວັນທີ: {formattedDocDate}</p>
+                      {/* Left and Right Administrative details */}
+                      <div className="flex justify-between items-end text-slate-900 text-[9px] font-bold mt-4 px-1">
+                        <div className="text-left space-y-0.5">
+                          <p className="uppercase text-slate-950 text-[10px]">{provinceName}</p>
+                          <p className="text-slate-800 text-[10px]">{officeNameState}</p>
+                          <p className="text-indigo-600 font-extrabold text-[10px] mt-1.5">ເລກທີ: {docNumber}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-slate-800 text-[10px]">ວັນທີ: {formattedDocDate}</p>
+                        </div>
                       </div>
                     </div>
 
                     {/* Report Title */}
-                    <div className="text-center my-4 space-y-1">
-                      <h2 className="text-sm font-black uppercase tracking-tight text-slate-900">{isLao ? "ໃບສະຫຼຸບລາຍງານ ແລະ ສະຖິຕິທາງການ" : "Official Analytical Summary Report"}</h2>
-                      <h3 className="text-[11px] font-bold text-slate-700">{isLao ? `ການນຳໃຊ້ ແລະ ຈອງຫ້ອງປະຊຸມ ${officeNameState}` : `Meeting Room Utilization Registry - ${officeNameState}`}</h3>
+                    <div className="text-center my-5 space-y-1.5">
+                      <h2 className="text-base font-black text-slate-950 uppercase tracking-wide">
+                        {isLao ? "ໃບສະຫຼຸບລາຍງານ" : "SUMMARY REPORT"}
+                      </h2>
+                      <h3 className="text-[11px] font-extrabold text-slate-800 leading-relaxed max-w-xl mx-auto">
+                        {isLao 
+                          ? "ການນໍາໃຊ້ລະບົບການຈອງຫ້ອງປະຊຸມທັນສະໄໝ ຫ້ອງວ່າການແຂວງຫົວພັນ" 
+                          : "Utilization of the Modern Meeting Room Booking System, Houaphanh Provincial Office"}
+                      </h3>
                       <p className="text-[9px] font-bold text-slate-500 italic">
                         {reportPeriod === "day" && `( ປະຈຳວັນທີ: ${reportDate} )`}
                         {reportPeriod === "week" && `( ປະຈຳອາທິດ: ວັນທີ ${getWeekRange(reportDate).start} ຫາ ວັນທີ ${getWeekRange(reportDate).end} )`}
