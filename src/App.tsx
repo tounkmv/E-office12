@@ -379,19 +379,19 @@ export default function App() {
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.9, y: 20, opacity: 0 }}
               transition={{ type: "spring", duration: 0.6 }}
-              className="relative w-full max-w-lg bg-slate-900/95 dark:bg-slate-950/95 border-2 border-amber-400/40 shadow-[0_0_50px_rgba(251,191,36,0.3)] rounded-[32px] p-8 md:p-10 text-center overflow-hidden"
+              className="relative w-full max-w-2xl bg-slate-900/95 dark:bg-slate-950/95 border-2 border-amber-400/60 shadow-[0_0_60px_rgba(251,191,36,0.35)] rounded-[32px] p-8 md:p-12 text-center overflow-hidden"
             >
               {/* Decorative top color stripe (Red, Amber, Blue) matching high-class official look */}
-              <div className="absolute top-0 left-0 right-0 h-[4.5px] bg-gradient-to-r from-red-600 via-amber-400 to-blue-600 shadow-sm" />
+              <div className="absolute top-0 left-0 right-0 h-[5px] bg-gradient-to-r from-red-600 via-amber-400 to-blue-600 shadow-sm" />
               
               {/* Emblem Centered at the top */}
-              <div className="relative mb-6 flex justify-center">
-                <div className="absolute -inset-1.5 bg-gradient-to-r from-amber-400 via-rose-400 to-amber-600 rounded-full blur-lg opacity-60 animate-pulse" />
-                <div className="relative p-3 bg-slate-950/90 rounded-full border border-amber-400/50 shadow-md">
+              <div className="relative mb-8 flex justify-center">
+                <div className="absolute -inset-2 bg-gradient-to-r from-amber-400 via-rose-500 to-amber-600 rounded-full blur-xl opacity-70 animate-pulse" />
+                <div className="relative p-3.5 bg-slate-950/90 rounded-full border-2 border-amber-400 shadow-xl">
                   <img
                     src={emblemLogo}
                     alt="Laos National Emblem"
-                    className="w-20 h-20 md:w-24 md:h-24 object-contain filter drop-shadow-[0_4px_10px_rgba(251,191,36,0.5)]"
+                    className="w-24 h-24 md:w-28 md:h-28 object-contain filter drop-shadow-[0_4px_12px_rgba(251,191,36,0.6)]"
                     referrerPolicy="no-referrer"
                     onError={(e) => {
                       if (e.currentTarget.src !== emblemSvg) {
@@ -405,45 +405,35 @@ export default function App() {
               </div>
 
               {/* Welcoming Text Content */}
-              <div className="space-y-4">
-                <p className="text-[11px] font-black text-amber-300 tracking-[0.2em] uppercase">
-                  {language === "lo" ? "ລະບົບຈອງຫ້ອງປະຊຸມທັນສະໄໝ" : "MODERN MEETING ROOM BOOKING SYSTEM"}
-                </p>
-
-                <div className="space-y-2">
-                  <h3 className="text-xl sm:text-2xl font-black text-white leading-relaxed drop-shadow-md">
-                    ຍີນດີຕ້ອນຮັບເຂົ້າສູ່ ລະບົບຈອງຫ້ອງປະຊຸມທັນສະໄໝ
+              <div className="space-y-6">
+                <div className="space-y-1">
+                  <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-amber-200 to-white leading-relaxed drop-shadow-md">
+                    {language === "lo" 
+                      ? "ຍີນດີຕ້ອນຮັບເຂົ້າສູ່ ລະບົບຈອງຫ້ອງປະຊຸມທັນສະໄໝ ຫ້ອງວ່າການແຂວງຫົວພັນ" 
+                      : "Welcome to the Modern Meeting Room Booking System of Houaphanh Province"}
                   </h3>
-                  <h4 className="text-lg sm:text-xl font-extrabold text-amber-400 leading-snug">
-                    ຫ້ອງວ່າການແຂວງຫົວພັນ
-                  </h4>
                 </div>
 
-                {/* Subtitle in English if English is selected */}
-                {language === "en" && (
-                  <p className="text-xs text-slate-400 font-bold italic tracking-wide">
-                    "Welcome to the Modern Meeting Room Booking System of the Houaphanh Provincial Office"
-                  </p>
-                )}
-
                 {/* Divider Line */}
-                <div className="flex items-center justify-center gap-2 py-1">
-                  <div className="h-[1px] w-12 bg-gradient-to-r from-transparent to-slate-700" />
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                  <div className="h-[1px] w-12 bg-gradient-to-l from-transparent to-slate-700" />
+                <div className="flex items-center justify-center gap-2 py-2">
+                  <div className="h-[1.5px] w-20 bg-gradient-to-r from-transparent to-amber-400/40" />
+                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                  <div className="h-[1.5px] w-20 bg-gradient-to-l from-transparent to-amber-400/40" />
                 </div>
 
                 {/* Personalized greet with name */}
                 {userProfile && (
-                  <div className="bg-white/5 backdrop-blur-xs rounded-2xl px-4 py-2.5 border border-white/5 inline-block mx-auto max-w-xs">
-                    <p className="text-xs text-slate-300 font-bold">
+                  <div className="bg-white/5 backdrop-blur-md rounded-2xl px-6 py-3.5 border border-white/10 inline-block mx-auto max-w-sm shadow-inner">
+                    <p className="text-xs sm:text-sm text-slate-300 font-bold">
                       {language === "lo" ? "ສະບາຍດີ, ທ່ານ" : "Hello,"}{" "}
-                      <span className="text-amber-300 font-black">{userProfile.displayName}</span>
+                      <span className="text-amber-400 font-black text-sm sm:text-base">{userProfile.displayName}</span>
                     </p>
                     {userProfile.department && (
-                      <p className="text-[10px] text-slate-400 mt-1.5 font-semibold">
-                        {userProfile.department}
-                      </p>
+                      <div className="mt-2.5 px-3 py-1 bg-amber-400/10 rounded-lg inline-block border border-amber-400/20">
+                        <p className="text-[10px] text-amber-300 font-extrabold uppercase tracking-wider">
+                          {userProfile.department}
+                        </p>
+                      </div>
                     )}
                   </div>
                 )}
