@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { 
   Bell, 
   Mail, 
@@ -642,151 +643,167 @@ export default function Navbar({ userProfile, language, setLanguage, onUpdatePro
       {/* --- Overlay Modals for interactive reading --- */}
 
       {/* 1. Notification Detail Reader Overlay Modal */}
-      <AnimatePresence>
-        {selectedNotification && (
-          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center z-[9999] p-4 sm:p-6">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 15 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 15 }}
-              transition={{ type: "spring", damping: 25, stiffness: 320 }}
-              className="bg-white dark:bg-[#1e293b] rounded-3xl max-w-lg w-full border-2 border-slate-200 dark:border-white/10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] p-6 sm:p-8 relative font-sans space-y-5 overflow-hidden"
-            >
-              {/* Background ambient light */}
-              <div className="absolute top-0 right-0 w-36 h-36 bg-blue-500/10 rounded-full blur-2xl pointer-events-none" />
-
-              {/* Top Bar with Clear Close X Button */}
-              <button 
-                onClick={() => setSelectedNotification(null)}
-                className="absolute top-4 right-4 p-2.5 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-500 hover:text-white text-slate-500 dark:text-slate-400 transition-all cursor-pointer border border-slate-200 dark:border-white/10 shadow-xs"
-                title={isLao ? "ປິດໜ້າຕ່າງ" : "Close"}
+      {typeof document !== "undefined" && createPortal(
+        <AnimatePresence>
+          {selectedNotification && (
+            <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 bg-slate-950/80 backdrop-blur-md">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 15 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 15 }}
+                transition={{ type: "spring", damping: 25, stiffness: 320 }}
+                className="bg-white dark:bg-[#1e293b] rounded-3xl max-w-lg w-full border-2 border-slate-200 dark:border-white/10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] p-6 sm:p-7 relative font-sans space-y-4 overflow-hidden"
               >
-                <X className="w-5 h-5" />
-              </button>
+                {/* Background ambient light */}
+                <div className="absolute top-0 right-0 w-36 h-36 bg-blue-500/10 rounded-full blur-2xl pointer-events-none" />
 
-              {/* Notification Header */}
-              <div className="flex items-center gap-3.5 pr-10 border-b border-slate-100 dark:border-white/10 pb-4">
-                <div className={`p-3 rounded-2xl border shadow-md ${
-                  selectedNotification.type === "success" ? "bg-emerald-500/15 text-emerald-500 border-emerald-500/30" :
-                  selectedNotification.type === "error" ? "bg-rose-500/15 text-rose-500 border-rose-500/30" :
-                  selectedNotification.type === "warning" ? "bg-amber-500/15 text-amber-500 border-amber-500/30" : "bg-blue-500/15 text-blue-500 border-blue-500/30"
-                }`}>
-                  {selectedNotification.type === "success" ? <CheckCircle className="w-6 h-6" /> : 
-                   selectedNotification.type === "error" ? <ShieldAlert className="w-6 h-6" /> : <Info className="w-6 h-6" />}
+                {/* Top Bar with Clear Close X Button */}
+                <button 
+                  onClick={() => setSelectedNotification(null)}
+                  className="absolute top-4 right-4 p-2 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-500 hover:text-white text-slate-500 dark:text-slate-400 transition-all cursor-pointer border border-slate-200 dark:border-white/10 shadow-xs"
+                  title={isLao ? "ປິດໜ້າຕ່າງ" : "Close"}
+                >
+                  <X className="w-5 h-5" />
+                </button>
+
+                {/* Notification Header */}
+                <div className="flex items-center gap-3 pr-10 border-b border-slate-100 dark:border-white/10 pb-3.5">
+                  <div className={`p-3 rounded-2xl border shadow-md shrink-0 ${
+                    selectedNotification.type === "success" ? "bg-emerald-500/15 text-emerald-500 border-emerald-500/30" :
+                    selectedNotification.type === "error" ? "bg-rose-500/15 text-rose-500 border-rose-500/30" :
+                    selectedNotification.type === "warning" ? "bg-amber-500/15 text-amber-500 border-amber-500/30" : "bg-blue-500/15 text-blue-500 border-blue-500/30"
+                  }`}>
+                    {selectedNotification.type === "success" ? <CheckCircle className="w-6 h-6" /> : 
+                     selectedNotification.type === "error" ? <ShieldAlert className="w-6 h-6" /> : <Info className="w-6 h-6" />}
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="font-black text-base sm:text-lg text-slate-900 dark:text-white leading-tight truncate">
+                      {selectedNotification.title}
+                    </h4>
+                    <p className="text-xs text-indigo-600 dark:text-indigo-400 font-extrabold uppercase tracking-wider mt-0.5">
+                      {isLao ? "ການແຈ້ງເຕືອນລະບົບ E-Office" : "E-Office System Notification"}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="font-black text-base sm:text-lg text-slate-900 dark:text-white leading-tight">
-                    {selectedNotification.title}
-                  </h4>
-                  <p className="text-xs text-indigo-600 dark:text-indigo-400 font-extrabold uppercase tracking-wider mt-0.5">
-                    {isLao ? "ການແຈ້ງເຕືອນລະບົບ" : "System Notification"}
+
+                {/* Main Message Content Box (Standardized Comfortable Font Size) */}
+                <div className="bg-slate-50 dark:bg-slate-900/70 rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-white/10 shadow-inner">
+                  <p className="text-sm sm:text-base leading-relaxed text-slate-800 dark:text-slate-100 font-semibold whitespace-pre-wrap">
+                    {selectedNotification.message}
                   </p>
                 </div>
-              </div>
 
-              {/* Main Message Content Box (Enlarged Text) */}
-              <div className="bg-slate-50 dark:bg-slate-900/60 rounded-2xl p-5 sm:p-6 border-2 border-slate-200/80 dark:border-white/10 shadow-inner">
-                <p className="text-base sm:text-lg md:text-xl leading-relaxed text-slate-800 dark:text-slate-100 font-bold whitespace-pre-wrap">
-                  {selectedNotification.message}
-                </p>
-              </div>
-
-              {/* Timestamp & Read Badge */}
-              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-bold pt-1">
-                <span className="flex items-center gap-1.5">
-                  <Clock className="w-4 h-4 text-indigo-500" />
-                  <span>
-                    {new Date(selectedNotification.createdAt).toLocaleDateString()} {new Date(selectedNotification.createdAt).toLocaleTimeString()}
+                {/* Timestamp & Read Badge */}
+                <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-bold pt-0.5">
+                  <span className="flex items-center gap-1.5">
+                    <Clock className="w-4 h-4 text-indigo-500" />
+                    <span>
+                      {new Date(selectedNotification.createdAt).toLocaleDateString()} {new Date(selectedNotification.createdAt).toLocaleTimeString()}
+                    </span>
                   </span>
-                </span>
-                <span className="px-3 py-1 bg-blue-500/15 text-blue-600 dark:text-blue-400 rounded-lg font-black uppercase text-xs border border-blue-500/20">
-                  {isLao ? "ອ່ານແລ້ວ" : "Read"}
-                </span>
-              </div>
+                  <span className="px-3 py-1 bg-blue-500/15 text-blue-600 dark:text-blue-400 rounded-lg font-black uppercase text-xs border border-blue-500/20">
+                    {isLao ? "ອ່ານແລ້ວ" : "Read"}
+                  </span>
+                </div>
 
-              {/* Prominent Bottom Close Button */}
-              <div className="pt-3 border-t border-slate-200/60 dark:border-white/10">
-                <button
-                  type="button"
-                  onClick={() => setSelectedNotification(null)}
-                  className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-slate-800 via-indigo-900 to-slate-900 hover:from-slate-700 hover:to-indigo-800 text-white font-black text-sm sm:text-base shadow-xl shadow-indigo-950/30 hover:scale-[1.01] active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2 border border-indigo-400/30"
-                >
-                  <X className="w-5 h-5 text-amber-300" />
-                  <span>{isLao ? "ປິດໜ້າຕ່າງ" : "Close Window"}</span>
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+                {/* Prominent Bottom Close Button */}
+                <div className="pt-2 border-t border-slate-200/60 dark:border-white/10">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedNotification(null)}
+                    className="w-full py-3 px-6 rounded-2xl bg-gradient-to-r from-slate-800 via-indigo-900 to-slate-900 hover:from-slate-700 hover:to-indigo-800 text-white font-black text-sm shadow-lg shadow-indigo-950/30 hover:scale-[1.01] active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2 border border-indigo-400/30"
+                  >
+                    <X className="w-4 h-4 text-amber-300" />
+                    <span>{isLao ? "ປິດໜ້າຕ່າງ" : "Close Window"}</span>
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/* 2. Email log Reader Overlay Modal */}
-      <AnimatePresence>
-        {selectedEmail && (
-          <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white dark:bg-[#1e293b] rounded-3xl max-w-2xl w-full border border-slate-100 dark:border-white/10 shadow-2xl p-6 relative flex flex-col max-h-[90vh]"
-            >
-              <button 
-                onClick={() => setSelectedEmail(null)}
-                className="absolute top-4 right-4 p-1.5 rounded-full bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 text-slate-500 hover:text-slate-700 dark:text-slate-400 cursor-pointer"
+      {typeof document !== "undefined" && createPortal(
+        <AnimatePresence>
+          {selectedEmail && (
+            <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 bg-slate-950/80 backdrop-blur-md">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 15 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 15 }}
+                transition={{ type: "spring", damping: 25, stiffness: 320 }}
+                className="bg-white dark:bg-[#1e293b] rounded-3xl max-w-xl w-full border-2 border-slate-200 dark:border-white/10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] p-6 sm:p-7 relative flex flex-col max-h-[90vh] font-sans space-y-4 overflow-hidden"
               >
-                <X className="w-4 h-4" />
-              </button>
+                {/* Background ambient light */}
+                <div className="absolute top-0 right-0 w-36 h-36 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
 
-              <div className="flex items-center gap-3 mb-4 pb-3 border-b border-slate-100 dark:border-white/5">
-                <div className="p-2.5 bg-emerald-500/10 text-emerald-500 rounded-xl">
-                  <Mail className="w-5.5 h-5.5" />
-                </div>
-                <div>
-                  <h4 className="font-extrabold text-sm text-slate-800 dark:text-slate-100">
-                    {selectedEmail.subject}
-                  </h4>
-                  <p className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider">
-                    {isLao ? "ຈຳລອງການສົ່ງເມວລະບົບ (Simulated SMTP Log)" : "Simulated SMTP Email Outbox"}
-                  </p>
-                </div>
-              </div>
-
-              {/* Email Client Header styling */}
-              <div className="bg-slate-50 dark:bg-slate-900/40 rounded-2xl p-3 border border-slate-100 dark:border-white/5 text-[11px] font-semibold space-y-1 mb-4 text-slate-700 dark:text-slate-300">
-                <div className="flex justify-between">
-                  <span className="opacity-60">{isLao ? "ຜູ້ຮັບ (To):" : "To:"}</span>
-                  <span className="font-bold text-slate-800 dark:text-white">{selectedEmail.to}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="opacity-60">{isLao ? "ສົ່ງເມື່ອ (Sent):" : "Sent:"}</span>
-                  <span className="font-bold">{new Date(selectedEmail.sentAt).toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="opacity-60">{isLao ? "ລະຫັດ SMTP:" : "SMTP Mailer ID:"}</span>
-                  <span className="font-mono text-[9px] opacity-70">{selectedEmail.id}</span>
-                </div>
-              </div>
-
-              {/* Email Content Frame */}
-              <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-[#111827] rounded-2xl border border-slate-200/50 dark:border-white/5 p-5 font-sans mb-4">
-                <div 
-                  className="prose dark:prose-invert max-w-none text-xs text-slate-700 dark:text-slate-300 leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: selectedEmail.body }}
-                />
-              </div>
-
-              <div className="text-right">
+                {/* Top Close Button */}
                 <button 
                   onClick={() => setSelectedEmail(null)}
-                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer"
+                  className="absolute top-4 right-4 p-2 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-500 hover:text-white text-slate-500 dark:text-slate-400 transition-all cursor-pointer border border-slate-200 dark:border-white/10 shadow-xs"
+                  title={isLao ? "ປິດໜ້າຕ່າງ" : "Close"}
                 >
-                  {isLao ? "ປິດໜ້າຕ່າງ" : "Close Reader"}
+                  <X className="w-5 h-5" />
                 </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+
+                {/* Email Header */}
+                <div className="flex items-center gap-3 pr-10 border-b border-slate-100 dark:border-white/10 pb-3.5">
+                  <div className="p-3 bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 rounded-2xl shadow-md shrink-0">
+                    <Mail className="w-6 h-6" />
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="font-black text-base sm:text-lg text-slate-900 dark:text-white leading-tight truncate">
+                      {selectedEmail.subject}
+                    </h4>
+                    <p className="text-xs text-emerald-600 dark:text-emerald-400 font-extrabold uppercase tracking-wider mt-0.5">
+                      {isLao ? "ຈຳລອງການສົ່ງເມວລະບົບ (Simulated SMTP Log)" : "Simulated SMTP Email Outbox"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Email Client Header styling */}
+                <div className="bg-slate-50 dark:bg-slate-900/60 rounded-2xl p-3.5 border border-slate-200/80 dark:border-white/10 text-xs font-medium space-y-1.5 text-slate-700 dark:text-slate-300">
+                  <div className="flex justify-between">
+                    <span className="opacity-70 font-bold">{isLao ? "ຜູ້ຮັບ (To):" : "To:"}</span>
+                    <span className="font-black text-slate-900 dark:text-white">{selectedEmail.to}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="opacity-70 font-bold">{isLao ? "ສົ່ງເມື່ອ (Sent):" : "Sent:"}</span>
+                    <span className="font-semibold">{new Date(selectedEmail.sentAt).toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="opacity-70 font-bold">{isLao ? "ລະຫັດ SMTP:" : "SMTP Mailer ID:"}</span>
+                    <span className="font-mono text-[11px] opacity-80">{selectedEmail.id}</span>
+                  </div>
+                </div>
+
+                {/* Email Content Frame (Standardized Comfortable Reading Font Size) */}
+                <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-[#111827] rounded-2xl border border-slate-200/80 dark:border-white/10 p-4 sm:p-5 font-sans">
+                  <div 
+                    className="prose dark:prose-invert max-w-none text-sm sm:text-base text-slate-800 dark:text-slate-200 leading-relaxed font-normal"
+                    dangerouslySetInnerHTML={{ __html: selectedEmail.body }}
+                  />
+                </div>
+
+                {/* Prominent Bottom Close Button */}
+                <div className="pt-2 border-t border-slate-200/60 dark:border-white/10 flex justify-end">
+                  <button 
+                    type="button"
+                    onClick={() => setSelectedEmail(null)}
+                    className="w-full py-3 px-6 rounded-2xl bg-gradient-to-r from-emerald-700 via-teal-800 to-slate-900 hover:from-emerald-600 hover:to-teal-700 text-white font-black text-sm shadow-lg shadow-emerald-950/30 hover:scale-[1.01] active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2 border border-emerald-400/30"
+                  >
+                    <X className="w-4 h-4 text-amber-300" />
+                    <span>{isLao ? "ປິດໜ້າຕ່າງ" : "Close Window"}</span>
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/* 3. Comprehensive User Profile Settings Drawer Modal */}
       <AnimatePresence>
