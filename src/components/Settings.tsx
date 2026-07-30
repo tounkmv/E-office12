@@ -17,11 +17,14 @@ import {
   Eye,
   EyeOff,
   Camera,
-  Upload
+  Upload,
+  Send,
+  Mail,
+  ShieldAlert
 } from "lucide-react";
 import { AppLanguage, AppTheme, UserProfile } from "../types";
 import { translations } from "../lib/translations";
-import { updateUserProfile } from "../lib/firebaseHelper";
+import { updateUserProfile, sendAdminTestEmail } from "../lib/firebaseHelper";
 import { db, collection, query, where, getDocs } from "../lib/firebase";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -59,6 +62,9 @@ export default function Settings({
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Gmail Notification testing state
+  const [sendingTestEmail, setSendingTestEmail] = useState(false);
+
   useEffect(() => {
     setDisplayName(userProfile.displayName || "");
     setDepartment(userProfile.department || "");
@@ -68,6 +74,23 @@ export default function Settings({
     setAvatar(userProfile.avatar || "");
     setUploadedFileName("");
   }, [userProfile]);
+
+  const handleTestGmailAlert = async () => {
+    setSendingTestEmail(true);
+    try {
+      await sendAdminTestEmail("tounkmv99@gmail.com");
+      triggerToast(
+        isLao 
+          ? "ສົ່ງອີເມວທົດລອງຫາ Gmail ແອັດມິນ (tounkmv99@gmail.com) ສຳເລັດແລ້ວ!" 
+          : "Test email sent to Admin Gmail (tounkmv99@gmail.com) successfully!"
+      );
+    } catch (err: any) {
+      console.error("Failed to send test email:", err);
+      alert(err.message || "Failed to send test email");
+    } finally {
+      setSendingTestEmail(false);
+    }
+  };
 
   const processFile = (file: File) => {
     const isLao = language === "lo";
@@ -459,6 +482,65 @@ export default function Settings({
                   className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 border-white/10"
                 />
               </div>
+            </div>
+          </div>
+
+          {/* Admin Gmail Notification Active Integration Card */}
+          <div id="admin-gmail-card" className="bg-gradient-to-br from-indigo-900/90 via-slate-900 to-indigo-950 p-6 rounded-3xl border-2 border-indigo-500/40 shadow-xl text-white space-y-4 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-amber-400/10 rounded-full blur-2xl pointer-events-none" />
+            
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-red-500/20 text-red-400 border border-red-500/30">
+                  <Mail className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="font-black text-sm text-white flex items-center gap-2">
+                    <span>{isLao ? "ລະບົບເຊື່ອມຕໍ່ການແຈ້ງເຕືອນ Gmail ແອັດມິນ" : "Admin Gmail Notification Alert"}</span>
+                  </h4>
+                  <p className="text-[10px] text-indigo-200 font-medium">
+                    {isLao ? "ແຈ້ງເຕືອນອັດໂນມັດໄປຫາ Gmail ຂອງແອັດມິນເມື່ອມີການຈອງຫ້ອງປະຊຸມໃໝ່" : "Sends instant email alerts to Admin Gmail on new room booking"}
+                  </p>
+                </div>
+              </div>
+              
+              <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shadow-xs">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block" />
+                <span>{isLao ? "ເຊື່ອມຕໍ່ແລ້ວ" : "CONNECTED"}</span>
+              </span>
+            </div>
+
+            <div className="space-y-3 bg-white/5 p-4 rounded-2xl border border-white/10 text-xs font-medium">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-300">{isLao ? "ຜູ້ດູແລລະບົບ (Admin Name):" : "Admin Name:"}</span>
+                <span className="font-black text-amber-300">ຄໍາຕຸ່ນ ຄໍາມະວົງ</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-300">{isLao ? "ອີເມວ Gmail ແອດມິນ:" : "Admin Gmail:"}</span>
+                <span className="font-mono font-black text-emerald-400">tounkmv99@gmail.com</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-300">{isLao ? "ເງື່ອນໄຂການແຈ້ງເຕືອນ:" : "Trigger Condition:"}</span>
+                <span className="font-bold text-white bg-indigo-500/30 px-2 py-0.5 rounded-md text-[11px]">
+                  {isLao ? "ເມື່ອມີການຍື່ນຈອງຫ້ອງປະຊຸມເຂົ້າມາໃໝ່" : "On New Meeting Room Booking"}
+                </span>
+              </div>
+            </div>
+
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={handleTestGmailAlert}
+                disabled={sendingTestEmail}
+                className="w-full bg-gradient-to-r from-red-600 via-rose-600 to-red-700 hover:from-red-500 hover:to-rose-600 text-white font-black py-3 px-4 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-red-600/20 hover:scale-[1.01] active:scale-95 transition-all cursor-pointer border border-red-400/30"
+              >
+                <Send className="w-4 h-4 text-amber-300 animate-bounce" />
+                <span>
+                  {sendingTestEmail 
+                    ? (isLao ? "ກຳລັງສົ່ງອີເມວທົດລອງ..." : "Sending Test Email...") 
+                    : (isLao ? "ທົດລອງສົ່ງອີເມວແຈ້ງເຕືອນຫາ tounkmv99@gmail.com" : "Send Test Alert Email to tounkmv99@gmail.com")}
+                </span>
+              </button>
             </div>
           </div>
 
