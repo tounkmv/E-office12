@@ -4,6 +4,7 @@ import {
   LayoutDashboard, 
   CalendarClock, 
   FolderKanban, 
+  FileSpreadsheet,
   Users, 
   Settings as SettingsIcon,
   LogOut,
@@ -35,8 +36,11 @@ export default function Sidebar({ activeTab, setActiveTab, language, userRole, o
     { id: "booking", label: t.navBooking, icon: CalendarClock },
     ...(userRole === "admin" ? [
       { id: "rooms", label: t.navRooms, icon: FolderKanban },
+      { id: "reports", label: t.navReports || "ລະບົບລາຍງານ", icon: FileSpreadsheet },
       { id: "users", label: t.navUsers, icon: Users }
-    ] : []),
+    ] : [
+      { id: "reports", label: t.navReports || "ລະບົບລາຍງານ", icon: FileSpreadsheet }
+    ]),
     { id: "settings", label: t.navSettings, icon: SettingsIcon }
   ];
 

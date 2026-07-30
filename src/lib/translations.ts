@@ -32,7 +32,8 @@ export const translations: Record<AppLanguage, Record<string, string>> = {
     // Navigation Links
     navDashboard: "ພາບລວມ",
     navBooking: "ຈອງຫ້ອງປະຊຸມ",
-    navRooms: "ຈັດການຫ້ອງ",
+    navRooms: "ຈັດການຫ້ອງປະຊຸມ",
+    navReports: "ລະບົບລາຍງານ",
     navUsers: "ຈັດການຜູ້ໃຊ້",
     navSettings: "ຕັ້ງຄ່າ",
 
@@ -180,6 +181,7 @@ export const translations: Record<AppLanguage, Record<string, string>> = {
     navDashboard: "Dashboard",
     navBooking: "Book a Room",
     navRooms: "Manage Rooms",
+    navReports: "Report System",
     navUsers: "Manage Users",
     navSettings: "System Settings",
 
