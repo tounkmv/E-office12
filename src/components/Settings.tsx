@@ -25,7 +25,8 @@ import {
 import { AppLanguage, AppTheme, UserProfile } from "../types";
 import { translations } from "../lib/translations";
 import { updateUserProfile, sendAdminTestEmail } from "../lib/firebaseHelper";
-import { db, collection, query, where, getDocs } from "../lib/firebase";
+import { db, collection, query, where, getDocs, auth, googleProvider, signInWithPopup, GoogleAuthProvider } from "../lib/firebase";
+import { getGoogleAccessToken, setGoogleAccessToken } from "../lib/gmailHelper";
 import { motion, AnimatePresence } from "motion/react";
 
 interface SettingsProps {
@@ -75,14 +76,40 @@ export default function Settings({
     setUploadedFileName("");
   }, [userProfile]);
 
+  const handleConnectGoogleGmail = async () => {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const credential = GoogleAuthProvider.credentialFromResult(result);
+      if (credential?.accessToken) {
+        setGoogleAccessToken(credential.accessToken);
+        triggerToast(
+          isLao 
+            ? "ເຊື່ອມຕໍ່ບັນຊີ Google & Gmail API ສຳເລັດແລ້ວ!" 
+            : "Google & Gmail API connected successfully!"
+        );
+        return credential.accessToken;
+      }
+    } catch (err: any) {
+      console.error("Google Gmail connect error:", err);
+      alert(err.message || "Failed to connect Google Account");
+    }
+    return null;
+  };
+
   const handleTestGmailAlert = async () => {
     setSendingTestEmail(true);
     try {
+      let currentToken = getGoogleAccessToken();
+      if (!currentToken) {
+        // Prompt connection if not yet connected
+        currentToken = await handleConnectGoogleGmail();
+      }
+
       await sendAdminTestEmail("tounkmv99@gmail.com");
       triggerToast(
         isLao 
-          ? "ສົ່ງອີເມວທົດລອງຫາ Gmail ແອັດມິນ (tounkmv99@gmail.com) ສຳເລັດແລ້ວ!" 
-          : "Test email sent to Admin Gmail (tounkmv99@gmail.com) successfully!"
+          ? "ສົ່ງອີເມວແຈ້ງເຕືອນແທ້ຫາ Gmail ແອັດມິນ (tounkmv99@gmail.com) ສຳເລັດແລ້ວ!" 
+          : "Real notification email sent to Admin Gmail (tounkmv99@gmail.com) successfully!"
       );
     } catch (err: any) {
       console.error("Failed to send test email:", err);
@@ -499,14 +526,18 @@ export default function Settings({
                     <span>{isLao ? "ລະບົບເຊື່ອມຕໍ່ການແຈ້ງເຕືອນ Gmail ແອັດມິນ" : "Admin Gmail Notification Alert"}</span>
                   </h4>
                   <p className="text-[10px] text-indigo-200 font-medium">
-                    {isLao ? "ແຈ້ງເຕືອນອັດໂນມັດໄປຫາ Gmail ຂອງແອັດມິນເມື່ອມີການຈອງຫ້ອງປະຊຸມໃໝ່" : "Sends instant email alerts to Admin Gmail on new room booking"}
+                    {isLao ? "ສົ່ງອີເມວແຈ້ງເຕືອນແທ້ຜ່ານ Google Gmail API ໄປຫາແອັບ Gmail ໃນມືຖື" : "Sends real emails via Google Gmail API directly to smartphone app"}
                   </p>
                 </div>
               </div>
               
-              <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shadow-xs">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block" />
-                <span>{isLao ? "ເຊື່ອມຕໍ່ແລ້ວ" : "CONNECTED"}</span>
+              <span className={`px-2.5 py-1 rounded-full border text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shadow-xs ${
+                getGoogleAccessToken()
+                  ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-300"
+                  : "bg-amber-500/20 border-amber-500/40 text-amber-300"
+              }`}>
+                <span className={`w-2 h-2 rounded-full inline-block ${getGoogleAccessToken() ? "bg-emerald-400 animate-ping" : "bg-amber-400"}`} />
+                <span>{getGoogleAccessToken() ? (isLao ? "Gmail API ເຊື່ອມຕໍ່ແລ້ວ" : "GMAIL API ACTIVE") : (isLao ? "ກຳລັງລໍຖ້າ OAuth Token" : "NEEDS AUTH")}</span>
               </span>
             </div>
 
@@ -525,20 +556,35 @@ export default function Settings({
                   {isLao ? "ເມື່ອມີການຍື່ນຈອງຫ້ອງປະຊຸມເຂົ້າມາໃໝ່" : "On New Meeting Room Booking"}
                 </span>
               </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-300">{isLao ? "ຂອບເຂດສິດ OAuth Scope:" : "OAuth Scope:"}</span>
+                <span className="font-mono text-[10px] text-amber-300 bg-black/40 px-2 py-0.5 rounded">
+                  gmail.send (Google Workspace API)
+                </span>
+              </div>
             </div>
 
-            <div className="pt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
+              <button
+                type="button"
+                onClick={handleConnectGoogleGmail}
+                className="bg-white/10 hover:bg-white/20 text-white font-black py-2.5 px-3 rounded-2xl text-xs flex items-center justify-center gap-2 border border-white/20 cursor-pointer transition-all"
+              >
+                <Key className="w-4 h-4 text-amber-400" />
+                <span>{isLao ? "ເຊື່ອມຕໍ່ / ຢືນຢັນສິດ Google OAuth" : "Connect / Authorize Google OAuth"}</span>
+              </button>
+
               <button
                 type="button"
                 onClick={handleTestGmailAlert}
                 disabled={sendingTestEmail}
-                className="w-full bg-gradient-to-r from-red-600 via-rose-600 to-red-700 hover:from-red-500 hover:to-rose-600 text-white font-black py-3 px-4 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-red-600/20 hover:scale-[1.01] active:scale-95 transition-all cursor-pointer border border-red-400/30"
+                className="bg-gradient-to-r from-red-600 via-rose-600 to-red-700 hover:from-red-500 hover:to-rose-600 text-white font-black py-2.5 px-3 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-red-600/20 hover:scale-[1.01] active:scale-95 transition-all cursor-pointer border border-red-400/30"
               >
                 <Send className="w-4 h-4 text-amber-300 animate-bounce" />
                 <span>
                   {sendingTestEmail 
-                    ? (isLao ? "ກຳລັງສົ່ງອີເມວທົດລອງ..." : "Sending Test Email...") 
-                    : (isLao ? "ທົດລອງສົ່ງອີເມວແຈ້ງເຕືອນຫາ tounkmv99@gmail.com" : "Send Test Alert Email to tounkmv99@gmail.com")}
+                    ? (isLao ? "ກຳລັງສົ່ງອີເມວແທ້..." : "Sending Real Email...") 
+                    : (isLao ? "ທົດລອງສົ່ງອີເມວຫາ tounkmv99@gmail.com" : "Test Real Email to tounkmv99@gmail.com")}
                 </span>
               </button>
             </div>

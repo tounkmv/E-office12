@@ -47,6 +47,7 @@ export const db = initializeFirestore(app, {
 // Initialize Auth
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
+googleProvider.addScope("https://www.googleapis.com/auth/gmail.send");
 googleProvider.setCustomParameters({
   prompt: 'select_account'
 });
@@ -78,6 +79,7 @@ export {
   signOut,
   onAuthStateChanged,
   signInWithEmailAndPassword,
-  createUserWithEmailAndPassword
+  createUserWithEmailAndPassword,
+  GoogleAuthProvider
 };
 export type { FirebaseUser };

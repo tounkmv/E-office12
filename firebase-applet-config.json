@@ -3,8 +3,9 @@
   "appId": "1:155204650437:web:57133370b31970ec7c77ac",
   "apiKey": "AIzaSyC5zdhShQfmSlkwzInfLUYGKqZE0AGP3F8",
   "authDomain": "grounded-backup-4dckx.firebaseapp.com",
-  "firestoreDatabaseId": "ai-studio-b11ab298-3842-499d-b8a0-5955f36707be",
   "storageBucket": "grounded-backup-4dckx.firebasestorage.app",
   "messagingSenderId": "155204650437",
-  "measurementId": ""
+  "measurementId": "",
+  "oAuthClientId": "155204650437-87i21o7te1pu31b79ibei98kn4lqbikh.apps.googleusercontent.com",
+  "recaptchaSiteKey": ""
 }

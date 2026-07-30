@@ -13,6 +13,7 @@ import {
   onSnapshot
 } from "./firebase";
 import { FirebaseUser } from "./firebase";
+import { sendRealGmailMessage } from "./gmailHelper";
 import { 
   UserProfile, 
   MeetingRoom, 
@@ -231,6 +232,18 @@ export async function logSimulatedEmail(to: string, subject: string, body: strin
     isRead: false
   };
   await setDoc(doc(db, "emails", emailId), emailLog);
+
+  // Send real email via Google Gmail API if OAuth token is active
+  try {
+    const res = await sendRealGmailMessage(to, subject, body);
+    if (res.success) {
+      console.log(`Real Gmail message successfully dispatched to ${to}`);
+    } else {
+      console.log(`Email logged in DB for ${to}. Gmail API notice: ${res.error}`);
+    }
+  } catch (err) {
+    console.error("Failed executing real Gmail API request:", err);
+  }
 }
 
 export async function markEmailAsRead(emailId: string) {
