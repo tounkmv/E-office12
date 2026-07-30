@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { createPortal } from "react-dom";
 import { 
   LayoutDashboard, 
   CalendarClock, 
@@ -158,87 +159,94 @@ export default function Sidebar({ activeTab, setActiveTab, language, userRole, o
         </button>
       </div>
 
-      {/* Modern High-End Logout Confirmation Modal Alert */}
-      <AnimatePresence>
-        {showLogoutModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 15 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 15 }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="bg-gradient-to-b from-slate-900 via-slate-900 to-rose-950/90 border-2 border-rose-500/40 rounded-3xl p-6 sm:p-7 max-w-md w-full text-white shadow-2xl relative overflow-hidden font-sans space-y-5"
-            >
-              {/* Background ambient light */}
-              <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/10 rounded-full blur-2xl pointer-events-none" />
-
-              <button
-                type="button"
-                onClick={() => setShowLogoutModal(false)}
-                className="absolute top-4 right-4 p-2 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
+      {/* Modern High-End Logout Confirmation Modal Alert Centered in Document Body */}
+      {typeof document !== "undefined" && createPortal(
+        <AnimatePresence>
+          {showLogoutModal && (
+            <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 bg-slate-950/85 backdrop-blur-md">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.88, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.88, y: 20 }}
+                transition={{ type: "spring", damping: 25, stiffness: 350 }}
+                className="bg-gradient-to-b from-slate-900 via-slate-900 to-rose-950/95 border-2 border-rose-500/50 rounded-3xl p-6 sm:p-8 max-w-md w-full text-white shadow-[0_25px_60px_-15px_rgba(225,29,72,0.35)] relative overflow-hidden font-sans text-center flex flex-col items-center justify-center space-y-5"
               >
-                <X className="w-5 h-5" />
-              </button>
+                {/* Background ambient light effects */}
+                <div className="absolute top-0 right-0 w-40 h-40 bg-rose-500/15 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute bottom-0 left-0 w-40 h-40 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
-              {/* Top Header with Warning Icon */}
-              <div className="flex items-center gap-4 border-b border-white/10 pb-4">
-                <div className="relative shrink-0">
-                  <div className="p-3.5 bg-rose-500/20 text-rose-400 border border-rose-500/40 rounded-2xl shadow-lg shadow-rose-500/20">
-                    <AlertTriangle className="w-7 h-7 animate-bounce" />
-                  </div>
-                  <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-rose-500 rounded-full animate-ping" />
-                </div>
-                <div>
-                  <h3 className="font-black text-lg text-white leading-tight">
-                    {language === "lo" ? "ຢືນຢັນການອອກຈາກລະບົບ" : "Confirm Sign Out"}
-                  </h3>
-                  <p className="text-xs text-rose-300 font-medium mt-0.5">
-                    {language === "lo" ? "E-Office ຫ້ອງວ່າການແຂວງຫົວພັນ" : "Houaphanh Provincial E-Office"}
-                  </p>
-                </div>
-              </div>
-
-              {/* Main Question Body */}
-              <div className="bg-white/5 p-4 rounded-2xl border border-white/10 space-y-2">
-                <p className="text-base sm:text-lg font-black text-amber-300 leading-relaxed text-center sm:text-left">
-                  {language === "lo" 
-                    ? "ທ່ານຕ້ອງການທີ່ຈະອອກຈາກລະບົບແທ້ບໍ່?" 
-                    : "Are you sure you want to log out?"}
-                </p>
-                <p className="text-xs text-slate-300 leading-relaxed font-medium">
-                  {language === "lo" 
-                    ? "ເມື່ອທ່ານອອກຈາກລະບົບ ແອັບຈະທຳການປິດເຊດຊັນການນຳໃຊ້ ແລະ ກັບຄືນໄປຫາໜ້າເຂົ້າສູ່ລະບົບ (Login) ຫຼັກ." 
-                    : "Signing out will end your active session and return you to the primary login screen."}
-                </p>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex items-center gap-3 pt-2">
+                {/* Close Button */}
                 <button
                   type="button"
                   onClick={() => setShowLogoutModal(false)}
-                  className="flex-1 py-3 px-4 rounded-2xl bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white font-bold text-xs sm:text-sm transition-all cursor-pointer border border-white/10 text-center"
+                  className="absolute top-4 right-4 p-2 rounded-full bg-white/5 hover:bg-white/15 text-slate-400 hover:text-white transition-colors cursor-pointer border border-white/5"
                 >
-                  {language === "lo" ? "ຍົກເລີກ" : "Cancel"}
+                  <X className="w-5 h-5" />
                 </button>
-                
-                <button
-                  type="button"
-                  id="btn-confirm-logout"
-                  onClick={() => {
-                    setShowLogoutModal(false);
-                    onSignOut();
-                  }}
-                  className="flex-1 py-3 px-4 rounded-2xl bg-gradient-to-r from-rose-600 via-red-600 to-amber-600 hover:from-rose-500 hover:to-red-500 text-white font-black text-xs sm:text-sm shadow-lg shadow-rose-600/30 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer border border-rose-400/40 flex items-center justify-center gap-2"
-                >
-                  <LogOut className="w-4 h-4 text-amber-200" />
-                  <span>{language === "lo" ? "ອອກຈາກລະບົບ" : "Log Out"}</span>
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+
+                {/* Top Glowing Warning Icon Container */}
+                <div className="relative flex items-center justify-center pt-2">
+                  <div className="p-4 bg-rose-500/20 text-rose-400 border border-rose-500/40 rounded-3xl shadow-xl shadow-rose-500/25 relative z-10">
+                    <AlertTriangle className="w-9 h-9 animate-bounce text-amber-300" />
+                  </div>
+                  <span className="absolute w-20 h-20 bg-rose-500/30 rounded-full animate-ping pointer-events-none" />
+                  <span className="absolute w-14 h-14 bg-amber-400/20 rounded-full animate-pulse pointer-events-none" />
+                </div>
+
+                {/* Header Title */}
+                <div className="space-y-1">
+                  <h3 className="font-black text-xl sm:text-2xl text-white tracking-tight leading-tight">
+                    {language === "lo" ? "ຢືນຢັນການອອກຈາກລະບົບ" : "Confirm Sign Out"}
+                  </h3>
+                  <p className="text-xs text-rose-300 font-bold uppercase tracking-wider flex items-center justify-center gap-1.5">
+                    <Building2 className="w-3.5 h-3.5 text-amber-400" />
+                    <span>{language === "lo" ? "E-Office ຫ້ອງວ່າການແຂວງຫົວພັນ" : "Houaphanh Provincial E-Office"}</span>
+                  </p>
+                </div>
+
+                {/* Main Question Alert Box */}
+                <div className="w-full bg-white/5 p-4 sm:p-5 rounded-2xl border border-white/10 space-y-2 text-center shadow-inner">
+                  <p className="text-base sm:text-lg font-black text-amber-300 leading-relaxed">
+                    {language === "lo" 
+                      ? "ທ່ານຕ້ອງການທີ່ຈະອອກຈາກລະບົບແທ້ບໍ່?" 
+                      : "Are you sure you want to log out?"}
+                  </p>
+                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-medium max-w-xs mx-auto">
+                    {language === "lo" 
+                      ? "ເມື່ອທ່ານອອກຈາກລະບົບ ແອັບຈະທຳການປິດເຊດຊັນການນຳໃຊ້ ແລະ ກັບຄືນໄປຫາໜ້າເຂົ້າສູ່ລະບົບ (Login) ຫຼັກ." 
+                      : "Signing out will safely end your session and return you to the main login screen."}
+                  </p>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="grid grid-cols-2 gap-3 w-full pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setShowLogoutModal(false)}
+                    className="py-3 px-4 rounded-2xl bg-slate-800/80 hover:bg-slate-700/90 text-slate-200 hover:text-white font-bold text-xs sm:text-sm transition-all cursor-pointer border border-slate-700/80 shadow-md text-center active:scale-95"
+                  >
+                    {language === "lo" ? "ຍົກເລີກ" : "Cancel"}
+                  </button>
+                  
+                  <button
+                    type="button"
+                    id="btn-confirm-logout"
+                    onClick={() => {
+                      setShowLogoutModal(false);
+                      onSignOut();
+                    }}
+                    className="py-3 px-4 rounded-2xl bg-gradient-to-r from-rose-600 via-red-600 to-amber-600 hover:from-rose-500 hover:to-red-500 text-white font-black text-xs sm:text-sm shadow-xl shadow-rose-600/35 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer border border-rose-400/40 flex items-center justify-center gap-2"
+                  >
+                    <LogOut className="w-4 h-4 text-amber-200" />
+                    <span>{language === "lo" ? "ອອກຈາກລະບົບ" : "Log Out"}</span>
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </aside>
   );
 }
