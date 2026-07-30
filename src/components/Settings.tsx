@@ -20,7 +20,11 @@ import {
   Upload,
   Send,
   Mail,
-  ShieldAlert
+  ShieldAlert,
+  HelpCircle,
+  ExternalLink,
+  X,
+  Copy
 } from "lucide-react";
 import { AppLanguage, AppTheme, UserProfile } from "../types";
 import { translations } from "../lib/translations";
@@ -63,8 +67,11 @@ export default function Settings({
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Gmail Notification testing state
+  // Gmail Notification testing state & domain authorization guide
   const [sendingTestEmail, setSendingTestEmail] = useState(false);
+  const [showDomainHelpModal, setShowDomainHelpModal] = useState(false);
+  const [manualToken, setManualToken] = useState(getGoogleAccessToken() || "");
+  const [showTokenInput, setShowTokenInput] = useState(false);
 
   useEffect(() => {
     setDisplayName(userProfile.displayName || "");
@@ -82,6 +89,7 @@ export default function Settings({
       const credential = GoogleAuthProvider.credentialFromResult(result);
       if (credential?.accessToken) {
         setGoogleAccessToken(credential.accessToken);
+        setManualToken(credential.accessToken);
         triggerToast(
           isLao 
             ? "ເຊື່ອມຕໍ່ບັນຊີ Google & Gmail API ສຳເລັດແລ້ວ!" 
@@ -91,9 +99,25 @@ export default function Settings({
       }
     } catch (err: any) {
       console.error("Google Gmail connect error:", err);
-      alert(err.message || "Failed to connect Google Account");
+      if (err.code === "auth/unauthorized-domain" || err.message?.includes("auth/unauthorized-domain")) {
+        setShowDomainHelpModal(true);
+      } else {
+        alert(err.message || "Failed to connect Google Account");
+      }
     }
     return null;
+  };
+
+  const handleSaveManualToken = () => {
+    if (!manualToken.trim()) {
+      alert(isLao ? "ກະລຸນາປ້ອນ Token" : "Please enter a valid access token");
+      return;
+    }
+    setGoogleAccessToken(manualToken.trim());
+    triggerToast(
+      isLao ? "ບັນທຶກ Google OAuth Access Token ສຳເລັດ!" : "Google OAuth Access Token saved!"
+    );
+    setShowTokenInput(false);
   };
 
   const handleTestGmailAlert = async () => {
@@ -101,7 +125,6 @@ export default function Settings({
     try {
       let currentToken = getGoogleAccessToken();
       if (!currentToken) {
-        // Prompt connection if not yet connected
         currentToken = await handleConnectGoogleGmail();
       }
 
@@ -113,7 +136,11 @@ export default function Settings({
       );
     } catch (err: any) {
       console.error("Failed to send test email:", err);
-      alert(err.message || "Failed to send test email");
+      if (err.code === "auth/unauthorized-domain" || err.message?.includes("auth/unauthorized-domain")) {
+        setShowDomainHelpModal(true);
+      } else {
+        alert(err.message || "Failed to send test email");
+      }
     } finally {
       setSendingTestEmail(false);
     }
@@ -588,6 +615,64 @@ export default function Settings({
                 </span>
               </button>
             </div>
+
+            {/* Sub-tools for Domain Authorization Help and Manual Token Entry */}
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/10 text-[11px]">
+              <button
+                type="button"
+                onClick={() => setShowDomainHelpModal(true)}
+                className="text-amber-300 hover:text-amber-200 underline font-bold flex items-center gap-1 cursor-pointer"
+              >
+                <HelpCircle className="w-3.5 h-3.5" />
+                <span>{isLao ? "ວິທີແກ້ໄຂ Firebase: auth/unauthorized-domain" : "Fix Firebase auth/unauthorized-domain"}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowTokenInput(!showTokenInput)}
+                className="text-slate-300 hover:text-white font-medium flex items-center gap-1 cursor-pointer"
+              >
+                <Key className="w-3.5 h-3.5 text-indigo-400" />
+                <span>{showTokenInput ? (isLao ? "ຊ່ອນຊ່ອງປ້ອນ Token" : "Hide Token Input") : (isLao ? "ປ້ອນ Access Token ໂດຍທົ່ງ" : "Enter Token Manually")}</span>
+              </button>
+            </div>
+
+            {/* Manual OAuth Token Input Panel */}
+            <AnimatePresence>
+              {showTokenInput && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="bg-black/40 p-3.5 rounded-2xl border border-white/10 space-y-2"
+                >
+                  <label className="block text-[11px] font-bold text-slate-300">
+                    {isLao ? "Google OAuth Access Token (ສຳລັບ Gmail API):" : "Google OAuth Access Token:"}
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={manualToken}
+                      onChange={(e) => setManualToken(e.target.value)}
+                      placeholder="ya29.a0A..."
+                      className="flex-1 bg-slate-900 border border-white/20 rounded-xl px-3 py-1.5 text-xs text-amber-300 font-mono focus:outline-none focus:border-amber-400"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleSaveManualToken}
+                      className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3 py-1.5 rounded-xl text-xs cursor-pointer"
+                    >
+                      {isLao ? "ບັນທຶກ" : "Save"}
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-slate-400">
+                    {isLao 
+                      ? "ສາມາດໃຊ້ Token ຈາກ Google OAuth Playground ເພື່ອສົ່ງອີເມວໂດຍກົງໄດ້" 
+                      : "You can paste an access token from Google OAuth Playground to test sending directly."}
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
         </div>
@@ -801,6 +886,110 @@ export default function Settings({
         </div>
 
       </div>
+
+      {/* Firebase Domain Authorization Help Modal */}
+      <AnimatePresence>
+        {showDomainHelpModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-slate-900 border-2 border-indigo-500/50 rounded-3xl p-6 max-w-lg w-full text-white shadow-2xl space-y-5 relative overflow-hidden"
+            >
+              <button
+                onClick={() => setShowDomainHelpModal(false)}
+                className="absolute top-4 right-4 text-slate-400 hover:text-white p-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="flex items-center gap-3 border-b border-white/10 pb-4">
+                <div className="p-3 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-2xl">
+                  <ShieldAlert className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-black text-base text-amber-300">
+                    {isLao ? "ວິທີແກ້ໄຂ Firebase: auth/unauthorized-domain" : "Fix Firebase auth/unauthorized-domain"}
+                  </h3>
+                  <p className="text-xs text-slate-300">
+                    {isLao ? "ອະນຸມັດໂດເມນນີ້ເພື່ອເປີດໃຊ້ Google & Gmail API" : "Authorize this domain to enable Google & Gmail API"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-3 text-xs leading-relaxed text-slate-200">
+                <p className="bg-amber-500/10 border border-amber-500/20 p-3 rounded-xl text-amber-200">
+                  <b>{isLao ? "ສາເຫດ:" : "Reason:"}</b> {isLao ? "ຂໍ້ຄວາມເຕືອນ 'auth/unauthorized-domain' ເກີດຂຶ້ນຍ້ອນ Firebase Security ຕ້ອງການໃຫ້ເພີ່ມໂດເມນ " : "Firebase requires whitelisting domain "} 
+                  <code className="bg-black/60 text-amber-300 px-1.5 py-0.5 rounded font-mono font-bold">{window.location.hostname}</code> 
+                  {isLao ? " ເຂົ້າໃນ Authorized Domains List." : " in Authorized Domains List."}
+                </p>
+
+                <h4 className="font-bold text-white text-xs pt-1 flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-emerald-400" />
+                  <span>{isLao ? "ຂັ້ນຕອນການເພີ່ມ 3 ຂັ້ນຕອນງ່າຍໆ:" : "3 Steps to Add Authorized Domain:"}</span>
+                </h4>
+
+                <ol className="list-decimal list-inside space-y-2.5 bg-white/5 p-4 rounded-2xl border border-white/10">
+                  <li className="font-medium">
+                    {isLao ? "ເຂົ້າໄປທີ່ " : "Go to "} 
+                    <a 
+                      href="https://console.firebase.google.com" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-indigo-400 font-bold underline inline-flex items-center gap-1 hover:text-indigo-300"
+                    >
+                      <span>Firebase Console</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </li>
+                  <li className="font-medium">
+                    {isLao ? "ເລືອກໂຄງການ -> ເມນູ " : "Select Project -> "} 
+                    <b className="text-amber-300">Authentication</b> -&gt; <b className="text-amber-300">Settings</b> -&gt; <b className="text-amber-300">Authorized domains</b>
+                  </li>
+                  <li className="font-medium">
+                    {isLao ? "ກົດປຸ່ມ " : "Click "} <b className="text-emerald-400">Add domain</b> {isLao ? " ແລ້ວວາງໂດເມນນີ້:" : " and add domain:"}
+                    <div className="mt-2 flex items-center justify-between bg-black/60 border border-indigo-500/30 p-2 rounded-xl">
+                      <span className="font-mono text-xs text-amber-300 font-bold px-1 select-all">{window.location.hostname}</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(window.location.hostname);
+                          triggerToast(isLao ? "ກັອບປີ້ໂດເມນແລ້ວ!" : "Domain copied!");
+                        }}
+                        className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[10px] px-2.5 py-1 rounded-lg flex items-center gap-1 cursor-pointer"
+                      >
+                        <Copy className="w-3 h-3" />
+                        <span>{isLao ? "ກັອບປີ້" : "Copy"}</span>
+                      </button>
+                    </div>
+                  </li>
+                </ol>
+              </div>
+
+              <div className="pt-2 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDomainHelpModal(false);
+                    setShowTokenInput(true);
+                  }}
+                  className="flex-1 bg-white/10 hover:bg-white/20 text-white font-bold py-2.5 px-3 rounded-xl text-xs text-center cursor-pointer border border-white/10"
+                >
+                  {isLao ? "ປ້ອນ Access Token ໂດຍທົ່ງ" : "Enter Access Token Manually"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowDomainHelpModal(false)}
+                  className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-bold py-2.5 px-5 rounded-xl text-xs cursor-pointer shadow-md"
+                >
+                  {isLao ? "ເຂົ້າໃຈແລ້ວ" : "Got it"}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
     </div>
   );

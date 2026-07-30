@@ -264,7 +264,16 @@ export default function Login({ language, setLanguage, onLocalLogin }: LoginProp
       }
     } catch (err: any) {
       console.error("Google Sign-In Error:", err);
-      setError(err.message || "Google Sign-In failed");
+      if (err.code === "auth/unauthorized-domain" || err.message?.includes("auth/unauthorized-domain")) {
+        const domain = window.location.hostname;
+        setError(
+          language === "lo" 
+            ? `⚠️ ໂດເມນ (${domain}) ຍັງບໍ່ໄດ້ຖືກເພີ່ມເຂົ້າໃນ Authorized Domains ຂອງ Firebase.\nກະລຸນາເພີ່ມ "${domain}" ເຂົ້າໃນ Firebase Console -> Authentication -> Settings -> Authorized Domains`
+            : `⚠️ Domain (${domain}) is not authorized in Firebase Console.\nPlease add "${domain}" under Firebase Console -> Authentication -> Settings -> Authorized Domains.`
+        );
+      } else {
+        setError(err.message || "Google Sign-In failed");
+      }
     } finally {
       setLoading(false);
     }
