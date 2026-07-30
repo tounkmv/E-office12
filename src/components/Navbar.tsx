@@ -644,53 +644,76 @@ export default function Navbar({ userProfile, language, setLanguage, onUpdatePro
       {/* 1. Notification Detail Reader Overlay Modal */}
       <AnimatePresence>
         {selectedNotification && (
-          <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center z-[9999] p-4 sm:p-6">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white dark:bg-[#1e293b] rounded-3xl max-w-md w-full border border-slate-100 dark:border-white/10 shadow-2xl p-6 relative"
+              initial={{ opacity: 0, scale: 0.9, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 15 }}
+              transition={{ type: "spring", damping: 25, stiffness: 320 }}
+              className="bg-white dark:bg-[#1e293b] rounded-3xl max-w-lg w-full border-2 border-slate-200 dark:border-white/10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] p-6 sm:p-8 relative font-sans space-y-5 overflow-hidden"
             >
+              {/* Background ambient light */}
+              <div className="absolute top-0 right-0 w-36 h-36 bg-blue-500/10 rounded-full blur-2xl pointer-events-none" />
+
+              {/* Top Bar with Clear Close X Button */}
               <button 
                 onClick={() => setSelectedNotification(null)}
-                className="absolute top-4 right-4 p-1.5 rounded-full bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 text-slate-500 hover:text-slate-700 dark:text-slate-400 cursor-pointer"
+                className="absolute top-4 right-4 p-2.5 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-500 hover:text-white text-slate-500 dark:text-slate-400 transition-all cursor-pointer border border-slate-200 dark:border-white/10 shadow-xs"
+                title={isLao ? "ປິດໜ້າຕ່າງ" : "Close"}
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
 
-              <div className="flex items-center gap-3 mb-4">
-                <div className={`p-2.5 rounded-xl ${
-                  selectedNotification.type === "success" ? "bg-emerald-500/10 text-emerald-500" :
-                  selectedNotification.type === "error" ? "bg-red-500/10 text-red-500" :
-                  selectedNotification.type === "warning" ? "bg-amber-500/10 text-amber-500" : "bg-blue-500/10 text-blue-500"
+              {/* Notification Header */}
+              <div className="flex items-center gap-3.5 pr-10 border-b border-slate-100 dark:border-white/10 pb-4">
+                <div className={`p-3 rounded-2xl border shadow-md ${
+                  selectedNotification.type === "success" ? "bg-emerald-500/15 text-emerald-500 border-emerald-500/30" :
+                  selectedNotification.type === "error" ? "bg-rose-500/15 text-rose-500 border-rose-500/30" :
+                  selectedNotification.type === "warning" ? "bg-amber-500/15 text-amber-500 border-amber-500/30" : "bg-blue-500/15 text-blue-500 border-blue-500/30"
                 }`}>
-                  {selectedNotification.type === "success" ? <CheckCircle className="w-5 h-5" /> : 
-                   selectedNotification.type === "error" ? <ShieldAlert className="w-5 h-5" /> : <Info className="w-5 h-5" />}
+                  {selectedNotification.type === "success" ? <CheckCircle className="w-6 h-6" /> : 
+                   selectedNotification.type === "error" ? <ShieldAlert className="w-6 h-6" /> : <Info className="w-6 h-6" />}
                 </div>
                 <div>
-                  <h4 className="font-extrabold text-sm text-slate-800 dark:text-slate-100">
+                  <h4 className="font-black text-base sm:text-lg text-slate-900 dark:text-white leading-tight">
                     {selectedNotification.title}
                   </h4>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                  <p className="text-xs text-indigo-600 dark:text-indigo-400 font-extrabold uppercase tracking-wider mt-0.5">
                     {isLao ? "ການແຈ້ງເຕືອນລະບົບ" : "System Notification"}
                   </p>
                 </div>
               </div>
 
-              <div className="bg-slate-50 dark:bg-slate-900/40 rounded-2xl p-4 border border-slate-100 dark:border-white/5 mb-4">
-                <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-200 font-semibold whitespace-pre-wrap">
+              {/* Main Message Content Box (Enlarged Text) */}
+              <div className="bg-slate-50 dark:bg-slate-900/60 rounded-2xl p-5 sm:p-6 border-2 border-slate-200/80 dark:border-white/10 shadow-inner">
+                <p className="text-base sm:text-lg md:text-xl leading-relaxed text-slate-800 dark:text-slate-100 font-bold whitespace-pre-wrap">
                   {selectedNotification.message}
                 </p>
               </div>
 
-              <div className="flex items-center justify-between text-[11px] text-slate-400 font-bold">
-                <span className="flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5" />
-                  {new Date(selectedNotification.createdAt).toLocaleDateString()} {new Date(selectedNotification.createdAt).toLocaleTimeString()}
+              {/* Timestamp & Read Badge */}
+              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-bold pt-1">
+                <span className="flex items-center gap-1.5">
+                  <Clock className="w-4 h-4 text-indigo-500" />
+                  <span>
+                    {new Date(selectedNotification.createdAt).toLocaleDateString()} {new Date(selectedNotification.createdAt).toLocaleTimeString()}
+                  </span>
                 </span>
-                <span className="px-2 py-0.5 bg-blue-500/10 text-blue-500 rounded-md font-bold uppercase text-[9px]">
+                <span className="px-3 py-1 bg-blue-500/15 text-blue-600 dark:text-blue-400 rounded-lg font-black uppercase text-xs border border-blue-500/20">
                   {isLao ? "ອ່ານແລ້ວ" : "Read"}
                 </span>
+              </div>
+
+              {/* Prominent Bottom Close Button */}
+              <div className="pt-3 border-t border-slate-200/60 dark:border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setSelectedNotification(null)}
+                  className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-slate-800 via-indigo-900 to-slate-900 hover:from-slate-700 hover:to-indigo-800 text-white font-black text-sm sm:text-base shadow-xl shadow-indigo-950/30 hover:scale-[1.01] active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2 border border-indigo-400/30"
+                >
+                  <X className="w-5 h-5 text-amber-300" />
+                  <span>{isLao ? "ປິດໜ້າຕ່າງ" : "Close Window"}</span>
+                </button>
               </div>
             </motion.div>
           </div>
