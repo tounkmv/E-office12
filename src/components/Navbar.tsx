@@ -593,30 +593,28 @@ export default function Navbar({ userProfile, language, setLanguage, onUpdatePro
           </AnimatePresence>
         </div>
 
-        {/* Clickable Admin Settings & User Profile Badge with Upgraded Luxury UI */}
+        {/* Admin Status & User Profile Badge (Static Status Display Only) */}
         {userProfile && (
-          <button 
+          <div 
             id="user-profile-badge" 
-            onClick={() => setShowProfileDrawer(true)}
-            className="flex items-center gap-2.5 sm:gap-3.5 bg-gradient-to-r from-slate-900 via-indigo-950 to-purple-950 hover:from-slate-800 hover:to-indigo-900 px-3 sm:px-4 py-2 rounded-2xl border-2 border-amber-400/80 shadow-[0_0_20px_rgba(251,191,36,0.25)] hover:shadow-[0_0_28px_rgba(251,191,36,0.5)] hover:scale-[1.02] active:scale-95 transition-all duration-300 cursor-pointer text-left group shrink-0 relative overflow-hidden"
-            title={isLao ? "ຄລິກເພື່ອຕັ້ງຄ່າບັນຊີ ແລະ ຂໍ້ມູນຜູ້ດູແລລະບົບ" : "Click to manage admin account & profile settings"}
+            className="flex items-center gap-2.5 sm:gap-3.5 bg-gradient-to-r from-slate-900 via-indigo-950 to-purple-950 px-3 sm:px-4 py-2 rounded-2xl border-2 border-amber-400/80 shadow-[0_0_20px_rgba(251,191,36,0.25)] text-left shrink-0 relative overflow-hidden select-none"
           >
-            <div className="absolute -top-6 -right-6 w-20 h-20 bg-amber-400/15 rounded-full blur-xl pointer-events-none group-hover:bg-amber-400/30 transition-colors" />
+            <div className="absolute -top-6 -right-6 w-20 h-20 bg-amber-400/15 rounded-full blur-xl pointer-events-none" />
             
             <div className="relative shrink-0">
               {userProfile.avatar ? (
                 <img 
                   src={userProfile.avatar} 
                   alt={userProfile.displayName} 
-                  className="w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-full object-cover border-2 border-amber-400 shadow-md shrink-0 group-hover:scale-105 transition-transform duration-300"
+                  className="w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-full object-cover border-2 border-amber-400 shadow-md shrink-0"
                 />
               ) : (
-                <div className="w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white border-2 border-amber-400 flex items-center justify-center font-black text-sm md:text-base shrink-0 shadow-md group-hover:scale-105 transition-transform duration-300">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white border-2 border-amber-400 flex items-center justify-center font-black text-sm md:text-base shrink-0 shadow-md">
                   {userProfile.displayName ? userProfile.displayName.charAt(0).toUpperCase() : <UserIcon className="w-5 h-5" />}
                 </div>
               )}
               {userProfile.role === "admin" && (
-                <span className="absolute -bottom-1 -right-1 w-5 h-5 bg-gradient-to-br from-amber-400 to-orange-500 text-slate-950 rounded-full flex items-center justify-center border-2 border-slate-900 shadow-xs animate-pulse" title="Admin">
+                <span className="absolute -bottom-1 -right-1 w-5 h-5 bg-gradient-to-br from-amber-400 to-orange-500 text-slate-950 rounded-full flex items-center justify-center border-2 border-slate-900 shadow-xs" title={isLao ? "ຜູ້ດູແລລະບົບ" : "Admin"}>
                   <Sliders className="w-2.5 h-2.5 font-bold" />
                 </span>
               )}
@@ -624,12 +622,12 @@ export default function Navbar({ userProfile, language, setLanguage, onUpdatePro
 
             <div className="flex flex-col text-left min-w-0">
               <div className="flex items-center gap-1.5 sm:gap-2">
-                <span className="text-xs sm:text-sm font-black text-white leading-tight truncate max-w-[85px] sm:max-w-[130px] group-hover:text-amber-300 transition-colors">
+                <span className="text-xs sm:text-sm font-black text-amber-300 leading-tight truncate max-w-[85px] sm:max-w-[130px]">
                   {userProfile.displayName || (isLao ? "ຜູ້ໃຊ້ງານ" : "User")}
                 </span>
-                <span className="px-2 py-0.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black text-[9px] sm:text-[10px] uppercase tracking-wider shadow-xs flex items-center gap-1 shrink-0 group-hover:brightness-110">
-                  <Sliders className="w-2.5 h-2.5 sm:w-3 sm:h-3 animate-spin-slow shrink-0" />
-                  <span>{userProfile.role === "admin" ? (isLao ? "ຕັ້ງຄ່າຜູ້ດູແລ" : "Admin") : (isLao ? "ຕັ້ງຄ່າໂປຣຟາຍ" : "Settings")}</span>
+                <span className="px-2 py-0.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black text-[9px] sm:text-[10px] uppercase tracking-wider shadow-xs flex items-center gap-1 shrink-0">
+                  <Sliders className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0" />
+                  <span>{userProfile.role === "admin" ? (isLao ? "ຜູ້ດູແລລະບົບ" : "Admin") : (isLao ? "ຜູ້ໃຊ້ງານ" : "User")}</span>
                 </span>
               </div>
               <span className="text-[10px] sm:text-[11px] text-indigo-200 font-bold tracking-wide mt-0.5 flex items-center gap-1 truncate max-w-[140px] sm:max-w-[180px]">
@@ -637,7 +635,7 @@ export default function Navbar({ userProfile, language, setLanguage, onUpdatePro
                 <span className="truncate">{userProfile.department || (userProfile.role === "admin" ? (isLao ? "ຜູ້ດູແລລະບົບສູງສຸດ" : "System Admin") : userProfile.email)}</span>
               </span>
             </div>
-          </button>
+          </div>
         )}
       </div>
 
