@@ -114,21 +114,6 @@ export default function Sidebar({ activeTab, setActiveTab, language, userRole, o
         })}
       </nav>
 
-      {/* Sleek Footer Cloud Status Indicator */}
-      <div className="px-4 pb-2 relative z-10">
-        <div className="bg-slate-50 dark:bg-slate-900/80 p-4 rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-sm backdrop-blur-md">
-          <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-extrabold mb-1 tracking-widest">
-            Firebase Database
-          </p>
-          <p className="text-xs font-black text-slate-700 dark:text-slate-200">
-            E-office v2.0.4
-          </p>
-          <div className="mt-2.5 flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-400 font-bold">
-            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-sm shadow-emerald-500"></div>
-            <span>Connected to Cloud</span>
-          </div>
-        </div>
-      </div>
 
       {/* Bottom Profile / Sign Out */}
       <div id="sidebar-footer" className="p-4 border-t border-slate-200/80 dark:border-white/10 relative z-10">
