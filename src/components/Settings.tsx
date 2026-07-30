@@ -31,6 +31,7 @@ import { translations } from "../lib/translations";
 import { updateUserProfile, sendAdminTestEmail } from "../lib/firebaseHelper";
 import { db, collection, query, where, getDocs, auth, googleProvider, signInWithPopup, GoogleAuthProvider } from "../lib/firebase";
 import { getGoogleAccessToken, setGoogleAccessToken } from "../lib/gmailHelper";
+import { getSocialNotifyConfig, saveSocialNotifyConfig, SocialNotifyConfig, getWhatsAppShareUrl, getLineShareUrl, sendLineNotifyApi, formatWhatsAppPhone } from "../lib/socialNotifyHelper";
 import { motion, AnimatePresence } from "motion/react";
 
 interface SettingsProps {
@@ -72,6 +73,58 @@ export default function Settings({
   const [showDomainHelpModal, setShowDomainHelpModal] = useState(false);
   const [manualToken, setManualToken] = useState(getGoogleAccessToken() || "");
   const [showTokenInput, setShowTokenInput] = useState(false);
+
+  // WhatsApp & LINE Notification State
+  const [socialConfig, setSocialConfig] = useState<SocialNotifyConfig>(getSocialNotifyConfig());
+  const [waPhoneInput, setWaPhoneInput] = useState(socialConfig.whatsappAdminPhone || "8562055555555");
+  const [lineTokenInput, setLineTokenInput] = useState(socialConfig.lineNotifyToken || "");
+  const [testingLine, setTestingLine] = useState(false);
+
+  const handleSaveSocialConfig = (updated: Partial<SocialNotifyConfig>) => {
+    const newCfg = { ...socialConfig, ...updated };
+    setSocialConfig(newCfg);
+    saveSocialNotifyConfig(newCfg);
+    triggerToast(
+      isLao ? "ບັນທຶກການຕັ້ງຄ່າ WhatsApp & LINE ສຳເລັດ!" : "WhatsApp & LINE settings saved!"
+    );
+  };
+
+  const handleTestWhatsAppAlert = () => {
+    const sampleMsg = `🏛️ *[E-Office ຫ້ອງວ່າການແຂວງຫົວພັນ]*\n📌 *ທົດລອງລະບົບແຈ້ງເຕືອນ WhatsApp ແອດມິນ*\n🏢 *ຫ້ອງປະຊຸມ:* ຫ້ອງປະຊຸມໃຫຍ່ A\n📝 *ຫົວຂໍ້:* ກອງປະຊຸມສະຫຼຸບວຽກງານປະຈຳເດືອນ\n📅 *ວັນທີ:* 2026-08-01\n⏰ *ເວລາ:* 08:30 ຫາ 11:30\n👤 *ຜູ້ຍື່ນຈອງ:* ${userProfile.displayName || "ຄໍາຕຸ່ນ ຄໍາມະວົງ"} (${userProfile.department || "ຫ້ອງວ່າການ"})\n📞 *ເບີໂທ:* ${userProfile.phone || "020 5555 5555"}\n👥 *ຈຳນວນ:* 15 ທ່ານ\n👉 *ເຂົ້າກວດສອບ & ອະນຸມັດ:* ${window.location.origin}`;
+    const url = getWhatsAppShareUrl(waPhoneInput, sampleMsg);
+    window.open(url, "_blank");
+    triggerToast(
+      isLao ? "ເປີດແອັບ WhatsApp ເພື່ອສົ່ງຂໍ້ຄວາມແຈ້ງເຕືອນ..." : "Opening WhatsApp to send notification..."
+    );
+  };
+
+  const handleTestLineAlert = async () => {
+    const sampleMsg = `\n🏛️ [E-Office ຫ້ອງວ່າການແຂວງຫົວພັນ]\n📌 ທົດລອງລະບົບແຈ້ງເຕືອນ LINE ແອດມິນ\n🏢 ຫ້ອງປະຊຸມ: ຫ້ອງປະຊຸມໃຫຍ່ A\n📝 ຫົວຂໍ້: ກອງປະຊຸມສະຫຼຸບວຽກງານປະຈຳເດືອນ\n📅 ວັນທີ: 2026-08-01 (08:30 - 11:30)\n👤 ຜູ້ຍື່ນຈອງ: ${userProfile.displayName || "ຄໍາຕຸ່ນ ຄໍາມະວົງ"}\n👉 ${window.location.origin}`;
+    
+    if (lineTokenInput.trim()) {
+      setTestingLine(true);
+      const res = await sendLineNotifyApi(lineTokenInput.trim(), sampleMsg);
+      setTestingLine(false);
+      if (res.success) {
+        triggerToast(
+          isLao ? "ສົ່ງແຈ້ງເຕືອນຜ່ານ LINE Notify API ໄປຫາແອັບ LINE ໃນມືຖືສຳເລັດ!" : "LINE Notify sent to mobile successfully!"
+        );
+      } else {
+        // Fallback to LINE Share URL if CORS/token invalid
+        const url = getLineShareUrl(sampleMsg);
+        window.open(url, "_blank");
+        triggerToast(
+          isLao ? "ເປີດແອັບ LINE ເພື່ອສົ່ງຂໍ້ຄວາມແຈ້ງເຕືອນ..." : "Opening LINE app to share alert..."
+        );
+      }
+    } else {
+      const url = getLineShareUrl(sampleMsg);
+      window.open(url, "_blank");
+      triggerToast(
+        isLao ? "ເປີດແອັບ LINE ເພື່ອສົ່ງຂໍ້ຄວາມແຈ້ງເຕືອນ..." : "Opening LINE app to share alert..."
+      );
+    }
+  };
 
   useEffect(() => {
     setDisplayName(userProfile.displayName || "");
@@ -673,6 +726,134 @@ export default function Settings({
                 </motion.div>
               )}
             </AnimatePresence>
+          </div>
+
+          {/* WhatsApp & LINE Social Notification Integration Card */}
+          <div id="admin-social-notify-card" className="bg-gradient-to-br from-emerald-950 via-slate-900 to-green-950 p-6 rounded-3xl border-2 border-emerald-500/40 shadow-xl text-white space-y-4 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-400/10 rounded-full blur-2xl pointer-events-none" />
+            
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                  <Send className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="font-black text-sm text-white flex items-center gap-2">
+                    <span>{isLao ? "ລະບົບເຊື່ອມຕໍ່ແຈ້ງເຕືອນ WhatsApp & LINE" : "WhatsApp & LINE Admin Notifications"}</span>
+                  </h4>
+                  <p className="text-[10px] text-emerald-200 font-medium">
+                    {isLao ? "ສົ່ງຂໍ້ຄວາມແຈ້ງເຕືອນການຈອງຫ້ອງປະຊຸມໃໝ່ເຂົ້າແອັບ WhatsApp ແລະ LINE ແອດມິນ" : "Instant booking alert dispatch to Admin WhatsApp & LINE apps"}
+                  </p>
+                </div>
+              </div>
+              
+              <span className="px-2.5 py-1 rounded-full border bg-emerald-500/20 border-emerald-500/40 text-emerald-300 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shadow-xs">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block" />
+                <span>{isLao ? "ພ້ອມໃຊ້ງານ" : "READY"}</span>
+              </span>
+            </div>
+
+            {/* Config Fields */}
+            <div className="space-y-4 bg-white/5 p-4 rounded-2xl border border-white/10 text-xs font-medium">
+              
+              {/* WhatsApp Config */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-slate-200 font-bold flex items-center gap-1.5 text-xs">
+                    <span className="px-1.5 py-0.5 rounded bg-emerald-600 text-white text-[10px] font-black">WhatsApp</span>
+                    <span>{isLao ? "ເບີໂທ WhatsApp ແອດມິນ (Admin WhatsApp Phone):" : "Admin WhatsApp Phone:"}</span>
+                  </label>
+                  <span className="text-[10px] text-emerald-300 font-mono">
+                    Formatted: {formatWhatsAppPhone(waPhoneInput)}
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={waPhoneInput}
+                    onChange={(e) => setWaPhoneInput(e.target.value)}
+                    placeholder="020 5555 5555 ຫຼື 85620..."
+                    className="flex-1 bg-slate-900 border border-emerald-500/30 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-400"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleSaveSocialConfig({ whatsappAdminPhone: waPhoneInput })}
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-2 rounded-xl text-xs cursor-pointer transition-all"
+                  >
+                    {isLao ? "ບັນທຶກເບີ" : "Save Phone"}
+                  </button>
+                </div>
+              </div>
+
+              {/* LINE Config */}
+              <div className="space-y-1.5 pt-2 border-t border-white/10">
+                <div className="flex items-center justify-between">
+                  <label className="text-slate-200 font-bold flex items-center gap-1.5 text-xs">
+                    <span className="px-1.5 py-0.5 rounded bg-green-500 text-white text-[10px] font-black">LINE</span>
+                    <span>{isLao ? "LINE Notify Token (ຫຼື ເປີດແຈ້ງເຕືອນຜ່ານ LINE App):" : "LINE Notify Token / Direct App Alert:"}</span>
+                  </label>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={lineTokenInput}
+                    onChange={(e) => setLineTokenInput(e.target.value)}
+                    placeholder="LINE Notify Access Token (ຖ້າມີ)..."
+                    className="flex-1 bg-slate-900 border border-green-500/30 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-green-400"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleSaveSocialConfig({ lineNotifyToken: lineTokenInput })}
+                    className="bg-green-600 hover:bg-green-500 text-white font-bold px-3 py-2 rounded-xl text-xs cursor-pointer transition-all"
+                  >
+                    {isLao ? "ບັນທຶກ Token" : "Save Token"}
+                  </button>
+                </div>
+                <p className="text-[10px] text-slate-300 italic">
+                  * {isLao ? "ຖ້າບໍ່ມີ LINE Token, ລະບົບຈະເປີດແອັບ LINE ເພື່ອສົ່ງຂໍ້ຄວາມຫາແອດມິນໂດຍກົງ" : "If no token is supplied, system generates a direct LINE share message link."}
+                </p>
+              </div>
+
+              {/* Auto Trigger Checkbox */}
+              <div className="pt-2 border-t border-white/10 flex items-center justify-between">
+                <span className="text-slate-200 text-xs font-bold">
+                  {isLao ? "ເປີດແຈ້ງເຕືອນອັດໂນມັດເມື່ອມີການຈອງຫ້ອງປະຊຸມໃໝ່:" : "Auto alert on new meeting room booking:"}
+                </span>
+                <input
+                  type="checkbox"
+                  checked={socialConfig.autoTriggerOnBooking}
+                  onChange={(e) => handleSaveSocialConfig({ autoTriggerOnBooking: e.target.checked })}
+                  className="w-4 h-4 text-emerald-500 rounded focus:ring-emerald-400 border-white/20 cursor-pointer"
+                />
+              </div>
+
+            </div>
+
+            {/* Test Action Buttons */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={handleTestWhatsAppAlert}
+                className="bg-gradient-to-r from-emerald-600 via-teal-600 to-green-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black py-2.5 px-3 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 hover:scale-[1.01] active:scale-95 transition-all cursor-pointer border border-emerald-400/30"
+              >
+                <Send className="w-4 h-4 text-amber-300 animate-bounce" />
+                <span>{isLao ? "ທົດລອງສົ່ງແຈ້ງເຕືອນ WhatsApp" : "Test WhatsApp Alert"}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleTestLineAlert}
+                disabled={testingLine}
+                className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-700 hover:from-green-500 hover:to-emerald-500 text-white font-black py-2.5 px-3 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-green-600/20 hover:scale-[1.01] active:scale-95 transition-all cursor-pointer border border-green-400/30"
+              >
+                <BellRing className="w-4 h-4 text-amber-300 animate-pulse" />
+                <span>
+                  {testingLine 
+                    ? (isLao ? "ກຳລັງສົ່ງ LINE..." : "Sending LINE...") 
+                    : (isLao ? "ທົດລອງສົ່ງແຈ້ງເຕືອນ LINE" : "Test LINE Alert")}
+                </span>
+              </button>
+            </div>
           </div>
 
         </div>
