@@ -319,6 +319,7 @@ export default function App() {
                 rooms={rooms} 
                 language={language} 
                 setActiveTab={setActiveTab}
+                userRole={userProfile.role}
               />
             )}
 
