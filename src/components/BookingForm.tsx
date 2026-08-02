@@ -333,6 +333,9 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
         if (cfg.lineNotifyToken) {
           sendLineNotifyApi(cfg.lineNotifyToken, formatBookingNotificationMessage(newBooking));
         }
+        if (cfg.whatsappEnabled) {
+          triggerWhatsAppAlert(newBooking);
+        }
       }
 
       showSystemToast(

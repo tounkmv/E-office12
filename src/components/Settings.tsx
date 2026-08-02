@@ -76,7 +76,7 @@ export default function Settings({
 
   // WhatsApp & LINE Notification State
   const [socialConfig, setSocialConfig] = useState<SocialNotifyConfig>(getSocialNotifyConfig());
-  const [waPhoneInput, setWaPhoneInput] = useState(socialConfig.whatsappAdminPhone || "8562055555555");
+  const [waPhoneInput, setWaPhoneInput] = useState(socialConfig.whatsappAdminPhone || "02058590404");
   const [lineTokenInput, setLineTokenInput] = useState(socialConfig.lineNotifyToken || "");
   const [testingLine, setTestingLine] = useState(false);
 
@@ -90,11 +90,12 @@ export default function Settings({
   };
 
   const handleTestWhatsAppAlert = () => {
-    const sampleMsg = `🏛️ *[E-Office ຫ້ອງວ່າການແຂວງຫົວພັນ]*\n📌 *ທົດລອງລະບົບແຈ້ງເຕືອນ WhatsApp ແອດມິນ*\n🏢 *ຫ້ອງປະຊຸມ:* ຫ້ອງປະຊຸມໃຫຍ່ A\n📝 *ຫົວຂໍ້:* ກອງປະຊຸມສະຫຼຸບວຽກງານປະຈຳເດືອນ\n📅 *ວັນທີ:* 2026-08-01\n⏰ *ເວລາ:* 08:30 ຫາ 11:30\n👤 *ຜູ້ຍື່ນຈອງ:* ${userProfile.displayName || "ຄໍາຕຸ່ນ ຄໍາມະວົງ"} (${userProfile.department || "ຫ້ອງວ່າການ"})\n📞 *ເບີໂທ:* ${userProfile.phone || "020 5555 5555"}\n👥 *ຈຳນວນ:* 15 ທ່ານ\n👉 *ເຂົ້າກວດສອບ & ອະນຸມັດ:* ${window.location.origin}`;
-    const url = getWhatsAppShareUrl(waPhoneInput, sampleMsg);
+    const adminPhone = waPhoneInput || socialConfig.whatsappAdminPhone || "02058590404";
+    const sampleMsg = `🏛️ *[E-Office ຫ້ອງວ່າການແຂວງຫົວພັນ]*\n📌 *ທົດລອງລະບົບແຈ້ງເຕືອນ WhatsApp ແອດມິນ*\n🏢 *ຫ້ອງປະຊຸມ:* ຫ້ອງປະຊຸມໃຫຍ່ A\n📝 *ຫົວຂໍ້:* ກອງປະຊຸມສະຫຼຸບວຽກງານປະຈຳເດືອນ\n📅 *ວັນທີ:* 2026-08-01\n⏰ *ເວລາ:* 08:30 ຫາ 11:30\n👤 *ຜູ້ຍື່ນຈອງ:* ${userProfile.displayName || "ຄໍາຕຸ່ນ ຄໍາມະວົງ"} (${userProfile.department || "ຫ້ອງວ່າການ"})\n📞 *ເບີໂທ:* ${userProfile.phone || "020 5859 0404"}\n👥 *ຈຳນວນ:* 15 ທ່ານ\n👉 *ເຂົ້າກວດສອບ & ອະນຸມັດ:* ${window.location.origin}`;
+    const url = getWhatsAppShareUrl(adminPhone, sampleMsg);
     window.open(url, "_blank");
     triggerToast(
-      isLao ? "ເປີດແອັບ WhatsApp ເພື່ອສົ່ງຂໍ້ຄວາມແຈ້ງເຕືອນ..." : "Opening WhatsApp to send notification..."
+      isLao ? `ເປີດແອັບ WhatsApp ເພື່ອສົ່ງຂໍ້ຄວາມແຈ້ງເຕືອນຫາແອດມິນ (${adminPhone})...` : `Opening WhatsApp to send notification to admin (${adminPhone})...`
     );
   };
 
@@ -772,7 +773,7 @@ export default function Settings({
                     type="text"
                     value={waPhoneInput}
                     onChange={(e) => setWaPhoneInput(e.target.value)}
-                    placeholder="020 5555 5555 ຫຼື 85620..."
+                    placeholder="020 5859 0404 ຫຼື 85620..."
                     className="flex-1 bg-slate-900 border border-emerald-500/30 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-400"
                   />
                   <button

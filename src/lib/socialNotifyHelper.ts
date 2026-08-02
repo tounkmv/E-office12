@@ -12,7 +12,7 @@ export interface SocialNotifyConfig {
 
 const DEFAULT_CONFIG: SocialNotifyConfig = {
   whatsappEnabled: true,
-  whatsappAdminPhone: "8562055555555", // Admin Phone
+  whatsappAdminPhone: "02058590404", // Default Admin Phone in system
   lineEnabled: true,
   lineNotifyToken: "",
   autoTriggerOnBooking: true
@@ -22,7 +22,12 @@ export function getSocialNotifyConfig(): SocialNotifyConfig {
   try {
     const stored = localStorage.getItem("eoffice_social_notify_config");
     if (stored) {
-      return { ...DEFAULT_CONFIG, ...JSON.parse(stored) };
+      const parsed = JSON.parse(stored);
+      // Migrate old default test numbers to admin phone 02058590404
+      if (!parsed.whatsappAdminPhone || parsed.whatsappAdminPhone === "8562055555555" || parsed.whatsappAdminPhone === "856205555555") {
+        parsed.whatsappAdminPhone = "02058590404";
+      }
+      return { ...DEFAULT_CONFIG, ...parsed };
     }
   } catch (e) {
     console.error("Failed loading social notify config:", e);
@@ -39,18 +44,21 @@ export function saveSocialNotifyConfig(config: SocialNotifyConfig) {
 }
 
 /**
- * Format clean phone number for WhatsApp API (e.g. 020 5555 5555 -> 8562055555555)
+ * Format clean phone number for WhatsApp API (e.g. 020 5859 0404 -> 8562058590404)
  */
 export function formatWhatsAppPhone(phone: string): string {
+  if (!phone) return "8562058590404";
   let cleaned = phone.replace(/[^\d]/g, "");
   if (cleaned.startsWith("020")) {
     cleaned = "85620" + cleaned.slice(3);
-  } else if (cleaned.startsWith("20") && cleaned.length === 10) {
+  } else if (cleaned.startsWith("20") && (cleaned.length === 10 || cleaned.length === 11)) {
     cleaned = "856" + cleaned;
   } else if (!cleaned.startsWith("856") && cleaned.length === 8) {
     cleaned = "85620" + cleaned;
+  } else if (!cleaned.startsWith("856")) {
+    cleaned = "856" + cleaned;
   }
-  return cleaned;
+  return cleaned || "8562058590404";
 }
 
 /**
@@ -102,7 +110,7 @@ export function getLineShareUrl(text: string): string {
  */
 export function triggerWhatsAppAlert(booking: RoomBooking, customPhone?: string): boolean {
   const config = getSocialNotifyConfig();
-  const phone = customPhone || config.whatsappAdminPhone || "8562055555555";
+  const phone = customPhone || config.whatsappAdminPhone || "02058590404";
   const message = formatBookingNotificationMessage(booking);
   const url = getWhatsAppShareUrl(phone, message);
 
