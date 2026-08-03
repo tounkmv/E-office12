@@ -327,21 +327,16 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
       setSuccess(t.bkSuccessMessage);
       setSubmittedBookingModal(newBooking);
 
-      // Check auto-trigger settings for WhatsApp and LINE
+      // Check auto-trigger settings for LINE background API notify
       const cfg = getSocialNotifyConfig();
-      if (cfg.autoTriggerOnBooking) {
-        if (cfg.lineNotifyToken) {
-          sendLineNotifyApi(cfg.lineNotifyToken, formatBookingNotificationMessage(newBooking));
-        }
-        if (cfg.whatsappEnabled) {
-          triggerWhatsAppAlert(newBooking);
-        }
+      if (cfg.autoTriggerOnBooking && cfg.lineNotifyToken) {
+        sendLineNotifyApi(cfg.lineNotifyToken, formatBookingNotificationMessage(newBooking));
       }
 
       showSystemToast(
         language === "lo" 
-          ? "ຍື່ນຄຳຮ້ອງຈອງຫ້ອງປະຊຸມສຳເລັດແລ້ວ! ລະບົບໄດ້ສົ່ງແຈ້ງເຕືອນຫາ Gmail, WhatsApp & LINE ແອດມິນແລ້ວ" 
-          : "Booking created! Instant notifications sent to Admin Gmail, WhatsApp & LINE.",
+          ? "ຍື່ນຄຳຮ້ອງຈອງຫ້ອງປະຊຸມສຳເລັດແລ້ວ!" 
+          : "Booking created successfully!",
         "success",
         language === "lo" ? "ຈອງສຳເລັດ" : "Booking Created"
       );
@@ -1735,12 +1730,12 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
       {/* Social Notify Confirmation Modal after new Booking Submission */}
       <AnimatePresence>
         {submittedBookingModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
             <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 10 }}
+              initial={{ opacity: 0, scale: 0.9, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 10 }}
-              className="bg-slate-900 border-2 border-emerald-500/50 rounded-3xl p-6 max-w-md w-full text-white shadow-2xl space-y-5 relative overflow-hidden font-sans"
+              exit={{ opacity: 0, scale: 0.9, y: 15 }}
+              className="bg-slate-900/95 border-2 border-emerald-500/40 rounded-3xl p-6 max-w-md w-full text-white shadow-2xl space-y-5 relative overflow-hidden font-sans"
             >
               <button
                 type="button"
@@ -1750,8 +1745,8 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
                 <X className="w-5 h-5" />
               </button>
 
-              <div className="flex items-center gap-3 border-b border-white/10 pb-4">
-                <div className="p-3 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-2xl">
+              <div className="flex items-center gap-3.5 border-b border-white/10 pb-4">
+                <div className="p-3 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-2xl shadow-inner">
                   <CheckCircle className="w-6 h-6" />
                 </div>
                 <div>
@@ -1759,63 +1754,71 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
                     {language === "lo" ? "ຍື່ນຄຳຮ້ອງຈອງຫ້ອງປະຊຸມສຳເລັດ!" : "Booking Request Submitted!"}
                   </h3>
                   <p className="text-[11px] text-slate-300 font-medium">
-                    {language === "lo" ? "ສົ່ງແຈ້ງເຕືອນຫາ Gmail, WhatsApp & LINE ແອດມິນແລ້ວ" : "Notified Admin via Gmail, WhatsApp & LINE"}
+                    {language === "lo" ? "ສົ່ງແຈ້ງເຕືອນຫາ Gmail & WhatsApp ແອດມິນແລ້ວ" : "Notified Admin via Gmail & WhatsApp"}
                   </p>
                 </div>
               </div>
 
               <div className="space-y-2.5 bg-white/5 p-4 rounded-2xl border border-white/10 text-xs">
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                   <span className="text-slate-400 font-medium">🏢 {language === "lo" ? "ຫ້ອງປະຊຸມ:" : "Room:"}</span>
                   <span className="font-bold text-white">{submittedBookingModal.roomName}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                   <span className="text-slate-400 font-medium">📝 {language === "lo" ? "ຫົວຂໍ້:" : "Title:"}</span>
                   <span className="font-bold text-amber-300 line-clamp-1">{submittedBookingModal.title}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                   <span className="text-slate-400 font-medium">📅 {language === "lo" ? "ວັນທີ & ເວລາ:" : "Date & Time:"}</span>
                   <span className="font-bold text-emerald-400">{submittedBookingModal.date} ({submittedBookingModal.startTime} - {submittedBookingModal.endTime})</span>
                 </div>
-                <div className="flex justify-between pt-1 border-t border-white/5">
+                <div className="flex justify-between items-center pt-2 border-t border-white/5">
                   <span className="text-slate-400 font-medium">👤 {language === "lo" ? "ຜູ້ດູແລລະບົບ (Admin):" : "Admin Email:"}</span>
                   <span className="font-mono text-indigo-300 font-bold">tounkmv99@gmail.com</span>
                 </div>
               </div>
 
-              <div className="space-y-2 pt-1">
+              {/* WhatsApp Contact Selection */}
+              <div className="space-y-2.5 pt-1">
                 <p className="text-[11px] font-bold text-slate-300">
-                  {language === "lo" ? "ເລືອກຊ່ອງທາງສົ່ງຂໍ້ຄວາມແຈ້ງເຕືອນດ່ວນຫາແອດມິນ:" : "Instant notification dispatch to Admin:"}
+                  {language === "lo" 
+                    ? "ເລືອກຊ່ອງທາງຕິດຕໍ່ຫາແອດມິນຜ່ານ WhatsApp (ລີ້ງຫາ WhatsApp Web / App):" 
+                    : "Select contact channel via WhatsApp:"}
                 </p>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  <button
-                    type="button"
-                    onClick={() => triggerWhatsAppAlert(submittedBookingModal)}
-                    className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black py-2.5 px-3 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 cursor-pointer border border-emerald-400/30"
-                  >
-                    <MessageSquare className="w-4 h-4 text-amber-300" />
-                    <span>{language === "lo" ? "ສົ່ງແຈ້ງເຕືອນ WhatsApp" : "Send WhatsApp Alert"}</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => triggerLineAlert(submittedBookingModal)}
-                    className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-black py-2.5 px-3 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-green-600/20 cursor-pointer border border-green-400/30"
-                  >
-                    <Clock className="w-4 h-4 text-amber-300" />
-                    <span>{language === "lo" ? "ສົ່ງແຈ້ງເຕືອນ LINE" : "Send LINE Alert"}</span>
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => triggerWhatsAppAlert(submittedBookingModal)}
+                  className="w-full bg-gradient-to-r from-emerald-600 via-teal-600 to-green-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black py-3 px-4 rounded-2xl text-xs flex items-center justify-center gap-2.5 shadow-lg shadow-emerald-600/20 cursor-pointer border border-emerald-400/40 hover:scale-[1.01] active:scale-98 transition-all"
+                >
+                  <MessageSquare className="w-4 h-4 text-amber-300 animate-bounce" />
+                  <span>{language === "lo" ? "ຕິດຕໍ່ແຈ້ງເຕືອນຜ່ານ WhatsApp Web / App" : "Contact via WhatsApp Web / App"}</span>
+                </button>
               </div>
 
-              <div className="pt-2 text-right">
+              {/* Modal Action Buttons: Contact Admin Later & Close */}
+              <div className="pt-2 flex items-center justify-end gap-2.5 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSubmittedBookingModal(null);
+                    showSystemToast(
+                      language === "lo" ? "ທ່ານສາມາດຕິດຕໍ່ຫາແອດມິນໄດ້ໃນພາຍຫຼັງຜ່ານເມນູການຈອງ" : "You can contact the admin later",
+                      "info",
+                      language === "lo" ? "ຕິດຕໍ່ພາຍຫຼັງ" : "Contact Later"
+                    );
+                  }}
+                  className="bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white font-bold py-2.5 px-4 rounded-xl text-xs border border-white/15 transition-all cursor-pointer"
+                >
+                  {language === "lo" ? "ຕິດຕໍ່ຫາແອັດມິນພາຍຫຼັງ" : "Contact Admin Later"}
+                </button>
+
                 <button
                   type="button"
                   onClick={() => setSubmittedBookingModal(null)}
-                  className="bg-white/10 hover:bg-white/20 text-white font-bold py-2 px-5 rounded-xl text-xs cursor-pointer"
+                  className="bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-bold py-2.5 px-4 rounded-xl text-xs border border-slate-600/80 transition-all cursor-pointer"
                 >
-                  {language === "lo" ? "ຕິດອະນຸມັດ ແລະ ປິດ" : "Close"}
+                  {language === "lo" ? "ປິດ" : "Close"}
                 </button>
               </div>
             </motion.div>
