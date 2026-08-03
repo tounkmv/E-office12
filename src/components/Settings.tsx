@@ -593,269 +593,274 @@ export default function Settings({
             </div>
           </div>
 
-          {/* Admin Gmail Notification Active Integration Card */}
-          <div id="admin-gmail-card" className="bg-gradient-to-br from-indigo-900/90 via-slate-900 to-indigo-950 p-6 rounded-3xl border-2 border-indigo-500/40 shadow-xl text-white space-y-4 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-48 h-48 bg-amber-400/10 rounded-full blur-2xl pointer-events-none" />
-            
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-red-500/20 text-red-400 border border-red-500/30">
-                  <Mail className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="font-black text-sm text-white flex items-center gap-2">
-                    <span>{isLao ? "ລະບົບເຊື່ອມຕໍ່ການແຈ້ງເຕືອນ Gmail ແອັດມິນ" : "Admin Gmail Notification Alert"}</span>
-                  </h4>
-                  <p className="text-[10px] text-indigo-200 font-medium">
-                    {isLao ? "ສົ່ງອີເມວແຈ້ງເຕືອນແທ້ຜ່ານ Google Gmail API ໄປຫາແອັບ Gmail ໃນມືຖື" : "Sends real emails via Google Gmail API directly to smartphone app"}
-                  </p>
-                </div>
-              </div>
-              
-              <span className={`px-2.5 py-1 rounded-full border text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shadow-xs ${
-                getGoogleAccessToken()
-                  ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-300"
-                  : "bg-amber-500/20 border-amber-500/40 text-amber-300"
-              }`}>
-                <span className={`w-2 h-2 rounded-full inline-block ${getGoogleAccessToken() ? "bg-emerald-400 animate-ping" : "bg-amber-400"}`} />
-                <span>{getGoogleAccessToken() ? (isLao ? "Gmail API ເຊື່ອມຕໍ່ແລ້ວ" : "GMAIL API ACTIVE") : (isLao ? "ກຳລັງລໍຖ້າ OAuth Token" : "NEEDS AUTH")}</span>
-              </span>
-            </div>
-
-            <div className="space-y-3 bg-white/5 p-4 rounded-2xl border border-white/10 text-xs font-medium">
-              <div className="flex items-center justify-between">
-                <span className="text-slate-300">{isLao ? "ຜູ້ດູແລລະບົບ (Admin Name):" : "Admin Name:"}</span>
-                <span className="font-black text-amber-300">ຄໍາຕຸ່ນ ຄໍາມະວົງ</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-300">{isLao ? "ອີເມວ Gmail ແອດມິນ:" : "Admin Gmail:"}</span>
-                <span className="font-mono font-black text-emerald-400">tounkmv99@gmail.com</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-300">{isLao ? "ເງື່ອນໄຂການແຈ້ງເຕືອນ:" : "Trigger Condition:"}</span>
-                <span className="font-bold text-white bg-indigo-500/30 px-2 py-0.5 rounded-md text-[11px]">
-                  {isLao ? "ເມື່ອມີການຍື່ນຈອງຫ້ອງປະຊຸມເຂົ້າມາໃໝ່" : "On New Meeting Room Booking"}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-300">{isLao ? "ຂອບເຂດສິດ OAuth Scope:" : "OAuth Scope:"}</span>
-                <span className="font-mono text-[10px] text-amber-300 bg-black/40 px-2 py-0.5 rounded">
-                  gmail.send (Google Workspace API)
-                </span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
-              <button
-                type="button"
-                onClick={handleConnectGoogleGmail}
-                className="bg-white/10 hover:bg-white/20 text-white font-black py-2.5 px-3 rounded-2xl text-xs flex items-center justify-center gap-2 border border-white/20 cursor-pointer transition-all"
-              >
-                <Key className="w-4 h-4 text-amber-400" />
-                <span>{isLao ? "ເຊື່ອມຕໍ່ / ຢືນຢັນສິດ Google OAuth" : "Connect / Authorize Google OAuth"}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleTestGmailAlert}
-                disabled={sendingTestEmail}
-                className="bg-gradient-to-r from-red-600 via-rose-600 to-red-700 hover:from-red-500 hover:to-rose-600 text-white font-black py-2.5 px-3 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-red-600/20 hover:scale-[1.01] active:scale-95 transition-all cursor-pointer border border-red-400/30"
-              >
-                <Send className="w-4 h-4 text-amber-300 animate-bounce" />
-                <span>
-                  {sendingTestEmail 
-                    ? (isLao ? "ກຳລັງສົ່ງອີເມວແທ້..." : "Sending Real Email...") 
-                    : (isLao ? "ທົດລອງສົ່ງອີເມວຫາ tounkmv99@gmail.com" : "Test Real Email to tounkmv99@gmail.com")}
-                </span>
-              </button>
-            </div>
-
-            {/* Sub-tools for Domain Authorization Help and Manual Token Entry */}
-            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/10 text-[11px]">
-              <button
-                type="button"
-                onClick={() => setShowDomainHelpModal(true)}
-                className="text-amber-300 hover:text-amber-200 underline font-bold flex items-center gap-1 cursor-pointer"
-              >
-                <HelpCircle className="w-3.5 h-3.5" />
-                <span>{isLao ? "ວິທີແກ້ໄຂ Firebase: auth/unauthorized-domain" : "Fix Firebase auth/unauthorized-domain"}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setShowTokenInput(!showTokenInput)}
-                className="text-slate-300 hover:text-white font-medium flex items-center gap-1 cursor-pointer"
-              >
-                <Key className="w-3.5 h-3.5 text-indigo-400" />
-                <span>{showTokenInput ? (isLao ? "ຊ່ອນຊ່ອງປ້ອນ Token" : "Hide Token Input") : (isLao ? "ປ້ອນ Access Token ໂດຍທົ່ງ" : "Enter Token Manually")}</span>
-              </button>
-            </div>
-
-            {/* Manual OAuth Token Input Panel */}
-            <AnimatePresence>
-              {showTokenInput && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="bg-black/40 p-3.5 rounded-2xl border border-white/10 space-y-2"
-                >
-                  <label className="block text-[11px] font-bold text-slate-300">
-                    {isLao ? "Google OAuth Access Token (ສຳລັບ Gmail API):" : "Google OAuth Access Token:"}
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={manualToken}
-                      onChange={(e) => setManualToken(e.target.value)}
-                      placeholder="ya29.a0A..."
-                      className="flex-1 bg-slate-900 border border-white/20 rounded-xl px-3 py-1.5 text-xs text-amber-300 font-mono focus:outline-none focus:border-amber-400"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleSaveManualToken}
-                      className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3 py-1.5 rounded-xl text-xs cursor-pointer"
-                    >
-                      {isLao ? "ບັນທຶກ" : "Save"}
-                    </button>
+          {/* Admin Gmail & Social Notification Integration Cards (Only visible to Admin) */}
+          {userProfile.role === "admin" && (
+            <>
+              {/* Admin Gmail Notification Active Integration Card */}
+              <div id="admin-gmail-card" className="bg-gradient-to-br from-indigo-900/90 via-slate-900 to-indigo-950 p-6 rounded-3xl border-2 border-indigo-500/40 shadow-xl text-white space-y-4 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-48 h-48 bg-amber-400/10 rounded-full blur-2xl pointer-events-none" />
+                
+                <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 rounded-xl bg-red-500/20 text-red-400 border border-red-500/30">
+                      <Mail className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h4 className="font-black text-sm text-white flex items-center gap-2">
+                        <span>{isLao ? "ລະບົບເຊື່ອມຕໍ່ການແຈ້ງເຕືອນ Gmail ແອັດມິນ" : "Admin Gmail Notification Alert"}</span>
+                      </h4>
+                      <p className="text-[10px] text-indigo-200 font-medium">
+                        {isLao ? "ສົ່ງອີເມວແຈ້ງເຕືອນແທ້ຜ່ານ Google Gmail API ໄປຫາແອັບ Gmail ໃນມືຖື" : "Sends real emails via Google Gmail API directly to smartphone app"}
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-[10px] text-slate-400">
-                    {isLao 
-                      ? "ສາມາດໃຊ້ Token ຈາກ Google OAuth Playground ເພື່ອສົ່ງອີເມວໂດຍກົງໄດ້" 
-                      : "You can paste an access token from Google OAuth Playground to test sending directly."}
-                  </p>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* WhatsApp & LINE Social Notification Integration Card */}
-          <div id="admin-social-notify-card" className="bg-gradient-to-br from-emerald-950 via-slate-900 to-green-950 p-6 rounded-3xl border-2 border-emerald-500/40 shadow-xl text-white space-y-4 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-400/10 rounded-full blur-2xl pointer-events-none" />
-            
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                  <Send className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="font-black text-sm text-white flex items-center gap-2">
-                    <span>{isLao ? "ລະບົບເຊື່ອມຕໍ່ແຈ້ງເຕືອນ WhatsApp & LINE" : "WhatsApp & LINE Admin Notifications"}</span>
-                  </h4>
-                  <p className="text-[10px] text-emerald-200 font-medium">
-                    {isLao ? "ສົ່ງຂໍ້ຄວາມແຈ້ງເຕືອນການຈອງຫ້ອງປະຊຸມໃໝ່ເຂົ້າແອັບ WhatsApp ແລະ LINE ແອດມິນ" : "Instant booking alert dispatch to Admin WhatsApp & LINE apps"}
-                  </p>
-                </div>
-              </div>
-              
-              <span className="px-2.5 py-1 rounded-full border bg-emerald-500/20 border-emerald-500/40 text-emerald-300 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shadow-xs">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block" />
-                <span>{isLao ? "ພ້ອມໃຊ້ງານ" : "READY"}</span>
-              </span>
-            </div>
-
-            {/* Config Fields */}
-            <div className="space-y-4 bg-white/5 p-4 rounded-2xl border border-white/10 text-xs font-medium">
-              
-              {/* WhatsApp Config */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-slate-200 font-bold flex items-center gap-1.5 text-xs">
-                    <span className="px-1.5 py-0.5 rounded bg-emerald-600 text-white text-[10px] font-black">WhatsApp</span>
-                    <span>{isLao ? "ເບີໂທ WhatsApp ແອດມິນ (Admin WhatsApp Phone):" : "Admin WhatsApp Phone:"}</span>
-                  </label>
-                  <span className="text-[10px] text-emerald-300 font-mono">
-                    Formatted: {formatWhatsAppPhone(waPhoneInput)}
+                  
+                  <span className={`px-2.5 py-1 rounded-full border text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shadow-xs ${
+                    getGoogleAccessToken()
+                      ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-300"
+                      : "bg-amber-500/20 border-amber-500/40 text-amber-300"
+                  }`}>
+                    <span className={`w-2 h-2 rounded-full inline-block ${getGoogleAccessToken() ? "bg-emerald-400 animate-ping" : "bg-amber-400"}`} />
+                    <span>{getGoogleAccessToken() ? (isLao ? "Gmail API ເຊື່ອມຕໍ່ແລ້ວ" : "GMAIL API ACTIVE") : (isLao ? "ກຳລັງລໍຖ້າ OAuth Token" : "NEEDS AUTH")}</span>
                   </span>
                 </div>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={waPhoneInput}
-                    onChange={(e) => setWaPhoneInput(e.target.value)}
-                    placeholder="020 5859 0404 ຫຼື 85620..."
-                    className="flex-1 bg-slate-900 border border-emerald-500/30 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-400"
-                  />
+
+                <div className="space-y-3 bg-white/5 p-4 rounded-2xl border border-white/10 text-xs font-medium">
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-300">{isLao ? "ຜູ້ດູແລລະບົບ (Admin Name):" : "Admin Name:"}</span>
+                    <span className="font-black text-amber-300">ຄໍາຕຸ່ນ ຄໍາມະວົງ</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-300">{isLao ? "ອີເມວ Gmail ແອດມິນ:" : "Admin Gmail:"}</span>
+                    <span className="font-mono font-black text-emerald-400">tounkmv99@gmail.com</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-300">{isLao ? "ເງື່ອນໄຂການແຈ້ງເຕືອນ:" : "Trigger Condition:"}</span>
+                    <span className="font-bold text-white bg-indigo-500/30 px-2 py-0.5 rounded-md text-[11px]">
+                      {isLao ? "ເມື່ອມີການຍື່ນຈອງຫ້ອງປະຊຸມເຂົ້າມາໃໝ່" : "On New Meeting Room Booking"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-300">{isLao ? "ຂອບເຂດສິດ OAuth Scope:" : "OAuth Scope:"}</span>
+                    <span className="font-mono text-[10px] text-amber-300 bg-black/40 px-2 py-0.5 rounded">
+                      gmail.send (Google Workspace API)
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
                   <button
                     type="button"
-                    onClick={() => handleSaveSocialConfig({ whatsappAdminPhone: waPhoneInput })}
-                    className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-2 rounded-xl text-xs cursor-pointer transition-all"
+                    onClick={handleConnectGoogleGmail}
+                    className="bg-white/10 hover:bg-white/20 text-white font-black py-2.5 px-3 rounded-2xl text-xs flex items-center justify-center gap-2 border border-white/20 cursor-pointer transition-all"
                   >
-                    {isLao ? "ບັນທຶກເບີ" : "Save Phone"}
+                    <Key className="w-4 h-4 text-amber-400" />
+                    <span>{isLao ? "ເຊື່ອມຕໍ່ / ຢືນຢັນສິດ Google OAuth" : "Connect / Authorize Google OAuth"}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleTestGmailAlert}
+                    disabled={sendingTestEmail}
+                    className="bg-gradient-to-r from-red-600 via-rose-600 to-red-700 hover:from-red-500 hover:to-rose-600 text-white font-black py-2.5 px-3 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-red-600/20 hover:scale-[1.01] active:scale-95 transition-all cursor-pointer border border-red-400/30"
+                  >
+                    <Send className="w-4 h-4 text-amber-300 animate-bounce" />
+                    <span>
+                      {sendingTestEmail 
+                        ? (isLao ? "ກຳລັງສົ່ງອີເມວແທ້..." : "Sending Real Email...") 
+                        : (isLao ? "ທົດລອງສົ່ງອີເມວຫາ tounkmv99@gmail.com" : "Test Real Email to tounkmv99@gmail.com")}
+                    </span>
+                  </button>
+                </div>
+
+                {/* Sub-tools for Domain Authorization Help and Manual Token Entry */}
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/10 text-[11px]">
+                  <button
+                    type="button"
+                    onClick={() => setShowDomainHelpModal(true)}
+                    className="text-amber-300 hover:text-amber-200 underline font-bold flex items-center gap-1 cursor-pointer"
+                  >
+                    <HelpCircle className="w-3.5 h-3.5" />
+                    <span>{isLao ? "ວິທີແກ້ໄຂ Firebase: auth/unauthorized-domain" : "Fix Firebase auth/unauthorized-domain"}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowTokenInput(!showTokenInput)}
+                    className="text-slate-300 hover:text-white font-medium flex items-center gap-1 cursor-pointer"
+                  >
+                    <Key className="w-3.5 h-3.5 text-indigo-400" />
+                    <span>{showTokenInput ? (isLao ? "ຊ່ອນຊ່ອງປ້ອນ Token" : "Hide Token Input") : (isLao ? "ປ້ອນ Access Token ໂດຍທົ່ງ" : "Enter Token Manually")}</span>
+                  </button>
+                </div>
+
+                {/* Manual OAuth Token Input Panel */}
+                <AnimatePresence>
+                  {showTokenInput && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="bg-black/40 p-3.5 rounded-2xl border border-white/10 space-y-2"
+                    >
+                      <label className="block text-[11px] font-bold text-slate-300">
+                        {isLao ? "Google OAuth Access Token (ສຳລັບ Gmail API):" : "Google OAuth Access Token:"}
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={manualToken}
+                          onChange={(e) => setManualToken(e.target.value)}
+                          placeholder="ya29.a0A..."
+                          className="flex-1 bg-slate-900 border border-white/20 rounded-xl px-3 py-1.5 text-xs text-amber-300 font-mono focus:outline-none focus:border-amber-400"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleSaveManualToken}
+                          className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3 py-1.5 rounded-xl text-xs cursor-pointer"
+                        >
+                          {isLao ? "ບັນທຶກ" : "Save"}
+                        </button>
+                      </div>
+                      <p className="text-[10px] text-slate-400">
+                        {isLao 
+                          ? "ສາມາດໃຊ້ Token ຈາກ Google OAuth Playground ເພື່ອສົ່ງອີເມວໂດຍກົງໄດ້" 
+                          : "You can paste an access token from Google OAuth Playground to test sending directly."}
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* WhatsApp & LINE Social Notification Integration Card */}
+              <div id="admin-social-notify-card" className="bg-gradient-to-br from-emerald-950 via-slate-900 to-green-950 p-6 rounded-3xl border-2 border-emerald-500/40 shadow-xl text-white space-y-4 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-400/10 rounded-full blur-2xl pointer-events-none" />
+                
+                <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                      <Send className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h4 className="font-black text-sm text-white flex items-center gap-2">
+                        <span>{isLao ? "ລະບົບເຊື່ອມຕໍ່ແຈ້ງເຕືອນ WhatsApp & LINE" : "WhatsApp & LINE Admin Notifications"}</span>
+                      </h4>
+                      <p className="text-[10px] text-emerald-200 font-medium">
+                        {isLao ? "ສົ່ງຂໍ້ຄວາມແຈ້ງເຕືອນການຈອງຫ້ອງປະຊຸມໃໝ່ເຂົ້າແອັບ WhatsApp ແລະ LINE ແອດມິນ" : "Instant booking alert dispatch to Admin WhatsApp & LINE apps"}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <span className="px-2.5 py-1 rounded-full border bg-emerald-500/20 border-emerald-500/40 text-emerald-300 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shadow-xs">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block" />
+                    <span>{isLao ? "ພ້ອມໃຊ້ງານ" : "READY"}</span>
+                  </span>
+                </div>
+
+                {/* Config Fields */}
+                <div className="space-y-4 bg-white/5 p-4 rounded-2xl border border-white/10 text-xs font-medium">
+                  
+                  {/* WhatsApp Config */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-slate-200 font-bold flex items-center gap-1.5 text-xs">
+                        <span className="px-1.5 py-0.5 rounded bg-emerald-600 text-white text-[10px] font-black">WhatsApp</span>
+                        <span>{isLao ? "ເບີໂທ WhatsApp ແອດມິນ (Admin WhatsApp Phone):" : "Admin WhatsApp Phone:"}</span>
+                      </label>
+                      <span className="text-[10px] text-emerald-300 font-mono">
+                        Formatted: {formatWhatsAppPhone(waPhoneInput)}
+                      </span>
+                    </div>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={waPhoneInput}
+                        onChange={(e) => setWaPhoneInput(e.target.value)}
+                        placeholder="020 5859 0404 ຫຼື 85620..."
+                        className="flex-1 bg-slate-900 border border-emerald-500/30 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-400"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleSaveSocialConfig({ whatsappAdminPhone: waPhoneInput })}
+                        className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-2 rounded-xl text-xs cursor-pointer transition-all"
+                      >
+                        {isLao ? "ບັນທຶກເບີ" : "Save Phone"}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* LINE Config */}
+                  <div className="space-y-1.5 pt-2 border-t border-white/10">
+                    <div className="flex items-center justify-between">
+                      <label className="text-slate-200 font-bold flex items-center gap-1.5 text-xs">
+                        <span className="px-1.5 py-0.5 rounded bg-green-500 text-white text-[10px] font-black">LINE</span>
+                        <span>{isLao ? "LINE Notify Token (ຫຼື ເປີດແຈ້ງເຕືອນຜ່ານ LINE App):" : "LINE Notify Token / Direct App Alert:"}</span>
+                      </label>
+                    </div>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={lineTokenInput}
+                        onChange={(e) => setLineTokenInput(e.target.value)}
+                        placeholder="LINE Notify Access Token (ຖ້າມີ)..."
+                        className="flex-1 bg-slate-900 border border-green-500/30 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-green-400"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleSaveSocialConfig({ lineNotifyToken: lineTokenInput })}
+                        className="bg-green-600 hover:bg-green-500 text-white font-bold px-3 py-2 rounded-xl text-xs cursor-pointer transition-all"
+                      >
+                        {isLao ? "ບັນທຶກ Token" : "Save Token"}
+                      </button>
+                    </div>
+                    <p className="text-[10px] text-slate-300 italic">
+                      * {isLao ? "ຖ້າບໍ່ມີ LINE Token, ລະບົບຈະເປີດແອັບ LINE ເພື່ອສົ່ງຂໍ້ຄວາມຫາແອດມິນໂດຍກົງ" : "If no token is supplied, system generates a direct LINE share message link."}
+                    </p>
+                  </div>
+
+                  {/* Auto Trigger Checkbox */}
+                  <div className="pt-2 border-t border-white/10 flex items-center justify-between">
+                    <span className="text-slate-200 text-xs font-bold">
+                      {isLao ? "ເປີດແຈ້ງເຕືອນອັດໂນມັດເມື່ອມີການຈອງຫ້ອງປະຊຸມໃໝ່:" : "Auto alert on new meeting room booking:"}
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={socialConfig.autoTriggerOnBooking}
+                      onChange={(e) => handleSaveSocialConfig({ autoTriggerOnBooking: e.target.checked })}
+                      className="w-4 h-4 text-emerald-500 rounded focus:ring-emerald-400 border-white/20 cursor-pointer"
+                    />
+                  </div>
+
+                </div>
+
+                {/* Test Action Buttons */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2">
+                  <button
+                    type="button"
+                    onClick={handleTestWhatsAppAlert}
+                    className="bg-gradient-to-r from-emerald-600 via-teal-600 to-green-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black py-2.5 px-3 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 hover:scale-[1.01] active:scale-95 transition-all cursor-pointer border border-emerald-400/30"
+                  >
+                    <Send className="w-4 h-4 text-amber-300 animate-bounce" />
+                    <span>{isLao ? "ທົດລອງສົ່ງແຈ້ງເຕືອນ WhatsApp" : "Test WhatsApp Alert"}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleTestLineAlert}
+                    disabled={testingLine}
+                    className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-700 hover:from-green-500 hover:to-emerald-500 text-white font-black py-2.5 px-3 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-green-600/20 hover:scale-[1.01] active:scale-95 transition-all cursor-pointer border border-green-400/30"
+                  >
+                    <BellRing className="w-4 h-4 text-amber-300 animate-pulse" />
+                    <span>
+                      {testingLine 
+                        ? (isLao ? "ກຳລັງສົ່ງ LINE..." : "Sending LINE...") 
+                        : (isLao ? "ທົດລອງສົ່ງແຈ້ງເຕືອນ LINE" : "Test LINE Alert")}
+                    </span>
                   </button>
                 </div>
               </div>
-
-              {/* LINE Config */}
-              <div className="space-y-1.5 pt-2 border-t border-white/10">
-                <div className="flex items-center justify-between">
-                  <label className="text-slate-200 font-bold flex items-center gap-1.5 text-xs">
-                    <span className="px-1.5 py-0.5 rounded bg-green-500 text-white text-[10px] font-black">LINE</span>
-                    <span>{isLao ? "LINE Notify Token (ຫຼື ເປີດແຈ້ງເຕືອນຜ່ານ LINE App):" : "LINE Notify Token / Direct App Alert:"}</span>
-                  </label>
-                </div>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={lineTokenInput}
-                    onChange={(e) => setLineTokenInput(e.target.value)}
-                    placeholder="LINE Notify Access Token (ຖ້າມີ)..."
-                    className="flex-1 bg-slate-900 border border-green-500/30 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-green-400"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleSaveSocialConfig({ lineNotifyToken: lineTokenInput })}
-                    className="bg-green-600 hover:bg-green-500 text-white font-bold px-3 py-2 rounded-xl text-xs cursor-pointer transition-all"
-                  >
-                    {isLao ? "ບັນທຶກ Token" : "Save Token"}
-                  </button>
-                </div>
-                <p className="text-[10px] text-slate-300 italic">
-                  * {isLao ? "ຖ້າບໍ່ມີ LINE Token, ລະບົບຈະເປີດແອັບ LINE ເພື່ອສົ່ງຂໍ້ຄວາມຫາແອດມິນໂດຍກົງ" : "If no token is supplied, system generates a direct LINE share message link."}
-                </p>
-              </div>
-
-              {/* Auto Trigger Checkbox */}
-              <div className="pt-2 border-t border-white/10 flex items-center justify-between">
-                <span className="text-slate-200 text-xs font-bold">
-                  {isLao ? "ເປີດແຈ້ງເຕືອນອັດໂນມັດເມື່ອມີການຈອງຫ້ອງປະຊຸມໃໝ່:" : "Auto alert on new meeting room booking:"}
-                </span>
-                <input
-                  type="checkbox"
-                  checked={socialConfig.autoTriggerOnBooking}
-                  onChange={(e) => handleSaveSocialConfig({ autoTriggerOnBooking: e.target.checked })}
-                  className="w-4 h-4 text-emerald-500 rounded focus:ring-emerald-400 border-white/20 cursor-pointer"
-                />
-              </div>
-
-            </div>
-
-            {/* Test Action Buttons */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2">
-              <button
-                type="button"
-                onClick={handleTestWhatsAppAlert}
-                className="bg-gradient-to-r from-emerald-600 via-teal-600 to-green-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black py-2.5 px-3 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 hover:scale-[1.01] active:scale-95 transition-all cursor-pointer border border-emerald-400/30"
-              >
-                <Send className="w-4 h-4 text-amber-300 animate-bounce" />
-                <span>{isLao ? "ທົດລອງສົ່ງແຈ້ງເຕືອນ WhatsApp" : "Test WhatsApp Alert"}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleTestLineAlert}
-                disabled={testingLine}
-                className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-700 hover:from-green-500 hover:to-emerald-500 text-white font-black py-2.5 px-3 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-green-600/20 hover:scale-[1.01] active:scale-95 transition-all cursor-pointer border border-green-400/30"
-              >
-                <BellRing className="w-4 h-4 text-amber-300 animate-pulse" />
-                <span>
-                  {testingLine 
-                    ? (isLao ? "ກຳລັງສົ່ງ LINE..." : "Sending LINE...") 
-                    : (isLao ? "ທົດລອງສົ່ງແຈ້ງເຕືອນ LINE" : "Test LINE Alert")}
-                </span>
-              </button>
-            </div>
-          </div>
+            </>
+          )}
 
         </div>
 
