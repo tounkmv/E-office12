@@ -349,7 +349,7 @@ export default function App() {
               />
             )}
 
-            {activeTab === "reports" && (
+            {activeTab === "reports" && userProfile.role === "admin" && (
               <ReportSystem 
                 bookings={bookings}
                 rooms={rooms}

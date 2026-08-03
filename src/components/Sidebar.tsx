@@ -40,9 +40,7 @@ export default function Sidebar({ activeTab, setActiveTab, language, userRole, o
       { id: "admin-bookings", label: t.navAdminBookings || (language === "lo" ? "ສູນຄວບຄຸມ ແລະ ການຈັດການຈອງທັງໝົດ" : "Control Center & Bookings"), icon: ShieldCheck },
       { id: "reports", label: t.navReports || "ລະບົບລາຍງານ", icon: FileSpreadsheet },
       { id: "users", label: t.navUsers, icon: Users }
-    ] : [
-      { id: "reports", label: t.navReports || "ລະບົບລາຍງານ", icon: FileSpreadsheet }
-    ]),
+    ] : []),
     { id: "settings", label: t.navSettings, icon: SettingsIcon }
   ];
 
