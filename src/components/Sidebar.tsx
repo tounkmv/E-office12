@@ -6,6 +6,7 @@ import {
   FolderKanban, 
   FileSpreadsheet,
   Users, 
+  ShieldCheck,
   Settings as SettingsIcon,
   LogOut,
   Building2,
@@ -36,6 +37,7 @@ export default function Sidebar({ activeTab, setActiveTab, language, userRole, o
     { id: "booking", label: t.navBooking, icon: CalendarClock },
     ...(userRole === "admin" ? [
       { id: "rooms", label: t.navRooms, icon: FolderKanban },
+      { id: "admin-bookings", label: t.navAdminBookings || (language === "lo" ? "ສູນຄວບຄຸມ ແລະ ການຈັດການຈອງທັງໝົດ" : "Control Center & Bookings"), icon: ShieldCheck },
       { id: "reports", label: t.navReports || "ລະບົບລາຍງານ", icon: FileSpreadsheet },
       { id: "users", label: t.navUsers, icon: Users }
     ] : [

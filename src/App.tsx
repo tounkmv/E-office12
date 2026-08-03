@@ -16,6 +16,7 @@ import Dashboard from "./components/Dashboard";
 import BookingForm from "./components/BookingForm";
 import RoomManagement from "./components/RoomManagement";
 import UserManagement from "./components/UserManagement";
+import AdminBookings from "./components/AdminBookings";
 import ReportSystem from "./components/ReportSystem";
 import Settings from "./components/Settings";
 import ToastContainer from "./components/ToastContainer";
@@ -335,6 +336,15 @@ export default function App() {
             {activeTab === "rooms" && userProfile.role === "admin" && (
               <RoomManagement 
                 rooms={rooms} 
+                language={language}
+              />
+            )}
+
+            {activeTab === "admin-bookings" && userProfile.role === "admin" && (
+              <AdminBookings 
+                rooms={rooms} 
+                bookings={bookings} 
+                userProfile={userProfile} 
                 language={language}
               />
             )}

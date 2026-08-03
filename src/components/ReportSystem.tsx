@@ -877,7 +877,7 @@ export default function ReportSystem({ bookings, rooms, language }: ReportSystem
                 <p className="text-base font-extrabold mt-1">{rTotal} ລາຍການ</p>
               </div>
               <div className="border-r border-b border-slate-950 p-3 bg-slate-50 text-center">
-                <p className="font-bold text-[10px] text-slate-600 uppercase">ອະນຸມັດແລ້ວ</p>
+                <p className="font-bold text-[10px] text-slate-600 uppercase">ອະນຸມັດ</p>
                 <p className="text-base font-extrabold mt-1 text-emerald-800">{rApproved} ລາຍການ</p>
               </div>
               <div className="border-b border-slate-950 p-3 bg-slate-50 text-center">
@@ -927,7 +927,7 @@ export default function ReportSystem({ bookings, rooms, language }: ReportSystem
                       <td className="py-2.5 px-2 border-r border-slate-950 text-center">{b.startTime} - {b.endTime}</td>
                       <td className="py-2.5 px-2 border-r border-slate-950 font-bold">{b.department || "ທົ່ວໄປ"}</td>
                       <td className="py-2.5 px-1 text-center font-bold">
-                        {b.status === "approved" ? "ອະນຸມັດແລ້ວ" : b.status === "rejected" ? "ປະຕິເສດແລ້ວ" : "ລໍຖ້າກວດສອບ"}
+                        {b.status === "approved" ? "ອະນຸມັດ" : b.status === "rejected" ? "ປະຕິເສດ" : "ລໍຖ້າກວດສອບ"}
                       </td>
                     </tr>
                   ))

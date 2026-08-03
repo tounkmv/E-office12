@@ -53,12 +53,12 @@ export default function DashboardCalendar({ bookings, rooms, language }: Dashboa
     notes: isLao ? "ໝາຍເຫດ" : "Notes",
     people: isLao ? "ຄົນ" : "people",
     detailsHeader: isLao ? "ລາຍລະອຽດການຈອງວັນທີ" : "Booking Details for",
-    statusApproved: isLao ? "ອະນຸມັດແລ້ວ" : "Approved",
+    statusApproved: isLao ? "ອະນຸມັດ" : "Approved",
     statusPending: isLao ? "ລໍຖ້າກວດສອບ" : "Pending",
-    statusRejected: isLao ? "ປະຕີເສດແລ້ວ" : "Rejected",
-    legendApproved: isLao ? "ອະນຸມັດແລ້ວ" : "Approved",
+    statusRejected: isLao ? "ປະຕິເສດ" : "Rejected",
+    legendApproved: isLao ? "ອະນຸມັດ" : "Approved",
     legendPending: isLao ? "ລໍຖ້າກວດສອບ" : "Pending",
-    legendRejected: isLao ? "ປະຕີເສດແລ້ວ" : "Rejected"
+    legendRejected: isLao ? "ປະຕິເສດ" : "Rejected"
   };
 
   const laMonths = [

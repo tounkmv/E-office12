@@ -1234,8 +1234,8 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
         )}
       </AnimatePresence>
 
-      {/* Admin Approvals Board Section */}
-      {userProfile.role === "admin" && (() => {
+      {/* Admin Approvals Board Section moved to dedicated menu */}
+      {false && userProfile.role === "admin" && (() => {
         const totalDbBookings = bookings.length;
         const pendingDbBookings = bookings.filter(b => b.status === "pending").length;
         const approvedDbBookings = bookings.filter(b => b.status === "approved").length;

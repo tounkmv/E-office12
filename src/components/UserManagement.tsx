@@ -412,7 +412,7 @@ export default function UserManagement({ language }: UserManagementProps) {
         >
           <div>
             <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              {isLao ? "ອະນຸມັດແລ້ວ" : "Active Users"}
+              {isLao ? "ອະນຸມັດ" : "Active Users"}
             </span>
             <div className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1">
               {activeCount}
@@ -465,7 +465,7 @@ export default function UserManagement({ language }: UserManagementProps) {
             <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">
               {activeFilter === "all" ? (isLao ? "ສະແດງທຸກບັນຊີໃນລະບົບ" : "Showing all accounts") :
                activeFilter === "admin" ? (isLao ? "ສະແດງສະເພາະຜູ້ດູແລລະບົບ (Admin)" : "Showing administrators only") :
-               activeFilter === "active" ? (isLao ? "ສະແດງສະເພາະບັນຊີທີ່ອະນຸມັດແລ້ວ" : "Showing active users only") :
+               activeFilter === "active" ? (isLao ? "ສະແດງສະເພາະບັນຊີທີ່ອະນຸມັດ" : "Showing active users only") :
                (isLao ? "ສະແດງບັນຊີທີ່ລໍຖ້າການອະນຸມັດ" : "Showing pending users")}
             </p>
           </div>
