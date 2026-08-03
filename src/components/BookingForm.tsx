@@ -287,6 +287,15 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
       return;
     }
 
+    if (selectedRoom && attendeesCount > selectedRoom.capacity) {
+      const msg = language === "lo" 
+        ? `ຈຳນວນຜູ້ເຂົ້າຮ່ວມ (${attendeesCount} ຄົນ) ກາຍຈຳນວນທີ່ນັ່ງສູງສຸດຂອງຫ້ອງນີ້ (${selectedRoom.capacity} ທ່ານ)!`
+        : `Attendees count (${attendeesCount}) exceeds room capacity (${selectedRoom.capacity} seats)!`;
+      setError(msg);
+      showSystemToast(msg, "warning", language === "lo" ? "ກາຍຈຳນວນທີ່ນັ່ງ" : "Capacity Exceeded");
+      return;
+    }
+
     // Conflict Check
     const hasConflict = checkTimeConflict(selectedRoom.id, date, effectiveEndDate, startTime, endTime);
     if (hasConflict) {
@@ -453,6 +462,16 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
       const msg = language === "lo" ? "ເວລາເລີ່ມຕົ້ນຕ້ອງໜ້ອຍກວ່າເວລາສິ້ນສຸດ!" : "Start time must be before end time!";
       setError(msg);
       showSystemToast(msg, "warning", language === "lo" ? "ແຈ້ງເຕືອນ" : "Warning");
+      return;
+    }
+
+    const currentEditingRoom = rooms.find(r => r.id === editingBooking.roomId || r.name === editingBooking.roomName);
+    if (currentEditingRoom && editAttendeesCount > currentEditingRoom.capacity) {
+      const msg = language === "lo" 
+        ? `ຈຳນວນຜູ້ເຂົ້າຮ່ວມ (${editAttendeesCount} ຄົນ) ກາຍຈຳນວນທີ່ນັ່ງສູງສຸດຂອງຫ້ອງນີ້ (${currentEditingRoom.capacity} ທ່ານ)!`
+        : `Attendees count (${editAttendeesCount}) exceeds room capacity (${currentEditingRoom.capacity} seats)!`;
+      setError(msg);
+      showSystemToast(msg, "warning", language === "lo" ? "ກາຍຈຳນວນທີ່ນັ່ງ" : "Capacity Exceeded");
       return;
     }
 
@@ -639,6 +658,7 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
                     setDepartment(userProfile.department || "");
                     setDate(todayStr);
                     setEndDate(todayStr);
+                    setAttendeesCount(room.capacity ? Math.min(5, room.capacity) : 5);
                   }}
                   className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white py-3 rounded-xl text-xs font-extrabold transition-all shadow-md shadow-blue-600/15 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer group/btn"
                 >
@@ -781,19 +801,31 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
                 {/* Attendees and Start & End Times Inputs */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="space-y-1">
-                    <label className="text-[11px] font-bold opacity-80 uppercase tracking-wider flex items-center gap-1 text-slate-700 dark:text-slate-300">
-                      <Users className="w-3.5 h-3.5 text-blue-500" />
-                      <span>{t.bkAttendees} *</span>
-                    </label>
+                    <div className="flex items-center justify-between gap-1">
+                      <label className="text-[11px] font-bold opacity-80 uppercase tracking-wider flex items-center gap-1 text-slate-700 dark:text-slate-300">
+                        <Users className="w-3.5 h-3.5 text-blue-500" />
+                        <span>{t.bkAttendees} *</span>
+                      </label>
+                      <span className="text-[10px] font-extrabold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/80 px-2 py-0.5 rounded-md border border-blue-200 dark:border-blue-800 shrink-0">
+                        {language === "lo" ? `ສູງສຸດ ${selectedRoom.capacity} ທ່ານ` : `Max ${selectedRoom.capacity}`}
+                      </span>
+                    </div>
                     <input 
                       type="number" 
                       value={attendeesCount}
-                      onChange={(e) => setAttendeesCount(parseInt(e.target.value) || 5)}
+                      onChange={(e) => setAttendeesCount(parseInt(e.target.value) || 0)}
                       required
                       min={1}
                       max={selectedRoom.capacity}
-                      className="w-full px-3.5 py-2.5 rounded-xl themed-input text-xs font-semibold"
+                      className={`w-full px-3.5 py-2.5 rounded-xl themed-input text-xs font-semibold ${
+                        attendeesCount > selectedRoom.capacity ? "border-red-500 text-red-500 focus:border-red-500 bg-red-50/50 dark:bg-red-950/30" : ""
+                      }`}
                     />
+                    <p className={`text-[10px] font-semibold ${attendeesCount > selectedRoom.capacity ? "text-red-500 font-bold" : "text-slate-500 dark:text-slate-400"}`}>
+                      {attendeesCount > selectedRoom.capacity 
+                        ? (language === "lo" ? `⚠️ ຈຳນວນກາຍຄວາມຈຸຫ້ອງ (ສູງສຸດ ${selectedRoom.capacity} ທ່ານ)` : `⚠️ Exceeds capacity (Max ${selectedRoom.capacity})`)
+                        : (language === "lo" ? `* ຈຳນວນທີ່ນັ່ງຂອງຫ້ອງນີ້: ຮອງຮັບໄດ້ສູງສຸດ ${selectedRoom.capacity} ທ່ານ` : `* Room limit: max ${selectedRoom.capacity} seats`)}
+                    </p>
                   </div>
 
                   <div className="space-y-1">
@@ -945,7 +977,10 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
 
       {/* Part 2.5: Edit Booking Modal Popup */}
       <AnimatePresence>
-        {editingBooking && (
+        {editingBooking && (() => {
+          const editRoomObj = rooms.find(r => r.id === editingBooking.roomId || r.name === editingBooking.roomName);
+          const editMaxCapacity = editRoomObj?.capacity || 100;
+          return (
           <div id="edit-booking-modal-overlay" className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -1068,18 +1103,31 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
                 {/* Attendees and Start & End Times Inputs */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="space-y-1">
-                    <label className="text-[11px] font-bold opacity-80 uppercase tracking-wider flex items-center gap-1 text-slate-700 dark:text-slate-300">
-                      <Users className="w-3.5 h-3.5 text-amber-500" />
-                      <span>{t.bkAttendees} *</span>
-                    </label>
+                    <div className="flex items-center justify-between gap-1">
+                      <label className="text-[11px] font-bold opacity-80 uppercase tracking-wider flex items-center gap-1 text-slate-700 dark:text-slate-300">
+                        <Users className="w-3.5 h-3.5 text-amber-500" />
+                        <span>{t.bkAttendees} *</span>
+                      </label>
+                      <span className="text-[10px] font-extrabold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/80 px-2 py-0.5 rounded-md border border-amber-200 dark:border-amber-800 shrink-0">
+                        {language === "lo" ? `ສູງສຸດ ${editMaxCapacity} ທ່ານ` : `Max ${editMaxCapacity}`}
+                      </span>
+                    </div>
                     <input 
                       type="number" 
                       value={editAttendeesCount}
-                      onChange={(e) => setEditAttendeesCount(parseInt(e.target.value) || 5)}
+                      onChange={(e) => setEditAttendeesCount(parseInt(e.target.value) || 0)}
                       required
                       min={1}
-                      className="w-full px-3.5 py-2.5 rounded-xl themed-input text-xs font-semibold"
+                      max={editMaxCapacity}
+                      className={`w-full px-3.5 py-2.5 rounded-xl themed-input text-xs font-semibold ${
+                        editAttendeesCount > editMaxCapacity ? "border-red-500 text-red-500 focus:border-red-500 bg-red-50/50 dark:bg-red-950/30" : ""
+                      }`}
                     />
+                    <p className={`text-[10px] font-semibold ${editAttendeesCount > editMaxCapacity ? "text-red-500 font-bold" : "text-slate-500 dark:text-slate-400"}`}>
+                      {editAttendeesCount > editMaxCapacity 
+                        ? (language === "lo" ? `⚠️ ຈຳນວນກາຍຄວາມຈຸຫ້ອງ (ສູງສຸດ ${editMaxCapacity} ທ່ານ)` : `⚠️ Exceeds capacity (Max ${editMaxCapacity})`)
+                        : (language === "lo" ? `* ຈຳນວນທີ່ນັ່ງຂອງຫ້ອງນີ້: ຮອງຮັບໄດ້ສູງສຸດ ${editMaxCapacity} ທ່ານ` : `* Room limit: max ${editMaxCapacity} seats`)}
+                    </p>
                   </div>
 
                   <div className="space-y-1">
@@ -1226,7 +1274,8 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
               </form>
             </motion.div>
           </div>
-        )}
+          );
+        })()}
       </AnimatePresence>
 
       {/* Admin Approvals Board Section moved to dedicated menu */}
