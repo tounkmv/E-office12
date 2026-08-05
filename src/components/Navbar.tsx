@@ -24,7 +24,8 @@ import {
   UserCheck,
   Key,
   Eye,
-  EyeOff
+  EyeOff,
+  Menu
 } from "lucide-react";
 import { db, collection, query, where, orderBy, onSnapshot, doc, updateDoc, getDocs } from "../lib/firebase";
 import { AppLanguage, SystemNotification, UserProfile } from "../types";
@@ -40,6 +41,8 @@ interface NavbarProps {
   language: AppLanguage;
   setLanguage?: (lang: AppLanguage) => void;
   onUpdateProfile?: (updated: UserProfile) => void;
+  isMobileMenuOpen?: boolean;
+  onToggleMobileMenu?: () => void;
 }
 
 const PRESET_AVATARS = [
@@ -53,7 +56,14 @@ const PRESET_AVATARS = [
   { id: "av8", name: "Consultant", url: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=150&h=150&q=80" }
 ];
 
-export default function Navbar({ userProfile, language, setLanguage, onUpdateProfile }: NavbarProps) {
+export default function Navbar({ 
+  userProfile, 
+  language, 
+  setLanguage, 
+  onUpdateProfile,
+  isMobileMenuOpen = false,
+  onToggleMobileMenu
+}: NavbarProps) {
   const t = translations[language];
   const [notifications, setNotifications] = useState<SystemNotification[]>([]);
   const [emailLogs, setEmailLogs] = useState<EmailLog[]>([]);
@@ -341,8 +351,58 @@ export default function Navbar({ userProfile, language, setLanguage, onUpdatePro
       {/* Decorative animated bottom glowing ribbon */}
       <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-400 to-transparent opacity-80 pointer-events-none" />
 
-      {/* 1. LEFT COLUMN: Empty or Title space (Logo and Online status removed) */}
+      {/* 1. LEFT COLUMN: Hamburger Menu Button & Responsive Brand Header */}
       <div id="navbar-left" className="flex items-center gap-3 z-10">
+        {/* Modern Sleek Hamburger Menu Toggle Button */}
+        {onToggleMobileMenu && (
+          <button
+            id="btn-hamburger-menu"
+            type="button"
+            onClick={onToggleMobileMenu}
+            className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500/20 via-indigo-600/30 to-purple-600/30 hover:from-amber-500/35 hover:to-indigo-600/45 text-amber-300 font-extrabold text-xs sm:text-sm border-2 border-amber-400/60 shadow-lg shadow-amber-500/10 hover:shadow-amber-500/25 hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer lg:hidden shrink-0 group relative overflow-hidden"
+            title={isLao ? "ເປີດ/ປິດ ເມນູຫຼັກ" : "Toggle Main Menu"}
+            aria-label="Toggle Main Menu"
+          >
+            {/* Ambient button light */}
+            <div className="absolute -top-6 -right-6 w-16 h-16 bg-amber-400/20 rounded-full blur-md group-hover:scale-150 transition-transform pointer-events-none" />
+
+            <div className="p-1 rounded-xl bg-amber-400/20 border border-amber-400/40 text-amber-300 group-hover:rotate-6 transition-transform">
+              {isMobileMenuOpen ? (
+                <X className="w-5 h-5 text-amber-300 animate-spin" style={{ animationDuration: '4s' }} />
+              ) : (
+                <Menu className="w-5 h-5 text-amber-300" />
+              )}
+            </div>
+
+            <span className="tracking-wider font-black text-white hidden sm:inline-block drop-shadow-xs">
+              {isLao ? "ເມນູ" : "Menu"}
+            </span>
+
+            {/* Glowing active indicator dot */}
+            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0" />
+          </button>
+        )}
+
+        {/* Small Responsive Brand Header Title for Mobile Header */}
+        <div className="flex items-center gap-2.5 lg:hidden border-l border-white/15 pl-3">
+          <img 
+            src={emblemLogo} 
+            alt="State Emblem" 
+            className="w-8 h-8 object-contain filter drop-shadow-sm shrink-0" 
+            referrerPolicy="no-referrer"
+            onError={(e) => {
+              if (e.currentTarget.src !== emblemSvg) e.currentTarget.src = emblemSvg;
+            }}
+          />
+          <div className="flex flex-col min-w-0">
+            <span className="text-xs font-black text-amber-400 leading-tight truncate">
+              {isLao ? "ຫ້ອງວ່າການແຂວງ" : "Provincial Office"}
+            </span>
+            <span className="text-[10px] font-bold text-slate-200 uppercase leading-none tracking-wider">
+              {isLao ? "ແຂວງຫົວພັນ" : "Houaphanh"}
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* 2. RIGHT COLUMN: Modern Controls & User Badge */}

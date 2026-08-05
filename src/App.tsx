@@ -64,6 +64,7 @@ export default function App() {
   const [rooms, setRooms] = useState<MeetingRoom[]>([]);
   const [bookings, setBookings] = useState<RoomBooking[]>([]);
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Sync Theme to HTML Element attribute
   useEffect(() => {
@@ -299,6 +300,9 @@ export default function App() {
           language={language} 
           userRole={userProfile.role}
           onSignOut={handleSignOut}
+          isMobileOpen={isMobileMenuOpen}
+          setIsMobileOpen={setIsMobileMenuOpen}
+          userProfile={userProfile}
         />
 
         {/* Main Content Area */}
@@ -310,6 +314,8 @@ export default function App() {
             language={language}
             setLanguage={setLanguage} 
             onUpdateProfile={setUserProfile}
+            isMobileMenuOpen={isMobileMenuOpen}
+            onToggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           />
 
           {/* Dynamic active page viewer */}
