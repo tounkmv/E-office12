@@ -18,7 +18,7 @@ import {
 import { AppLanguage, MeetingRoom, RoomBooking, UserProfile } from "../types";
 import { translations } from "../lib/translations";
 import { updateBookingStatus, updateBooking, deleteBooking, clearAllBookings } from "../lib/firebaseHelper";
-import { triggerWhatsAppAlert, triggerLineAlert } from "../lib/socialNotifyHelper";
+import { triggerWhatsAppAlert } from "../lib/socialNotifyHelper";
 import { showSystemToast } from "../utils/toast";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -568,14 +568,6 @@ export default function AdminBookings({ rooms, bookings, userProfile, language }
                               title={language === "lo" ? "ສົ່ງແຈ້ງເຕືອນຜ່ານ WhatsApp" : "Share via WhatsApp"}
                             >
                               <MessageSquare className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => triggerLineAlert(booking)}
-                              className="p-1.5 bg-green-500/10 hover:bg-green-500/20 text-green-500 rounded-lg transition-all cursor-pointer"
-                              title={language === "lo" ? "ສົ່ງແຈ້ງເຕືອນຜ່ານ LINE" : "Share via LINE"}
-                            >
-                              <Clock className="w-3.5 h-3.5" />
                             </button>
                             <button
                               id={`btn-admin-edit-${booking.id}`}

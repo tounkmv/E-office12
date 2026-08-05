@@ -1,20 +1,16 @@
-// Helper module for instant WhatsApp and LINE notifications for Room Booking System
+// Helper module for instant WhatsApp notifications for Room Booking System
 
 import { RoomBooking } from "../types";
 
 export interface SocialNotifyConfig {
   whatsappEnabled: boolean;
-  whatsappAdminPhone: string; // e.g. "8562055555555" or "+856 20 5555 5555"
-  lineEnabled: boolean;
-  lineNotifyToken: string; // LINE Notify access token
-  autoTriggerOnBooking: boolean; // Auto open/send on new booking creation
+  whatsappAdminPhone: string; // e.g. "02058590404" or "8562058590404"
+  autoTriggerOnBooking: boolean; // Auto open/send WhatsApp alert on new booking creation
 }
 
 const DEFAULT_CONFIG: SocialNotifyConfig = {
   whatsappEnabled: true,
   whatsappAdminPhone: "02058590404", // Default Admin Phone in system
-  lineEnabled: true,
-  lineNotifyToken: "",
   autoTriggerOnBooking: true
 };
 
@@ -35,9 +31,11 @@ export function getSocialNotifyConfig(): SocialNotifyConfig {
   return DEFAULT_CONFIG;
 }
 
-export function saveSocialNotifyConfig(config: SocialNotifyConfig) {
+export function saveSocialNotifyConfig(config: Partial<SocialNotifyConfig>) {
   try {
-    localStorage.setItem("eoffice_social_notify_config", JSON.stringify(config));
+    const current = getSocialNotifyConfig();
+    const updated = { ...current, ...config };
+    localStorage.setItem("eoffice_social_notify_config", JSON.stringify(updated));
   } catch (e) {
     console.error("Failed saving social notify config:", e);
   }
@@ -62,7 +60,7 @@ export function formatWhatsAppPhone(phone: string): string {
 }
 
 /**
- * Generates Lao formatted text message for WhatsApp and LINE
+ * Generates Lao formatted text message for WhatsApp
  */
 export function formatBookingNotificationMessage(booking: RoomBooking): string {
   const origin = typeof window !== "undefined" ? window.location.origin : "https://eoffice.gov.la";
@@ -99,13 +97,6 @@ export function getWhatsAppShareUrl(phone: string, text: string): string {
 }
 
 /**
- * Generates LINE share message URL
- */
-export function getLineShareUrl(text: string): string {
-  return `https://line.me/R/msg/text/?${encodeURIComponent(text)}`;
-}
-
-/**
  * Open WhatsApp alert directly in a new tab/app window
  */
 export function triggerWhatsAppAlert(booking: RoomBooking, customPhone?: string): boolean {
@@ -121,48 +112,3 @@ export function triggerWhatsAppAlert(booking: RoomBooking, customPhone?: string)
   return false;
 }
 
-/**
- * Open LINE alert directly in a new tab/app window
- */
-export function triggerLineAlert(booking: RoomBooking): boolean {
-  const message = formatBookingNotificationMessage(booking);
-  const url = getLineShareUrl(message);
-
-  if (typeof window !== "undefined") {
-    window.open(url, "_blank");
-    return true;
-  }
-  return false;
-}
-
-/**
- * Sends LINE Notify message via HTTP POST (if LINE Notify token is configured)
- */
-export async function sendLineNotifyApi(token: string, message: string): Promise<{ success: boolean; error?: string }> {
-  if (!token) {
-    return { success: false, error: "No LINE Notify token provided" };
-  }
-
-  try {
-    // Note: LINE Notify API requires CORS proxy or direct server call.
-    // We attempt fetch and fallback cleanly to LINE Share if CORS blocks.
-    const response = await fetch("https://notify-api.line.me/api/notify", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "Authorization": `Bearer ${token}`
-      },
-      body: new URLSearchParams({ message })
-    });
-
-    if (response.ok) {
-      return { success: true };
-    } else {
-      const err = await response.text();
-      return { success: false, error: err || `HTTP ${response.status}` };
-    }
-  } catch (e: any) {
-    console.warn("LINE Notify API call failed (CORS or network):", e);
-    return { success: false, error: e.message || "Network error" };
-  }
-}

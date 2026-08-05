@@ -30,7 +30,7 @@ import {
 import { db, collection, query, where, orderBy, onSnapshot, doc, updateDoc, getDocs } from "../lib/firebase";
 import { AppLanguage, SystemNotification, UserProfile } from "../types";
 import { translations } from "../lib/translations";
-import { EmailLog, updateUserProfile, markEmailAsRead } from "../lib/firebaseHelper";
+import { updateUserProfile } from "../lib/firebaseHelper";
 import { showSystemToast } from "../utils/toast";
 import { motion, AnimatePresence } from "motion/react";
 import emblemLogo from "../assets/images/emblem.png";
@@ -66,16 +66,10 @@ export default function Navbar({
 }: NavbarProps) {
   const t = translations[language];
   const [notifications, setNotifications] = useState<SystemNotification[]>([]);
-  const [emailLogs, setEmailLogs] = useState<EmailLog[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [showEmailLogs, setShowEmailLogs] = useState(false);
 
   // Expanded interaction detail modal states
   const [selectedNotification, setSelectedNotification] = useState<SystemNotification | null>(null);
-  const [selectedEmail, setSelectedEmail] = useState<EmailLog | null>(null);
-
-  // Compute unread email logs count
-  const unreadEmailCount = emailLogs.filter(log => !log.isRead).length;
 
   // Profile Drawer / Modal Settings State
   const [showProfileDrawer, setShowProfileDrawer] = useState(false);
@@ -214,31 +208,6 @@ export default function Navbar({
       setNotifications(items);
     }, (error) => {
       console.error("Notifications subscripton error:", error);
-    });
-
-    return () => unsubscribe();
-  }, [userProfile]);
-
-  // Subscribe to email logs (simulated email notifications database)
-  useEffect(() => {
-    if (!userProfile) return;
-
-    const emailRef = collection(db, "emails");
-    // Admins can see all emails, regular users see only their own
-    const q = userProfile.role === "admin" 
-      ? query(emailRef, orderBy("sentAt", "desc"))
-      : query(emailRef, where("to", "==", userProfile.email));
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const items: EmailLog[] = [];
-      snapshot.forEach((doc) => {
-        items.push(doc.data() as EmailLog);
-      });
-      // Sort client-side by sentAt descending to avoid composite index requirements
-      items.sort((a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime());
-      setEmailLogs(items.slice(0, 30)); // limit to 30 logs
-    }, (error) => {
-      console.error("Email log subscription error:", error);
     });
 
     return () => unsubscribe();
@@ -420,118 +389,11 @@ export default function Navbar({
           </button>
         )}
 
-        {/* Email Outbox Log Button (Email Notification system visibility) */}
-        <div className="relative">
-          <button
-            id="btn-email-logs"
-            onClick={() => {
-              setShowEmailLogs(!showEmailLogs);
-              setShowNotifications(false);
-            }}
-            className="p-2.5 sm:p-3 rounded-2xl bg-white/10 hover:bg-amber-400/20 text-white hover:text-amber-300 relative transition-all duration-300 hover:scale-105 active:scale-95 hover:shadow-lg hover:shadow-amber-500/20 border border-white/15 hover:border-amber-400/50 cursor-pointer shrink-0"
-            title="Email Outbox (Simulated System)"
-          >
-            <Mail className="w-5.5 h-5.5 md:w-6 md:h-6" />
-            {unreadEmailCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-emerald-500 text-white font-mono text-[10px] md:text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white dark:border-slate-900 animate-pulse shadow-sm shadow-emerald-500">
-                {unreadEmailCount}
-              </span>
-            )}
-          </button>
-
-          {/* Email Logs Dropdown */}
-          <AnimatePresence>
-            {showEmailLogs && (
-              <motion.div
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 15 }}
-                id="email-logs-dropdown"
-                className="absolute right-0 mt-3 w-96 bg-white dark:bg-[#1e293b] rounded-3xl shadow-2xl p-5 border border-slate-100 dark:border-white/5 overflow-hidden z-40 max-h-[500px] flex flex-col"
-              >
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/5">
-                  <h3 className="font-bold text-sm flex items-center gap-2 text-emerald-500">
-                    <Mail className="w-4 h-4" /> 
-                    <span>ອີເມວລະບົບ (Email Logs)</span>
-                  </h3>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-full font-bold">
-                      SMTP Active
-                    </span>
-                    <button 
-                      onClick={() => setShowEmailLogs(false)}
-                      className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-all cursor-pointer"
-                      title={isLao ? "ປິດ" : "Close"}
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex-1 overflow-y-auto space-y-3.5 mt-4 pr-1">
-                  {emailLogs.length === 0 ? (
-                    <div className="text-center py-8 text-xs opacity-60">
-                      ບໍ່ມີບັນທຶກການສົ່ງອີເມວ
-                    </div>
-                  ) : (
-                    emailLogs.map((log) => (
-                      <div 
-                        key={log.id} 
-                        onClick={async () => {
-                          setSelectedEmail(log);
-                          setShowEmailLogs(false);
-                          if (!log.isRead) {
-                            try {
-                              await markEmailAsRead(log.id);
-                            } catch (error) {
-                              console.error("Failed to mark email as read:", error);
-                            }
-                          }
-                        }}
-                        className={`p-3 rounded-2xl border text-xs transition-all duration-200 cursor-pointer ${
-                          log.isRead 
-                            ? "bg-slate-50/70 dark:bg-slate-900/20 border-slate-100 dark:border-white/5 opacity-75 hover:opacity-100" 
-                            : "bg-emerald-500/10 border-emerald-500/20 shadow-xs hover:bg-emerald-500/15"
-                        }`}
-                      >
-                        <div className="flex justify-between font-bold text-[11px] mb-1 text-slate-700 dark:text-slate-300">
-                          <span className="truncate max-w-[200px] flex items-center gap-1.5">
-                            {!log.isRead && (
-                              <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 animate-pulse" />
-                            )}
-                            <span>ຫາ: {log.to}</span>
-                          </span>
-                          <span className="text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            {new Date(log.sentAt).toLocaleTimeString()}
-                          </span>
-                        </div>
-                        <div className="font-bold text-emerald-600 dark:text-emerald-400 mb-1">{log.subject}</div>
-                        <div 
-                          className="text-[10px] opacity-75 line-clamp-2 bg-slate-100 dark:bg-slate-900/50 p-2 rounded-lg font-mono border border-slate-200/40 dark:border-white/5"
-                          dangerouslySetInnerHTML={{ __html: log.body }}
-                        />
-                        <div className="text-[9px] text-indigo-500 font-extrabold tracking-wider mt-2 uppercase flex items-center gap-1">
-                          <span>{isLao ? "ຄລິກເພື່ອອ່ານລາຍລະອຽດ" : "Click to read details"}</span>
-                          <ExternalLink className="w-2.5 h-2.5" />
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
         {/* In-App Notification Bell Button */}
         <div className="relative">
           <button
             id="btn-notifications"
-            onClick={() => {
-              setShowNotifications(!showNotifications);
-              setShowEmailLogs(false);
-            }}
+            onClick={() => setShowNotifications(!showNotifications)}
             className="p-2.5 sm:p-3 rounded-2xl bg-white/10 hover:bg-amber-400/20 text-white hover:text-amber-300 relative transition-all duration-300 hover:scale-105 active:scale-95 hover:shadow-lg hover:shadow-amber-500/20 border border-white/15 hover:border-amber-400/50 cursor-pointer shrink-0"
           >
             <Bell className="w-5.5 h-5.5 md:w-6 md:h-6" />
@@ -756,88 +618,7 @@ export default function Navbar({
         document.body
       )}
 
-      {/* 2. Email log Reader Overlay Modal */}
-      {typeof document !== "undefined" && createPortal(
-        <AnimatePresence>
-          {selectedEmail && (
-            <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 bg-slate-950/80 backdrop-blur-md">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9, y: 15 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9, y: 15 }}
-                transition={{ type: "spring", damping: 25, stiffness: 320 }}
-                className="bg-white dark:bg-[#1e293b] rounded-3xl max-w-xl w-full border-2 border-slate-200 dark:border-white/10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] p-6 sm:p-7 relative flex flex-col max-h-[90vh] font-sans space-y-4 overflow-hidden"
-              >
-                {/* Background ambient light */}
-                <div className="absolute top-0 right-0 w-36 h-36 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
-
-                {/* Top Close Button */}
-                <button 
-                  onClick={() => setSelectedEmail(null)}
-                  className="absolute top-4 right-4 p-2 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-500 hover:text-white text-slate-500 dark:text-slate-400 transition-all cursor-pointer border border-slate-200 dark:border-white/10 shadow-xs"
-                  title={isLao ? "ປິດໜ້າຕ່າງ" : "Close"}
-                >
-                  <X className="w-5 h-5" />
-                </button>
-
-                {/* Email Header */}
-                <div className="flex items-center gap-3 pr-10 border-b border-slate-100 dark:border-white/10 pb-3.5">
-                  <div className="p-3 bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 rounded-2xl shadow-md shrink-0">
-                    <Mail className="w-6 h-6" />
-                  </div>
-                  <div className="min-w-0">
-                    <h4 className="font-black text-base sm:text-lg text-slate-900 dark:text-white leading-tight truncate">
-                      {selectedEmail.subject}
-                    </h4>
-                    <p className="text-xs text-emerald-600 dark:text-emerald-400 font-extrabold uppercase tracking-wider mt-0.5">
-                      {isLao ? "ຈຳລອງການສົ່ງເມວລະບົບ (Simulated SMTP Log)" : "Simulated SMTP Email Outbox"}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Email Client Header styling */}
-                <div className="bg-slate-50 dark:bg-slate-900/60 rounded-2xl p-3.5 border border-slate-200/80 dark:border-white/10 text-xs font-medium space-y-1.5 text-slate-700 dark:text-slate-300">
-                  <div className="flex justify-between">
-                    <span className="opacity-70 font-bold">{isLao ? "ຜູ້ຮັບ (To):" : "To:"}</span>
-                    <span className="font-black text-slate-900 dark:text-white">{selectedEmail.to}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="opacity-70 font-bold">{isLao ? "ສົ່ງເມື່ອ (Sent):" : "Sent:"}</span>
-                    <span className="font-semibold">{new Date(selectedEmail.sentAt).toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="opacity-70 font-bold">{isLao ? "ລະຫັດ SMTP:" : "SMTP Mailer ID:"}</span>
-                    <span className="font-mono text-[11px] opacity-80">{selectedEmail.id}</span>
-                  </div>
-                </div>
-
-                {/* Email Content Frame (Standardized Comfortable Reading Font Size) */}
-                <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-[#111827] rounded-2xl border border-slate-200/80 dark:border-white/10 p-4 sm:p-5 font-sans">
-                  <div 
-                    className="prose dark:prose-invert max-w-none text-sm sm:text-base text-slate-800 dark:text-slate-200 leading-relaxed font-normal"
-                    dangerouslySetInnerHTML={{ __html: selectedEmail.body }}
-                  />
-                </div>
-
-                {/* Prominent Bottom Close Button */}
-                <div className="pt-2 border-t border-slate-200/60 dark:border-white/10 flex justify-end">
-                  <button 
-                    type="button"
-                    onClick={() => setSelectedEmail(null)}
-                    className="w-full py-3 px-6 rounded-2xl bg-gradient-to-r from-emerald-700 via-teal-800 to-slate-900 hover:from-emerald-600 hover:to-teal-700 text-white font-black text-sm shadow-lg shadow-emerald-950/30 hover:scale-[1.01] active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2 border border-emerald-400/30"
-                  >
-                    <X className="w-4 h-4 text-amber-300" />
-                    <span>{isLao ? "ປິດໜ້າຕ່າງ" : "Close Window"}</span>
-                  </button>
-                </div>
-              </motion.div>
-            </div>
-          )}
-        </AnimatePresence>,
-        document.body
-      )}
-
-      {/* 3. Comprehensive User Profile Settings Drawer Modal */}
+      {/* 2. Comprehensive User Profile Settings Drawer Modal */}
       <AnimatePresence>
         {showProfileDrawer && userProfile && (
           <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-md flex items-center justify-center z-50 p-4">

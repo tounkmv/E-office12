@@ -29,7 +29,7 @@ import {
 import { AppLanguage, MeetingRoom, RoomBooking, UserProfile } from "../types";
 import { translations } from "../lib/translations";
 import { addBooking, deleteBooking, updateBookingStatus, updateBooking, clearAllBookings } from "../lib/firebaseHelper";
-import { triggerWhatsAppAlert, triggerLineAlert, formatBookingNotificationMessage, getSocialNotifyConfig, sendLineNotifyApi } from "../lib/socialNotifyHelper";
+import { triggerWhatsAppAlert, formatBookingNotificationMessage, getSocialNotifyConfig } from "../lib/socialNotifyHelper";
 import { showSystemToast } from "../utils/toast";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -336,10 +336,10 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
       setSuccess(t.bkSuccessMessage);
       setSubmittedBookingModal(newBooking);
 
-      // Check auto-trigger settings for LINE background API notify
+      // Check auto-trigger settings for WhatsApp notify
       const cfg = getSocialNotifyConfig();
-      if (cfg.autoTriggerOnBooking && cfg.lineNotifyToken) {
-        sendLineNotifyApi(cfg.lineNotifyToken, formatBookingNotificationMessage(newBooking));
+      if (cfg.autoTriggerOnBooking) {
+        triggerWhatsAppAlert(newBooking);
       }
 
       showSystemToast(
@@ -1594,14 +1594,6 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
                                   <MessageSquare className="w-3.5 h-3.5" />
                                 </button>
                                 <button
-                                  type="button"
-                                  onClick={() => triggerLineAlert(booking)}
-                                  className="p-1.5 bg-green-500/10 hover:bg-green-500/20 text-green-500 rounded-lg transition-all cursor-pointer"
-                                  title={language === "lo" ? "ສົ່ງແຈ້ງເຕືອນຜ່ານ LINE" : "Share via LINE"}
-                                >
-                                  <Clock className="w-3.5 h-3.5" />
-                                </button>
-                                <button
                                   id={`btn-admin-edit-${booking.id}`}
                                   onClick={() => handleOpenEditBooking(booking)}
                                   className="p-1.5 text-amber-500 hover:bg-amber-500/10 rounded-lg transition-all cursor-pointer"
@@ -1803,7 +1795,7 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
                     {language === "lo" ? "ຍື່ນຄຳຮ້ອງຈອງຫ້ອງປະຊຸມສຳເລັດ!" : "Booking Request Submitted!"}
                   </h3>
                   <p className="text-[11px] text-slate-300 font-medium">
-                    {language === "lo" ? "ສົ່ງແຈ້ງເຕືອນຫາ Gmail & WhatsApp ແອດມິນແລ້ວ" : "Notified Admin via Gmail & WhatsApp"}
+                    {language === "lo" ? "ສົ່ງແຈ້ງເຕືອນຫາ WhatsApp ແອດມິນແລ້ວ" : "Notified Admin via WhatsApp"}
                   </p>
                 </div>
               </div>
