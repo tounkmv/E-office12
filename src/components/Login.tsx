@@ -1,5 +1,5 @@
 import { useState, FormEvent, useEffect } from "react";
-import { Building2, AlertCircle, Sparkles, Lock, ShieldCheck, UserCheck, Eye, EyeOff, User, Briefcase, Phone, CheckCircle2 } from "lucide-react";
+import { Building2, AlertCircle, Sparkles, Lock, ShieldCheck, UserCheck, Eye, EyeOff, User, Briefcase, Phone, CheckCircle2, Info } from "lucide-react";
 import { db, collection, getDocs, query, where, doc, setDoc, getDoc } from "../lib/firebase";
 import { seedDefaultAdmin } from "../lib/firebaseHelper";
 import { translations } from "../lib/translations";
@@ -521,11 +521,53 @@ export default function Login({ language, setLanguage, onLocalLogin }: LoginProp
 
 
 
-            {/* Security Note */}
-            <div className="text-center pt-2">
-              <span className="text-[10px] md:text-[11px] text-slate-400 dark:text-slate-500 block font-bold leading-relaxed">
-                * {language === "lo" ? "ສະຫງວນສິດສະເພາະພະນັກງານ ຫ້ອງວ່າການແຂວງຫົວພັນ ເທົ່ານັ້ນ" : "For Houaphanh Provincial Office personnel only"}
-              </span>
+            {/* Instructional Note / Guidance Card */}
+            <div className="mt-3.5 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-indigo-500/10 to-blue-500/10 dark:from-amber-500/15 dark:via-indigo-500/15 dark:to-blue-500/15 border border-indigo-200/60 dark:border-white/10 backdrop-blur-sm text-left shadow-xs transition-all">
+              <div className="flex items-start gap-2.5">
+                <div className="p-1.5 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5 border border-amber-500/30 shadow-xs">
+                  <Info className="w-4 h-4" />
+                </div>
+                <div className="space-y-1 text-xs md:text-[12px] leading-relaxed text-slate-700 dark:text-slate-300">
+                  <p className="font-extrabold text-indigo-900 dark:text-amber-300 flex items-center gap-1.5">
+                    <span>{language === "lo" ? "ໝາຍເຫດ:" : "Note:"}</span>
+                  </p>
+                  <p className="font-medium text-slate-600 dark:text-slate-300">
+                    {language === "lo" ? (
+                      <>
+                        ຖ້າຫາກທ່ານມີບັນຊີຜູ້ໃຊ້ຢູ່ໃນລະບົບແລ້ວ ສາມາດລັອກອີນເຂົ້າລະບົບໄດ້ເລີຍ, ແຕ່ຖ້າຫາກທ່ານຍັງບໍ່ທັນມີບັນຊີ ທ່ານສາມາດຄລີກປຸ່ມ{" "}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsSignUp(true);
+                            setError(null);
+                            setSuccessMsg(null);
+                          }}
+                          className="font-black text-indigo-600 dark:text-amber-300 underline hover:text-indigo-800 dark:hover:text-amber-200 cursor-pointer px-1.5 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200/50 dark:border-amber-400/30 inline-block my-0.5 transition-all hover:scale-105"
+                        >
+                          ຍັງບໍ່ມີບັນຊີ? ກົດທີ່ນີ້ເພື່ອລົງທະບຽນໃໝ່
+                        </button>{" "}
+                        ເພື່ອຂໍສິດເຂົ້າໃຊ້ລະບົບຈາກແອັດມິນໄດ້.
+                      </>
+                    ) : (
+                      <>
+                        If you already have an account, you can sign in directly. If you do not have an account yet, click{" "}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsSignUp(true);
+                            setError(null);
+                            setSuccessMsg(null);
+                          }}
+                          className="font-black text-indigo-600 dark:text-amber-300 underline hover:text-indigo-800 dark:hover:text-amber-200 cursor-pointer px-1.5 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200/50 dark:border-amber-400/30 inline-block my-0.5 transition-all hover:scale-105"
+                        >
+                          No account yet? Register here
+                        </button>{" "}
+                        to request access from the administrator.
+                      </>
+                    )}
+                  </p>
+                </div>
+              </div>
             </div>
 
           </div>
