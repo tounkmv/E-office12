@@ -73,28 +73,26 @@ export default function Sidebar({
         const Icon = item.icon;
         const isActive = activeTab === item.id;
 
-        // Custom notification badge rendering for Dashboard & Admin Bookings
+        // Custom notification badge rendering for Dashboard & Admin Bookings (Numeric pop-up badge only for pending bookings)
         let badge = null;
         if (item.id === "dashboard" && pendingCount > 0) {
           badge = (
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-300 border border-amber-400/40 animate-pulse shrink-0">
-              {pendingCount} {language === "lo" ? "ໃໝ່" : "New"}
+            <span 
+              className="px-2 py-0.5 rounded-full text-xs font-black bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white shadow-md shadow-amber-500/40 border border-amber-300/50 animate-pulse shrink-0 flex items-center justify-center min-w-[22px] h-5.5 leading-none transition-all duration-300"
+              title={language === "lo" ? `${pendingCount} ການຈອງລໍຖ້າການອະນຸມັດ` : `${pendingCount} pending bookings`}
+            >
+              {pendingCount}
             </span>
           );
-        } else if (item.id === "admin-bookings") {
-          if (pendingCount > 0) {
-            badge = (
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-black bg-gradient-to-r from-rose-600 to-red-600 text-white shadow-md shadow-rose-600/30 animate-bounce shrink-0 border border-rose-300/40">
-                {pendingCount} {language === "lo" ? "ຖ້າອະນຸມັດ" : "Pending"}
-              </span>
-            );
-          } else if (totalCount > 0) {
-            badge = (
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0">
-                {totalCount} {language === "lo" ? "ການຈອງ" : "Bookings"}
-              </span>
-            );
-          }
+        } else if (item.id === "admin-bookings" && pendingCount > 0) {
+          badge = (
+            <span 
+              className="px-2 py-0.5 rounded-full text-xs font-black bg-gradient-to-r from-rose-600 via-red-600 to-rose-700 text-white shadow-md shadow-rose-600/40 border border-rose-300/50 animate-bounce shrink-0 flex items-center justify-center min-w-[22px] h-5.5 leading-none transition-all duration-300"
+              title={language === "lo" ? `${pendingCount} ການຈອງລໍຖ້າການອະນຸມັດ` : `${pendingCount} pending bookings`}
+            >
+              {pendingCount}
+            </span>
+          );
         }
 
         return (
