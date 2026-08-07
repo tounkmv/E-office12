@@ -317,6 +317,7 @@ export default function App() {
             onUpdateProfile={setUserProfile}
             isMobileMenuOpen={isMobileMenuOpen}
             onToggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            setActiveTab={setActiveTab}
           />
 
           {/* Dynamic active page viewer */}

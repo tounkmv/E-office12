@@ -43,6 +43,7 @@ interface NavbarProps {
   onUpdateProfile?: (updated: UserProfile) => void;
   isMobileMenuOpen?: boolean;
   onToggleMobileMenu?: () => void;
+  setActiveTab?: (tab: string) => void;
 }
 
 const PRESET_AVATARS = [
@@ -62,7 +63,8 @@ export default function Navbar({
   setLanguage, 
   onUpdateProfile,
   isMobileMenuOpen = false,
-  onToggleMobileMenu
+  onToggleMobileMenu,
+  setActiveTab
 }: NavbarProps) {
   const t = translations[language];
   const [notifications, setNotifications] = useState<SystemNotification[]>([]);
@@ -817,18 +819,59 @@ export default function Navbar({
                 <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-[#111827] rounded-2xl border border-slate-200/80 dark:border-white/10 p-4 sm:p-5 font-sans">
                   <div 
                     className="prose dark:prose-invert max-w-none text-sm sm:text-base text-slate-800 dark:text-slate-200 leading-relaxed font-normal"
+                    onClick={(e) => {
+                      const target = (e.target as HTMLElement).closest("a, button");
+                      if (target) {
+                        e.preventDefault();
+                        setSelectedEmail(null);
+                        if (setActiveTab) {
+                          if (userProfile?.role === "admin") {
+                            setActiveTab("admin-bookings");
+                            showSystemToast(
+                              isLao
+                                ? "ກຳລັງນຳທ່ານໄປຫາໜ້າ ສູນຄວບຄຸມ ແລະ ການຈັດການການຈອງ..."
+                                : "Navigating to Control Center & Bookings...",
+                              "success"
+                            );
+                          } else {
+                            setActiveTab("booking");
+                          }
+                        }
+                      }
+                    }}
                     dangerouslySetInnerHTML={{ __html: selectedEmail.body }}
                   />
                 </div>
 
-                <div className="pt-2 border-t border-slate-200/60 dark:border-white/10 flex justify-end">
+                <div className="pt-2 border-t border-slate-200/60 dark:border-white/10 flex flex-col sm:flex-row gap-2.5">
+                  {userProfile?.role === "admin" && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedEmail(null);
+                        if (setActiveTab) {
+                          setActiveTab("admin-bookings");
+                          showSystemToast(
+                            isLao 
+                              ? "ກຳລັງນຳທ່ານໄປຫາໜ້າ ສູນຄວບຄຸມ ແລະ ການຈັດການການຈອງ..." 
+                              : "Navigating to Control Center & Bookings...",
+                            "success"
+                          );
+                        }
+                      }}
+                      className="flex-1 py-3 px-4 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-xs sm:text-sm shadow-md hover:scale-[1.01] active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2 border border-blue-400/30"
+                    >
+                      <Sparkles className="w-4 h-4 text-amber-300" />
+                      <span>{isLao ? "👉 ເຂົ້າລະບົບເພື່ອຕິດຕາມ ແລະ ອະນຸມັດ" : "👉 Go to Control Center"}</span>
+                    </button>
+                  )}
                   <button 
                     type="button"
                     onClick={() => setSelectedEmail(null)}
-                    className="w-full py-3 px-6 rounded-2xl bg-gradient-to-r from-emerald-700 via-teal-800 to-slate-900 hover:from-emerald-600 hover:to-teal-700 text-white font-black text-sm shadow-lg shadow-emerald-950/30 hover:scale-[1.01] active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2 border border-emerald-400/30"
+                    className="py-3 px-5 rounded-2xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs sm:text-sm transition-all cursor-pointer flex items-center justify-center gap-2 border border-slate-300 dark:border-white/10"
                   >
-                    <X className="w-4 h-4 text-amber-300" />
-                    <span>{isLao ? "ປິດໜ້າຕ່າງ" : "Close Window"}</span>
+                    <X className="w-4 h-4" />
+                    <span>{isLao ? "ປິດໜ້າຕ່າງ" : "Close"}</span>
                   </button>
                 </div>
               </motion.div>
