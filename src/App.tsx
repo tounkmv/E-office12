@@ -303,6 +303,7 @@ export default function App() {
           isMobileOpen={isMobileMenuOpen}
           setIsMobileOpen={setIsMobileMenuOpen}
           userProfile={userProfile}
+          bookings={bookings}
         />
 
         {/* Main Content Area */}

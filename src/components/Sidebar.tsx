@@ -18,7 +18,7 @@ import {
   ChevronRight,
   Menu
 } from "lucide-react";
-import { AppLanguage, UserRole, UserProfile } from "../types";
+import { AppLanguage, UserRole, UserProfile, RoomBooking } from "../types";
 import { translations } from "../lib/translations";
 import { motion, AnimatePresence } from "motion/react";
 import emblemLogo from "../assets/images/emblem.png";
@@ -33,6 +33,7 @@ interface SidebarProps {
   isMobileOpen?: boolean;
   setIsMobileOpen?: (open: boolean) => void;
   userProfile?: UserProfile | null;
+  bookings?: RoomBooking[];
 }
 
 export default function Sidebar({ 
@@ -43,10 +44,15 @@ export default function Sidebar({
   onSignOut,
   isMobileOpen = false,
   setIsMobileOpen,
-  userProfile
+  userProfile,
+  bookings = []
 }: SidebarProps) {
   const t = translations[language];
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  // Calculate pending and total booking counts for notification badges
+  const pendingCount = bookings.filter(b => b.status === "pending").length;
+  const totalCount = bookings.length;
 
   const menuItems = [
     { id: "dashboard", label: t.navDashboard, icon: LayoutDashboard },
@@ -66,6 +72,31 @@ export default function Sidebar({
       {menuItems.map((item) => {
         const Icon = item.icon;
         const isActive = activeTab === item.id;
+
+        // Custom notification badge rendering for Dashboard & Admin Bookings
+        let badge = null;
+        if (item.id === "dashboard" && pendingCount > 0) {
+          badge = (
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-300 border border-amber-400/40 animate-pulse shrink-0">
+              {pendingCount} {language === "lo" ? "ໃໝ່" : "New"}
+            </span>
+          );
+        } else if (item.id === "admin-bookings") {
+          if (pendingCount > 0) {
+            badge = (
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-black bg-gradient-to-r from-rose-600 to-red-600 text-white shadow-md shadow-rose-600/30 animate-bounce shrink-0 border border-rose-300/40">
+                {pendingCount} {language === "lo" ? "ຖ້າອະນຸມັດ" : "Pending"}
+              </span>
+            );
+          } else if (totalCount > 0) {
+            badge = (
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0">
+                {totalCount} {language === "lo" ? "ການຈອງ" : "Bookings"}
+              </span>
+            );
+          }
+        }
+
         return (
           <button
             key={item.id}
@@ -80,17 +111,21 @@ export default function Sidebar({
                 : "text-slate-600 dark:text-slate-300 hover:bg-gradient-to-r hover:from-purple-500/10 hover:to-indigo-500/10 hover:text-indigo-600 dark:hover:text-amber-400 hover:scale-[1.02] hover:translate-x-1 hover:shadow-md hover:shadow-indigo-500/5 border border-transparent hover:border-indigo-500/20"
             }`}
           >
-            <div className="flex items-center gap-3.5">
-              <Icon className={`w-5 h-5 md:w-6 md:h-6 transition-transform duration-300 group-hover:scale-110 ${
+            <div className="flex items-center gap-3.5 min-w-0 pr-2">
+              <Icon className={`w-5 h-5 md:w-6 md:h-6 shrink-0 transition-transform duration-300 group-hover:scale-110 ${
                 isActive ? "text-amber-300 drop-shadow-sm" : "text-slate-400 dark:text-slate-400 group-hover:text-indigo-500 dark:group-hover:text-amber-400"
               }`} />
-              <span className="leading-tight">{item.label}</span>
+              <span className="leading-tight truncate">{item.label}</span>
             </div>
-            {isActive ? (
-              <Sparkles className="w-4.5 h-4.5 text-amber-300 animate-spin" style={{ animationDuration: '6s' }} />
-            ) : (
-              <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 text-indigo-400 transition-opacity" />
-            )}
+
+            <div className="flex items-center gap-1.5 shrink-0">
+              {badge}
+              {isActive ? (
+                <Sparkles className="w-4.5 h-4.5 text-amber-300 animate-spin" style={{ animationDuration: '6s' }} />
+              ) : (
+                <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 text-indigo-400 transition-opacity" />
+              )}
+            </div>
           </button>
         );
       })}
