@@ -1,8 +1,7 @@
 import { useState, FormEvent, useEffect } from "react";
 import { Building2, AlertCircle, Sparkles, Lock, ShieldCheck, UserCheck, Eye, EyeOff, User, Briefcase, Phone, CheckCircle2 } from "lucide-react";
-import { db, collection, getDocs, query, where, doc, setDoc, getDoc, auth, googleProvider, signInWithPopup, GoogleAuthProvider } from "../lib/firebase";
-import { seedDefaultAdmin, syncUserProfile } from "../lib/firebaseHelper";
-import { setGoogleAccessToken } from "../lib/gmailHelper";
+import { db, collection, getDocs, query, where, doc, setDoc, getDoc } from "../lib/firebase";
+import { seedDefaultAdmin } from "../lib/firebaseHelper";
 import { translations } from "../lib/translations";
 import { AppLanguage, UserProfile } from "../types";
 import { motion, AnimatePresence } from "motion/react";
@@ -236,49 +235,6 @@ export default function Login({ language, setLanguage, onLocalLogin }: LoginProp
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    setLoading(true);
-    setError(null);
-    setSuccessMsg(null);
-    try {
-      const result = await signInWithPopup(auth, googleProvider);
-      const credential = GoogleAuthProvider.credentialFromResult(result);
-      if (credential?.accessToken) {
-        setGoogleAccessToken(credential.accessToken);
-      }
-
-      if (result.user) {
-        const profile = await syncUserProfile(result.user);
-        if (profile.status === "pending") {
-          setError(language === "lo" ? "ບັນຊີ Google ຂອງທ່ານກຳລັງລໍຖ້າການອະນຸມັດຈາກແອັດມິນ" : "Your Google account is pending administrator approval.");
-          return;
-        }
-        if (profile.status === "inactive") {
-          setError(language === "lo" ? "ບັນຊີຂອງທ່ານຖືກລະງັບການໃຊ້ງານ" : "Your account has been suspended.");
-          return;
-        }
-
-        if (onLocalLogin) {
-          onLocalLogin(profile);
-        }
-      }
-    } catch (err: any) {
-      console.error("Google Sign-In Error:", err);
-      if (err.code === "auth/unauthorized-domain" || err.message?.includes("auth/unauthorized-domain")) {
-        const domain = window.location.hostname;
-        setError(
-          language === "lo" 
-            ? `⚠️ ໂດເມນ (${domain}) ຍັງບໍ່ໄດ້ຖືກເພີ່ມເຂົ້າໃນ Authorized Domains ຂອງ Firebase.\nກະລຸນາເພີ່ມ "${domain}" ເຂົ້າໃນ Firebase Console -> Authentication -> Settings -> Authorized Domains`
-            : `⚠️ Domain (${domain}) is not authorized in Firebase Console.\nPlease add "${domain}" under Firebase Console -> Authentication -> Settings -> Authorized Domains.`
-        );
-      } else {
-        setError(err.message || "Google Sign-In failed");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div id="login-page" className="min-h-screen flex flex-col items-center justify-center bg-slate-950 text-white overflow-x-hidden relative font-sans p-4 sm:p-6 md:p-8 selection:bg-amber-400 selection:text-slate-900">
       {/* Fullscreen Sakura Wallpaper Background with slow zoom animation */}
@@ -441,31 +397,6 @@ export default function Login({ language, setLanguage, onLocalLogin }: LoginProp
                   className="w-full bg-gradient-to-r from-rose-600 via-indigo-600 to-purple-600 hover:from-rose-500 hover:to-purple-500 text-white py-3 rounded-xl font-black text-xs md:text-sm shadow-lg shadow-rose-500/25 hover:shadow-xl hover:shadow-rose-500/40 hover:scale-[1.01] active:scale-95 transition-all duration-300 cursor-pointer disabled:opacity-50 border border-rose-400/30 flex items-center justify-center gap-2"
                 >
                   {loading ? t.loading : (language === "lo" ? "ເຂົ້າສູ່ລະບົບ" : "Sign In")}
-                </button>
-
-                {/* Divider */}
-                <div className="flex items-center my-3">
-                  <div className="flex-1 border-t border-slate-200 dark:border-white/10" />
-                  <span className="px-3 text-[11px] font-bold text-slate-400 dark:text-slate-400 uppercase">
-                    {language === "lo" ? "ຫຼື" : "OR"}
-                  </span>
-                  <div className="flex-1 border-t border-slate-200 dark:border-white/10" />
-                </div>
-
-                {/* Google OAuth Sign-In Button */}
-                <button
-                  type="button"
-                  onClick={handleGoogleSignIn}
-                  disabled={loading}
-                  className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold py-2.5 px-4 rounded-xl text-xs md:text-sm shadow-sm transition-all duration-200 flex items-center justify-center gap-2.5 cursor-pointer"
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 48 48">
-                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
-                    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
-                    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
-                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
-                  </svg>
-                  <span>{language === "lo" ? "ເຂົ້າສູ່ລະບົບດ້ວຍ Google Account" : "Sign in with Google"}</span>
                 </button>
               </form>
             ) : (
