@@ -63,6 +63,7 @@ export default function App() {
   // Database State
   const [rooms, setRooms] = useState<MeetingRoom[]>([]);
   const [bookings, setBookings] = useState<RoomBooking[]>([]);
+  const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -187,9 +188,26 @@ export default function App() {
       console.error("Bookings snapshot error:", error);
     });
 
+    // Listen to Users collection
+    const usersRef = collection(db, "users");
+    const unsubscribeUsers = onSnapshot(usersRef, (snapshot) => {
+      const list: UserProfile[] = [];
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data() as UserProfile;
+        list.push({
+          ...data,
+          uid: docSnap.id || data.uid
+        });
+      });
+      setAllUsers(list);
+    }, (error) => {
+      console.error("Users snapshot error:", error);
+    });
+
     return () => {
       unsubscribeRooms();
       unsubscribeBookings();
+      unsubscribeUsers();
     };
   }, [userProfile]);
 
@@ -304,6 +322,7 @@ export default function App() {
           setIsMobileOpen={setIsMobileMenuOpen}
           userProfile={userProfile}
           bookings={bookings}
+          allUsers={allUsers}
         />
 
         {/* Main Content Area */}

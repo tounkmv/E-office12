@@ -164,8 +164,8 @@ export default function Login({ language, setLanguage, onLocalLogin }: LoginProp
 
   const handleSignUpSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!username.trim() || !password || !displayName.trim() || !department.trim()) {
-      setError(language === "lo" ? "ກະລຸນາປ້ອນຂໍ້ມູນທີ່ຈຳເປັນໃຫ້ຄົບຖ້ວນ" : "Please fill in all required fields");
+    if (!username.trim() || !password || !displayName.trim() || !department.trim() || !phone.trim()) {
+      setError(language === "lo" ? "ກະລຸນາກອກຂໍ້ມູນທັງໝົດທີ່ກໍານົດໄວ້ໃນແບບຟອມໃຫ້ຄົບຖ້ວນ" : "Please fill in all required fields in the registration form");
       return;
     }
 
@@ -479,10 +479,11 @@ export default function Login({ language, setLanguage, onLocalLogin }: LoginProp
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
                     <Phone className="w-3.5 h-3.5 text-pink-500" />
-                    <span>{language === "lo" ? "ເບີໂທລະສັບຕິດຕໍ່ (Phone)" : "Phone Number"}</span>
+                    <span>{language === "lo" ? "ເບີໂທລະສັບຕິດຕໍ່ (Phone)" : "Phone Number"} *</span>
                   </label>
                   <input
                     type="text"
+                    required
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="020 xxxx xxxx"

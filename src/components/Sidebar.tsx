@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { db, collection, onSnapshot } from "../lib/firebase";
 import { 
   LayoutDashboard, 
   CalendarClock, 
@@ -34,6 +35,8 @@ interface SidebarProps {
   setIsMobileOpen?: (open: boolean) => void;
   userProfile?: UserProfile | null;
   bookings?: RoomBooking[];
+  allUsers?: UserProfile[];
+  pendingUsersCount?: number;
 }
 
 export default function Sidebar({ 
@@ -45,10 +48,38 @@ export default function Sidebar({
   isMobileOpen = false,
   setIsMobileOpen,
   userProfile,
-  bookings = []
+  bookings = [],
+  allUsers,
+  pendingUsersCount: pendingUsersCountProp
 }: SidebarProps) {
   const t = translations[language];
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [internalPendingUsersCount, setInternalPendingUsersCount] = useState(0);
+
+  // Subscribe to pending users count for admins
+  useEffect(() => {
+    if (userRole !== "admin") return;
+
+    const usersRef = collection(db, "users");
+    const unsubscribe = onSnapshot(usersRef, (snapshot) => {
+      let pending = 0;
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        if (data.status === "pending") {
+          pending++;
+        }
+      });
+      setInternalPendingUsersCount(pending);
+    }, (error) => {
+      console.error("Sidebar users snapshot error:", error);
+    });
+
+    return () => unsubscribe();
+  }, [userRole]);
+
+  const effectivePendingUsersCount = pendingUsersCountProp !== undefined
+    ? pendingUsersCountProp
+    : (allUsers ? allUsers.filter(u => u.status === "pending").length : internalPendingUsersCount);
 
   // Calculate pending and total booking counts for notification badges
   const pendingCount = bookings.filter(b => b.status === "pending").length;
@@ -91,6 +122,15 @@ export default function Sidebar({
               title={language === "lo" ? `${pendingCount} ການຈອງລໍຖ້າການອະນຸມັດ` : `${pendingCount} pending bookings`}
             >
               {pendingCount}
+            </span>
+          );
+        } else if (item.id === "users" && effectivePendingUsersCount > 0) {
+          badge = (
+            <span 
+              className="px-2 py-0.5 rounded-full text-xs font-black bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white shadow-md shadow-amber-500/40 border border-amber-300/50 animate-bounce shrink-0 flex items-center justify-center min-w-[22px] h-5.5 leading-none transition-all duration-300"
+              title={language === "lo" ? `${effectivePendingUsersCount} ຜູ້ໃຊ້ລໍຖ້າການອະນຸມັດ` : `${effectivePendingUsersCount} pending users`}
+            >
+              {effectivePendingUsersCount}
             </span>
           );
         }
