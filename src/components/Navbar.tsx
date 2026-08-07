@@ -30,7 +30,7 @@ import {
 import { db, collection, query, where, orderBy, onSnapshot, doc, updateDoc, getDocs } from "../lib/firebase";
 import { AppLanguage, SystemNotification, UserProfile } from "../types";
 import { translations } from "../lib/translations";
-import { EmailLog, updateUserProfile, markEmailAsRead } from "../lib/firebaseHelper";
+import { EmailLog, updateUserProfile, markEmailAsRead, markAllEmailsAsRead } from "../lib/firebaseHelper";
 import { showSystemToast } from "../utils/toast";
 import { motion, AnimatePresence } from "motion/react";
 import emblemLogo from "../assets/images/emblem.png";
@@ -259,6 +259,20 @@ export default function Navbar({
     }
   };
 
+  const handleMarkAllEmailsAsRead = async () => {
+    const unreadEmails = emailLogs.filter(e => !e.isRead);
+    if (unreadEmails.length === 0) return;
+    try {
+      await markAllEmailsAsRead(unreadEmails.map(e => e.id));
+      showSystemToast(
+        isLao ? "ໝາຍອ່ານຂໍ້ຄວາມເມວທັງໝົດແລ້ວ" : "All emails marked as read",
+        "success"
+      );
+    } catch (err) {
+      console.error("Error marking all emails read:", err);
+    }
+  };
+
   const handleMarkOneRead = async (id: string) => {
     try {
       await updateDoc(doc(db, "notifications", id), { isRead: true });
@@ -461,9 +475,17 @@ export default function Navbar({
                     </h3>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] bg-emerald-500/10 text-emerald-500 px-2.5 py-0.5 rounded-full font-bold border border-emerald-500/20">
-                      {isLao ? "Gmail API / SMTP" : "Gmail Active"}
-                    </span>
+                    {unreadEmailCount > 0 && (
+                      <button 
+                        type="button"
+                        onClick={handleMarkAllEmailsAsRead}
+                        className="text-[11px] font-bold bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 px-2.5 py-1 rounded-xl border border-emerald-500/30 flex items-center gap-1 transition-all cursor-pointer shadow-2xs hover:scale-105 active:scale-95"
+                        title={isLao ? "ອ່ານຂໍ້ຄວາມທັງໝົດແລ້ວ" : "Mark all emails as read"}
+                      >
+                        <CheckCheck className="w-3.5 h-3.5 text-emerald-500" />
+                        <span>{isLao ? "ອ່ານທັງໝົດ" : "Mark all read"}</span>
+                      </button>
+                    )}
                     <button 
                       onClick={() => setShowEmailLogs(false)}
                       className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-all cursor-pointer"
@@ -473,6 +495,22 @@ export default function Navbar({
                     </button>
                   </div>
                 </div>
+
+                {unreadEmailCount > 0 && (
+                  <div className="mt-3 p-2.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between text-xs">
+                    <span className="text-emerald-700 dark:text-emerald-300 font-medium text-[11px]">
+                      {isLao ? `ມີ ${unreadEmailCount} ເມວທີ່ຍັງບໍ່ທັນອ່ານ` : `${unreadEmailCount} unread emails`}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleMarkAllEmailsAsRead}
+                      className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      <CheckCheck className="w-3.5 h-3.5" />
+                      <span>{isLao ? "ອ່ານຂໍ້ຄວາມທັງໝົດແລ້ວ" : "Mark all as read"}</span>
+                    </button>
+                  </div>
+                )}
 
                 <div className="flex-1 overflow-y-auto space-y-3 mt-4 pr-1">
                   {emailLogs.length === 0 ? (

@@ -251,6 +251,12 @@ export async function markEmailAsRead(emailId: string) {
   await updateDoc(emailRef, { isRead: true });
 }
 
+export async function markAllEmailsAsRead(emailIds: string[]) {
+  if (!emailIds || emailIds.length === 0) return;
+  const promises = emailIds.map(id => updateDoc(doc(db, "emails", id), { isRead: true }));
+  await Promise.all(promises);
+}
+
 // Create In-App Notification
 export async function createNotification(userId: string, title: string, message: string, type: "info" | "success" | "warning" | "error" = "info") {
   const notifId = "notif_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
