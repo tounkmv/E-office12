@@ -13,7 +13,11 @@ import {
   Settings, 
   Check, 
   Eye, 
-  X 
+  X,
+  Upload,
+  Image as ImageIcon,
+  Trash2,
+  Stamp
 } from "lucide-react";
 import emblemLogo from "../assets/images/emblem.png";
 import emblemSvg from "../assets/images/emblem.svg";
@@ -48,10 +52,32 @@ export default function ReportSystem({ bookings, rooms, language }: ReportSystem
   const [approverName, setApproverName] = useState("ທ່ານ ສົມພອນ ບຸນມະນີ");
   const [approverTitle, setApproverTitle] = useState("ຫົວໜ້າຫ້ອງວ່າການແຂວງຫົວພັນ");
   const [showSeal, setShowSeal] = useState(true);
+  const [sealMode, setSealMode] = useState<"default" | "custom">("default");
+  const [customSealUrl, setCustomSealUrl] = useState<string | null>(null);
+
   const [showDistribution, setShowDistribution] = useState(true);
+  const [distributionText, setDistributionText] = useState<string>(
+    `- ທ່ານເຈົ້າແຂວງ (ເພື່ອລາຍງານ)\n- ຫ້ອງວ່າການແຂວງ (ເພື່ອຕິດຕາມ)\n- ບັນດາພະແນກການອ້ອມຂ້າງ (ເພື່ອຊາບ)\n- ເກັບມ້ຽນສຳເນົາ`
+  );
+
   const [customPreface, setCustomPreface] = useState(
     "ເພື່ອເປັນການສະຫຼຸບ, ສັງເຄາະ ແລະ ຕິດຕາມການນຳໃຊ້ຫ້ອງປະຊຸມຂອງບັນດາພະແນກການ ແລະ ອົງການອ້ອມຂ້າງແຂວງ, ຫ້ອງວ່າການແຂວງຫົວພັນ ຂໍສະຫຼຸບສັງລວມຕົວເລກສະຖິຕິການຈອງ ແລະ ນຳໃຊ້ຫ້ອງປະຊຸມ ດັ່ງມີລາຍລະອຽດລຸ່ມນີ້:"
   );
+
+  const handleSealUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          setCustomSealUrl(event.target.result as string);
+          setSealMode("custom");
+          setShowSeal(true);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   // Helper for computing week start/end dates
   const getWeekRange = (dateStr: string) => {
@@ -509,14 +535,17 @@ export default function ReportSystem({ bookings, rooms, language }: ReportSystem
                   </div>
                 </div>
 
-                {/* Section IV: Visual Toggles */}
+                {/* Section IV: Visual Toggles & Custom Options */}
                 <div className="space-y-4">
                   <h4 className="text-[11px] font-black uppercase text-indigo-500 dark:text-indigo-400 tracking-wider flex items-center gap-1.5 border-b border-slate-100 dark:border-white/5 pb-1">
                     <Settings className="w-4 h-4" />
-                    <span>{isLao ? "4. ການສະແດງຜົນເພີ່ມເຕີມ" : "4. Display & Styling Toggles"}</span>
+                    <span>{isLao ? "4. ການສະແດງຜົນເພີ່ມເຕີມ & ກາປະທັບ" : "4. Display, Stamp & Distribution Options"}</span>
                   </h4>
-                  <div className="grid grid-cols-2 gap-4">
+                  
+                  {/* Toggle buttons grid */}
+                  <div className="grid grid-cols-2 gap-3">
                     <button
+                      type="button"
                       onClick={() => setShowSeal(!showSeal)}
                       className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex items-center justify-between ${
                         showSeal
@@ -525,15 +554,19 @@ export default function ReportSystem({ bookings, rooms, language }: ReportSystem
                       }`}
                     >
                       <div className="flex flex-col">
-                        <span className="text-xs font-bold">{isLao ? "ກາປະທັບທາງການ" : "Official Seal"}</span>
-                        <span className="text-[9px] opacity-80">{isLao ? "ສະແດງກາປະທັບສີແດງ" : "Show round stamp seal"}</span>
+                        <span className="text-xs font-bold flex items-center gap-1.5">
+                          <Stamp className="w-3.5 h-3.5" />
+                          {isLao ? "ກາປະທັບທາງການ" : "Official Seal"}
+                        </span>
+                        <span className="text-[9px] opacity-80">{isLao ? "ສະແດງກາປະທັບໃນເອກະສານ" : "Show official stamp/seal"}</span>
                       </div>
-                      <div className={`w-5 h-5 rounded-full flex items-center justify-center ${showSeal ? "bg-indigo-600 text-white" : "bg-slate-300 dark:bg-slate-700"}`}>
+                      <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${showSeal ? "bg-indigo-600 text-white" : "bg-slate-300 dark:bg-slate-700"}`}>
                         {showSeal && <Check className="w-3.5 h-3.5" />}
                       </div>
                     </button>
 
                     <button
+                      type="button"
                       onClick={() => setShowDistribution(!showDistribution)}
                       className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex items-center justify-between ${
                         showDistribution
@@ -543,13 +576,117 @@ export default function ReportSystem({ bookings, rooms, language }: ReportSystem
                     >
                       <div className="flex flex-col">
                         <span className="text-xs font-bold">{isLao ? "ບ່ອນນຳສົ່ງ" : "Distribution List"}</span>
-                        <span className="text-[9px] opacity-80">{isLao ? "ສະແດງບັນຊີບ່ອນນຳສົ່ງ" : "Show copy-to lists"}</span>
+                        <span className="text-[9px] opacity-80">{isLao ? "ສະແດງບັນຊີບ່ອນນຳສົ່ງ" : "Show distribution section"}</span>
                       </div>
-                      <div className={`w-5 h-5 rounded-full flex items-center justify-center ${showDistribution ? "bg-indigo-600 text-white" : "bg-slate-300 dark:bg-slate-700"}`}>
+                      <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${showDistribution ? "bg-indigo-600 text-white" : "bg-slate-300 dark:bg-slate-700"}`}>
                         {showDistribution && <Check className="w-3.5 h-3.5" />}
                       </div>
                     </button>
                   </div>
+
+                  {/* Sub-Panel 1: Custom Seal Image Upload */}
+                  {showSeal && (
+                    <div className="p-3.5 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-white/10 space-y-3 animate-in fade-in duration-200">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[10px] text-slate-600 dark:text-slate-300 font-extrabold flex items-center gap-1.5">
+                          <ImageIcon className="w-3.5 h-3.5 text-indigo-500" />
+                          <span>{isLao ? "ຮູບແບບກາປະທັບຂອງອົງການ" : "Official Seal Format"}</span>
+                        </label>
+                        <div className="flex gap-1 bg-slate-200 dark:bg-slate-900 p-0.5 rounded-lg">
+                          <button
+                            type="button"
+                            onClick={() => setSealMode("default")}
+                            className={`px-2 py-0.5 text-[9px] font-bold rounded-md transition-all ${
+                              sealMode === "default"
+                                ? "bg-white dark:bg-indigo-600 text-slate-900 dark:text-white shadow-xs"
+                                : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                            }`}
+                          >
+                            {isLao ? "ມາດຕະຖານ" : "Default"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setSealMode("custom")}
+                            className={`px-2 py-0.5 text-[9px] font-bold rounded-md transition-all ${
+                              sealMode === "custom"
+                                ? "bg-white dark:bg-indigo-600 text-slate-900 dark:text-white shadow-xs"
+                                : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                            }`}
+                          >
+                            {isLao ? "ອັບໂຫຼດເອງ" : "Custom Upload"}
+                          </button>
+                        </div>
+                      </div>
+
+                      {sealMode === "custom" && (
+                        <div className="space-y-2">
+                          {customSealUrl ? (
+                            <div className="flex items-center justify-between p-2.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-white/10">
+                              <div className="flex items-center gap-2.5">
+                                <img
+                                  src={customSealUrl}
+                                  alt="Uploaded Seal"
+                                  className="w-10 h-10 object-contain border border-slate-200 dark:border-white/10 rounded-lg bg-slate-50 dark:bg-slate-800 p-0.5"
+                                />
+                                <div>
+                                  <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                                    {isLao ? "ອັບໂຫຼດກາປະທັບສຳເລັດ" : "Seal Uploaded"}
+                                  </p>
+                                  <p className="text-[9px] text-slate-400">
+                                    {isLao ? "ພ້ອມສະແດງໃນເອກະສານລາຍງານ" : "Ready for print display"}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <label className="p-1.5 text-xs bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-200 rounded-lg cursor-pointer transition-colors">
+                                  <Upload className="w-3.5 h-3.5" />
+                                  <input type="file" accept="image/*" onChange={handleSealUpload} className="hidden" />
+                                </label>
+                                <button
+                                  type="button"
+                                  onClick={() => setCustomSealUrl(null)}
+                                  className="p-1.5 text-xs bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-lg transition-colors cursor-pointer"
+                                  title={isLao ? "ລຶບຮູບ" : "Remove image"}
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <label className="border-2 border-dashed border-indigo-500/40 hover:border-indigo-500 bg-indigo-500/5 hover:bg-indigo-500/10 transition-all rounded-2xl p-4 flex flex-col items-center justify-center cursor-pointer text-center group">
+                              <Upload className="w-6 h-6 text-indigo-500 group-hover:scale-110 transition-transform mb-1" />
+                              <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                                {isLao ? "ຄລີກເພື່ອອັບໂຫຼດຮູບກາປະທັບອົງການ (PNG/JPG)" : "Click to upload organization seal image"}
+                              </span>
+                              <span className="text-[9px] text-slate-400 mt-0.5">
+                                {isLao ? "ແນະນຳໄຟລ໌ PNG ພື້ນຫຼັງໂປ່ງໃສ (Transparent)" : "PNG with transparent background recommended"}
+                              </span>
+                              <input type="file" accept="image/*" onChange={handleSealUpload} className="hidden" />
+                            </label>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Sub-Panel 2: Custom Distribution Comment Textarea */}
+                  {showDistribution && (
+                    <div className="p-3.5 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-white/10 space-y-2 animate-in fade-in duration-200">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[10px] text-slate-600 dark:text-slate-300 font-extrabold">
+                          {isLao ? "ເນື້ອໃນບ່ອນນຳສົ່ງ (ປັບແຕ່ງ/ພີມໄດ້ຕາມຈຸດປະສົງ)" : "Distribution List / Comments (Customizable)"}
+                        </label>
+                      </div>
+                      <textarea
+                        value={distributionText}
+                        onChange={(e) => setDistributionText(e.target.value)}
+                        rows={4}
+                        placeholder={isLao ? "ພີມບັນຊີບ່ອນນຳສົ່ງ ຫຼື ຄອມເມັ້ນເພີ່ມເຕີມ..." : "Type custom distribution list..."}
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none leading-relaxed resize-none"
+                      />
+                    </div>
+                  )}
+
                 </div>
 
               </div>
@@ -717,12 +854,9 @@ export default function ReportSystem({ bookings, rooms, language }: ReportSystem
                       {showDistribution ? (
                         <div>
                           <p className="font-bold underline uppercase text-[7px]">ບ່ອນນຳສົ່ງ (Distribution):</p>
-                          <ul className="text-[7px] list-none pl-0 space-y-0.5 text-slate-600 mt-1">
-                            <li>- ທ່ານເຈົ້າແຂວງ{provinceName}</li>
-                            <li>- ຫ້ອງວ່າການ{provinceName}</li>
-                            <li>- ຂະແໜງເຕັກໂນໂລຊີ</li>
-                            <li>- ເກັບມ້ຽນສຳເນົາ</li>
-                          </ul>
+                          <div className="text-[7px] text-slate-700 mt-1 whitespace-pre-line font-medium leading-normal">
+                            {distributionText || (isLao ? "(ບໍ່ມີຂໍ້ມູນບ່ອນນຳສົ່ງ)" : "(No distribution text)")}
+                          </div>
                         </div>
                       ) : (
                         <div className="h-6"></div>
@@ -744,20 +878,30 @@ export default function ReportSystem({ bookings, rooms, language }: ReportSystem
                         <p className="text-[7px] text-slate-400">{isLao ? "(ເຊັນ ແລະ ປະທັບຕາເປັນທາງການ)" : "(Signature & Seal)"}</p>
                       </div>
                       
-                      {/* Red Stamp mockup representation in Live Preview */}
+                      {/* Stamp Representation in Live Preview */}
                       {showSeal ? (
-                        <div className="relative my-2 scale-75 select-none">
-                          <div className="w-16 h-16 rounded-full border-2 border-dashed border-red-500/50 flex flex-col items-center justify-center p-0.5">
-                            <div className="w-14 h-14 rounded-full border border-double border-red-500/60 flex flex-col items-center justify-center text-center">
-                              <span className="text-[5px] text-red-500 font-bold">ຫ້ອງວ່າການ</span>
-                              <span className="text-[6px] text-red-500 font-black tracking-tighter leading-none my-0.5">ແຂວງຫົວພັນ</span>
-                              <span className="text-[4px] text-red-500">STAMP SEAL</span>
+                        sealMode === "custom" && customSealUrl ? (
+                          <div className="my-1.5 flex items-center justify-center">
+                            <img
+                              src={customSealUrl}
+                              alt="Official Stamp"
+                              className="w-16 h-16 object-contain filter drop-shadow-xs select-none"
+                            />
+                          </div>
+                        ) : (
+                          <div className="relative my-2 scale-75 select-none">
+                            <div className="w-16 h-16 rounded-full border-2 border-dashed border-red-500/50 flex flex-col items-center justify-center p-0.5">
+                              <div className="w-14 h-14 rounded-full border border-double border-red-500/60 flex flex-col items-center justify-center text-center">
+                                <span className="text-[5px] text-red-500 font-bold">ຫ້ອງວ່າການ</span>
+                                <span className="text-[6px] text-red-500 font-black tracking-tighter leading-none my-0.5">{provinceName}</span>
+                                <span className="text-[4px] text-red-500">STAMP SEAL</span>
+                              </div>
+                            </div>
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[6px] text-red-500 font-bold border border-red-500/30 px-1 rotate-[-12deg] bg-white/95">
+                              APPROVED
                             </div>
                           </div>
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[6px] text-red-500 font-bold border border-red-500/30 px-1 rotate-[-12deg] bg-white/95">
-                            APPROVED
-                          </div>
-                        </div>
+                        )
                       ) : (
                         <div className="h-10"></div>
                       )}
@@ -944,12 +1088,9 @@ export default function ReportSystem({ bookings, rooms, language }: ReportSystem
                 {showDistribution ? (
                   <div>
                     <p className="font-bold underline text-[10px] uppercase">ບ່ອນນຳສົ່ງ (Distribution List):</p>
-                    <ul className="text-[9px] list-none pl-0 space-y-0.5 font-medium text-slate-700 mt-1.5">
-                      <li>- ທ່ານເຈົ້າແຂວງ{provinceName} (ເພື່ອລາຍງານ)</li>
-                      <li>- ຫ້ອງວ່າການ{provinceName} (ເພື່ອຕິດຕາມ)</li>
-                      <li>- ບັນດາພະແນກການອ້ອມຂ້າງ (ເພື່ອຊາບ)</li>
-                      <li>- ເກັບມ້ຽນສຳເນົາ (ຂະແໜງເຕັກໂນໂລຊີ)</li>
-                    </ul>
+                    <div className="text-[9px] font-medium text-slate-800 mt-1.5 whitespace-pre-line leading-relaxed">
+                      {distributionText || (isLao ? "(ບໍ່ມີຂໍ້ມູນບ່ອນນຳສົ່ງ)" : "(No distribution text)")}
+                    </div>
                   </div>
                 ) : (
                   <div className="h-10"></div>
@@ -972,18 +1113,28 @@ export default function ReportSystem({ bookings, rooms, language }: ReportSystem
               </div>
               
               {showSeal ? (
-                <div className="relative my-3 flex items-center justify-center">
-                  <div className="w-24 h-24 rounded-full border-4 border-dashed border-red-500/40 flex flex-col items-center justify-center p-1 select-none pointer-events-none">
-                    <div className="w-20 h-20 rounded-full border-2 border-double border-red-500/50 flex flex-col items-center justify-center text-center">
-                      <span className="text-[7px] text-red-500 font-bold leading-none">ຫ້ອງວ່າການ</span>
-                      <span className="text-[8px] text-red-500 font-black leading-tight my-0.5">ແຂວງຫົວພັນ</span>
-                      <span className="text-[6px] text-red-500 font-semibold leading-none">OFFICIAL SEAL</span>
+                sealMode === "custom" && customSealUrl ? (
+                  <div className="my-2 flex items-center justify-center">
+                    <img
+                      src={customSealUrl}
+                      alt="Official Seal"
+                      className="w-24 h-24 object-contain filter select-none"
+                    />
+                  </div>
+                ) : (
+                  <div className="relative my-3 flex items-center justify-center">
+                    <div className="w-24 h-24 rounded-full border-4 border-dashed border-red-500/40 flex flex-col items-center justify-center p-1 select-none pointer-events-none">
+                      <div className="w-20 h-20 rounded-full border-2 border-double border-red-500/50 flex flex-col items-center justify-center text-center">
+                        <span className="text-[7px] text-red-500 font-bold leading-none">ຫ້ອງວ່າການ</span>
+                        <span className="text-[8px] text-red-500 font-black leading-tight my-0.5">{provinceName}</span>
+                        <span className="text-[6px] text-red-500 font-semibold leading-none">OFFICIAL SEAL</span>
+                      </div>
+                    </div>
+                    <div className="absolute text-[8px] text-red-500 font-bold border border-red-500/30 px-1 py-0.5 rotate-[-12deg] bg-white/95">
+                      ບ່ອນປະທັບຕາ
                     </div>
                   </div>
-                  <div className="absolute text-[8px] text-red-500 font-bold border border-red-500/30 px-1 py-0.5 rotate-[-12deg] bg-white/95">
-                    ບ່ອນປະທັບຕາ
-                  </div>
-                </div>
+                )
               ) : (
                 <div className="h-16"></div>
               )}
