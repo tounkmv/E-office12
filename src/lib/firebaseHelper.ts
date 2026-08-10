@@ -387,9 +387,10 @@ export async function addBooking(booking: RoomBooking) {
   );
 
   // Confirmation Email to Requester
+  const cleanUserName = (booking.userName || "").replace(/^ທ່ານ\s*/, "").trim();
   const userEmailBody = `
     <div style="font-family: 'Phetsarath OT', sans-serif; max-width: 550px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
-      <h3 style="color: #2563eb; margin-top: 0;">ສະບາຍດີທ່ານ ${booking.userName},</h3>
+      <h3 style="color: #2563eb; margin-top: 0;">ສະບາຍດີ ທ່ານ ${cleanUserName},</h3>
       <p>ລະບົບໄດ້ຮັບຄຳຮ້ອງຂໍຈອງຫ້ອງປະຊຸມຂອງທ່ານແລ້ວ:</p>
       <ul style="line-height: 1.8;">
         <li><b>ຫ້ອງປະຊຸມ:</b> ${booking.roomName}</li>
@@ -445,11 +446,12 @@ export async function updateBookingStatus(bookingId: string, status: BookingStat
       typeNotif
     );
 
+    const cleanUserName = (booking.userName || "").replace(/^ທ່ານ\s*/, "").trim();
     // Simulated Email Notification to user
     await logSimulatedEmail(
       booking.userEmail,
       `[E-Office ຫົວພັນ] ຜົນການຈອງຫ້ອງປະຊຸມ - ${statusTextLao}`,
-      `<h3>ສະບາຍດີ ທ່ານ ${booking.userName},</h3>
+      `<h3>ສະບາຍດີ ທ່ານ ${cleanUserName},</h3>
        <p>ຄຳຮ້ອງຂໍຈອງຫ້ອງປະຊຸມຂອງທ່ານໄດ້ຮັບການກວດສອບຈາກຜູ້ດູແລລະບົບແລ້ວ:</p>
        <ul>
          <li><b>ຫ້ອງປະຊຸມ:</b> ${booking.roomName}</li>

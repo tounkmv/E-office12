@@ -487,7 +487,9 @@ export default function App() {
                   <div className="bg-white/5 backdrop-blur-md rounded-2xl px-6 py-3.5 border border-white/10 inline-block mx-auto max-w-sm shadow-inner">
                     <p className="text-xs sm:text-sm text-slate-300 font-bold">
                       {language === "lo" ? "ສະບາຍດີ, ທ່ານ" : "Hello,"}{" "}
-                      <span className="text-amber-400 font-black text-sm sm:text-base">{userProfile.displayName}</span>
+                      <span className="text-amber-400 font-black text-sm sm:text-base">
+                        {(userProfile.displayName || "").replace(/^ທ່ານ\s*/, "").trim()}
+                      </span>
                     </p>
                     {userProfile.department && (
                       <div className="mt-2.5 px-3 py-1 bg-amber-400/10 rounded-lg inline-block border border-amber-400/20">
