@@ -855,13 +855,12 @@ export default function ReportSystem({ bookings, rooms, language }: ReportSystem
                       <div className="flex flex-col items-center">
                         <div className="space-y-0.5">
                           <p className="font-bold uppercase text-[9px] text-slate-950">{approverTitle}</p>
-                          <p className="text-[7px] text-slate-400">{isLao ? "(ເຊັນ ແລະ ປະທັບຕາເປັນທາງການ)" : "(Signature & Seal)"}</p>
                         </div>
                         
                         {/* Stamp Representation in Live Preview */}
                         {showSeal ? (
                           sealMode === "custom" && customSealUrl ? (
-                            <div className="my-1.5 flex items-center justify-center min-h-[50px]">
+                            <div className="my-1.5 flex items-center justify-center min-h-[55px]">
                               <img
                                 src={customSealUrl}
                                 alt="Official Stamp"
@@ -869,7 +868,7 @@ export default function ReportSystem({ bookings, rooms, language }: ReportSystem
                               />
                             </div>
                           ) : (
-                            <div className="relative my-2 scale-75 select-none min-h-[50px] flex items-center justify-center">
+                            <div className="relative my-2 scale-75 select-none min-h-[55px] flex items-center justify-center">
                               <div className="w-16 h-16 rounded-full border-2 border-dashed border-red-500/50 flex flex-col items-center justify-center p-0.5">
                                 <div className="w-14 h-14 rounded-full border border-double border-red-500/60 flex flex-col items-center justify-center text-center">
                                   <span className="text-[5px] text-red-500 font-bold">ຫ້ອງວ່າການ</span>
@@ -883,12 +882,12 @@ export default function ReportSystem({ bookings, rooms, language }: ReportSystem
                             </div>
                           )
                         ) : (
-                          <div className="h-12"></div>
+                          <div className="h-14"></div>
                         )}
 
                         <div className="pt-1 w-full">
                           <p className="font-semibold text-slate-400">......................................................</p>
-                          <p className="font-bold text-slate-900 text-[9px] mt-0.5">( {approverName} )</p>
+                          <p className="font-bold text-slate-900 text-[9px] mt-0.5">{approverName}</p>
                         </div>
                       </div>
 
@@ -907,13 +906,10 @@ export default function ReportSystem({ bookings, rooms, language }: ReportSystem
                     <div className="w-[46%] text-center flex flex-col items-center justify-between">
                       <div className="space-y-0.5">
                         <p className="font-bold uppercase text-[9px] text-slate-950">{isLao ? "ຜູ້ສະຫຼຸບ ແລະ ບັນທຶກລາຍງານ" : "Report Compiler"}</p>
-                        <p className="text-[7px] text-slate-400">{isLao ? "(ເຊັນລົງລາຍເຊັນ)" : "(Signature)"}</p>
                       </div>
 
                       {/* Signature Spacing Area */}
-                      <div className="min-h-[60px] flex items-center justify-center">
-                        <span className="text-[7px] text-slate-300 italic font-mono">{isLao ? "(ບ່ອນເຊັນ)" : "(Signature space)"}</span>
-                      </div>
+                      <div className="min-h-[65px] flex items-center justify-center"></div>
 
                       <div className="pt-1 w-full">
                         <p className="font-semibold text-slate-400">......................................................</p>
@@ -1099,7 +1095,6 @@ export default function ReportSystem({ bookings, rooms, language }: ReportSystem
               <div className="flex flex-col items-center">
                 <div className="space-y-1 text-center">
                   <p className="font-bold uppercase tracking-wide text-sm">{approverTitle}</p>
-                  <p className="text-[10px] text-slate-500 font-medium">(ເຊັນ ແລະ ປະທັບຕາເປັນທາງການ)</p>
                 </div>
                 
                 {showSeal ? (
@@ -1131,7 +1126,7 @@ export default function ReportSystem({ bookings, rooms, language }: ReportSystem
 
                 <div className="pt-2 text-center w-full">
                   <p className="font-bold text-slate-800">......................................................</p>
-                  <p className="text-[11px] text-slate-900 mt-1 font-bold">( {approverName} )</p>
+                  <p className="text-[11px] text-slate-900 mt-1 font-bold">{approverName}</p>
                 </div>
               </div>
 
@@ -1150,13 +1145,10 @@ export default function ReportSystem({ bookings, rooms, language }: ReportSystem
             <div className="w-[46%] text-center flex flex-col items-center justify-between">
               <div className="space-y-1 text-center">
                 <p className="font-bold uppercase tracking-wide text-sm">{isLao ? "ຜູ້ສະຫຼຸບ ແລະ ບັນທຶກລາຍງານ" : "Report Compiler"}</p>
-                <p className="text-[10px] text-slate-500 font-medium">(ເຊັນລົງລາຍເຊັນ)</p>
               </div>
 
               {/* Generous signature spacing matching official height */}
-              <div className="min-h-[110px] flex items-center justify-center">
-                <span className="text-[9px] text-slate-300 italic font-mono select-none">{isLao ? "(ບ່ອນລົງລາຍເຊັນ)" : "(Signature space)"}</span>
-              </div>
+              <div className="min-h-[110px] flex items-center justify-center"></div>
 
               <div className="pt-2 text-center w-full">
                 <p className="font-bold text-slate-800">......................................................</p>
