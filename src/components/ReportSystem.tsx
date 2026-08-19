@@ -849,66 +849,76 @@ export default function ReportSystem({ bookings, rooms, language }: ReportSystem
                   {/* III. Sign-off Blocks */}
                   <div className="flex justify-between items-start text-[8px] text-slate-900 font-sans pt-4 border-t border-slate-200">
                     
-                    {/* Distribution */}
-                    <div className="w-[45%] text-left space-y-1">
-                      {showDistribution ? (
-                        <div>
-                          <p className="font-bold underline uppercase text-[7px]">ບ່ອນນຳສົ່ງ (Distribution):</p>
-                          <div className="text-[7px] text-slate-700 mt-1 whitespace-pre-line font-medium leading-normal">
+                    {/* Left Column: Approver, Seal, and Distribution */}
+                    <div className="w-[46%] text-center flex flex-col justify-between">
+                      {/* Approver Header & Stamp */}
+                      <div className="flex flex-col items-center">
+                        <div className="space-y-0.5">
+                          <p className="font-bold uppercase text-[9px] text-slate-950">{approverTitle}</p>
+                          <p className="text-[7px] text-slate-400">{isLao ? "(ເຊັນ ແລະ ປະທັບຕາເປັນທາງການ)" : "(Signature & Seal)"}</p>
+                        </div>
+                        
+                        {/* Stamp Representation in Live Preview */}
+                        {showSeal ? (
+                          sealMode === "custom" && customSealUrl ? (
+                            <div className="my-1.5 flex items-center justify-center min-h-[50px]">
+                              <img
+                                src={customSealUrl}
+                                alt="Official Stamp"
+                                className="w-16 h-16 object-contain filter drop-shadow-xs select-none"
+                              />
+                            </div>
+                          ) : (
+                            <div className="relative my-2 scale-75 select-none min-h-[50px] flex items-center justify-center">
+                              <div className="w-16 h-16 rounded-full border-2 border-dashed border-red-500/50 flex flex-col items-center justify-center p-0.5">
+                                <div className="w-14 h-14 rounded-full border border-double border-red-500/60 flex flex-col items-center justify-center text-center">
+                                  <span className="text-[5px] text-red-500 font-bold">ຫ້ອງວ່າການ</span>
+                                  <span className="text-[6px] text-red-500 font-black tracking-tighter leading-none my-0.5">{provinceName}</span>
+                                  <span className="text-[4px] text-red-500">STAMP SEAL</span>
+                                </div>
+                              </div>
+                              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[6px] text-red-500 font-bold border border-red-500/30 px-1 rotate-[-12deg] bg-white/95">
+                                APPROVED
+                              </div>
+                            </div>
+                          )
+                        ) : (
+                          <div className="h-12"></div>
+                        )}
+
+                        <div className="pt-1 w-full">
+                          <p className="font-semibold text-slate-400">......................................................</p>
+                          <p className="font-bold text-slate-900 text-[9px] mt-0.5">( {approverName} )</p>
+                        </div>
+                      </div>
+
+                      {/* Distribution List underneath Approver */}
+                      {showDistribution && (
+                        <div className="text-left pt-4 mt-3 border-t border-dashed border-slate-200">
+                          <p className="font-bold underline uppercase text-[7px] text-slate-900">ບ່ອນນຳສົ່ງ (Distribution):</p>
+                          <div className="text-[7px] text-slate-700 mt-1 whitespace-pre-line font-medium leading-normal pl-1">
                             {distributionText || (isLao ? "(ບໍ່ມີຂໍ້ມູນບ່ອນນຳສົ່ງ)" : "(No distribution text)")}
                           </div>
                         </div>
-                      ) : (
-                        <div className="h-6"></div>
                       )}
-                      
-                      <div className="pt-4">
-                        <p className="font-bold">{isLao ? "ຜູ້ສະຫຼຸບລາຍງານ" : "Report Compiler"}</p>
-                        <div className="h-6"></div>
-                        <p className="font-semibold text-slate-400">......................................................</p>
-                        <p className="font-bold text-slate-800">{compilerName}</p>
-                        <p className="text-[7px] text-slate-500">{compilerTitle}</p>
-                      </div>
                     </div>
 
-                    {/* Approver & Seal */}
-                    <div className="w-[45%] text-center flex flex-col items-center justify-between">
+                    {/* Right Column: Report Compiler / Staff */}
+                    <div className="w-[46%] text-center flex flex-col items-center justify-between">
                       <div className="space-y-0.5">
-                        <p className="font-bold uppercase text-[9px] text-slate-950">{approverTitle}</p>
-                        <p className="text-[7px] text-slate-400">{isLao ? "(ເຊັນ ແລະ ປະທັບຕາເປັນທາງການ)" : "(Signature & Seal)"}</p>
+                        <p className="font-bold uppercase text-[9px] text-slate-950">{isLao ? "ຜູ້ສະຫຼຸບ ແລະ ບັນທຶກລາຍງານ" : "Report Compiler"}</p>
+                        <p className="text-[7px] text-slate-400">{isLao ? "(ເຊັນລົງລາຍເຊັນ)" : "(Signature)"}</p>
                       </div>
-                      
-                      {/* Stamp Representation in Live Preview */}
-                      {showSeal ? (
-                        sealMode === "custom" && customSealUrl ? (
-                          <div className="my-1.5 flex items-center justify-center">
-                            <img
-                              src={customSealUrl}
-                              alt="Official Stamp"
-                              className="w-16 h-16 object-contain filter drop-shadow-xs select-none"
-                            />
-                          </div>
-                        ) : (
-                          <div className="relative my-2 scale-75 select-none">
-                            <div className="w-16 h-16 rounded-full border-2 border-dashed border-red-500/50 flex flex-col items-center justify-center p-0.5">
-                              <div className="w-14 h-14 rounded-full border border-double border-red-500/60 flex flex-col items-center justify-center text-center">
-                                <span className="text-[5px] text-red-500 font-bold">ຫ້ອງວ່າການ</span>
-                                <span className="text-[6px] text-red-500 font-black tracking-tighter leading-none my-0.5">{provinceName}</span>
-                                <span className="text-[4px] text-red-500">STAMP SEAL</span>
-                              </div>
-                            </div>
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[6px] text-red-500 font-bold border border-red-500/30 px-1 rotate-[-12deg] bg-white/95">
-                              APPROVED
-                            </div>
-                          </div>
-                        )
-                      ) : (
-                        <div className="h-10"></div>
-                      )}
 
-                      <div className="pt-1">
+                      {/* Signature Spacing Area */}
+                      <div className="min-h-[60px] flex items-center justify-center">
+                        <span className="text-[7px] text-slate-300 italic font-mono">{isLao ? "(ບ່ອນເຊັນ)" : "(Signature space)"}</span>
+                      </div>
+
+                      <div className="pt-1 w-full">
                         <p className="font-semibold text-slate-400">......................................................</p>
-                        <p className="font-bold text-slate-900 text-[9px]">{approverName}</p>
+                        <p className="font-bold text-slate-900 text-[9px] mt-0.5">{compilerName}</p>
+                        <p className="text-[7px] text-slate-500 mt-0.5">{compilerTitle}</p>
                       </div>
                     </div>
 
@@ -1083,65 +1093,75 @@ export default function ReportSystem({ bookings, rooms, language }: ReportSystem
           {/* SECTION III: AUTHENTIC ADMINISTRATIVE SIGN-OFF & OFFICIAL SEAL */}
           <div className="mt-8 flex justify-between items-start text-xs text-slate-950 font-sans">
             
-            <div className="w-[45%] text-left space-y-1 flex flex-col justify-between min-h-[220px]">
-              <div>
-                {showDistribution ? (
-                  <div>
-                    <p className="font-bold underline text-[10px] uppercase">ບ່ອນນຳສົ່ງ (Distribution List):</p>
-                    <div className="text-[9px] font-medium text-slate-800 mt-1.5 whitespace-pre-line leading-relaxed">
-                      {distributionText || (isLao ? "(ບໍ່ມີຂໍ້ມູນບ່ອນນຳສົ່ງ)" : "(No distribution text)")}
+            {/* Left Column: Approver, Seal, and Distribution */}
+            <div className="w-[46%] text-center flex flex-col justify-between">
+              {/* Approver Header & Stamp */}
+              <div className="flex flex-col items-center">
+                <div className="space-y-1 text-center">
+                  <p className="font-bold uppercase tracking-wide text-sm">{approverTitle}</p>
+                  <p className="text-[10px] text-slate-500 font-medium">(ເຊັນ ແລະ ປະທັບຕາເປັນທາງການ)</p>
+                </div>
+                
+                {showSeal ? (
+                  sealMode === "custom" && customSealUrl ? (
+                    <div className="my-2.5 flex items-center justify-center min-h-[96px]">
+                      <img
+                        src={customSealUrl}
+                        alt="Official Seal"
+                        className="w-24 h-24 object-contain filter select-none"
+                      />
                     </div>
-                  </div>
-                ) : (
-                  <div className="h-10"></div>
-                )}
-              </div>
-              
-              <div className="pt-6">
-                <p className="font-bold">ຜູ້ສະຫຼຸບ ແລະ ບັນທຶກລາຍງານ</p>
-                <div className="h-14"></div>
-                <p className="font-bold text-slate-800">......................................................</p>
-                <p className="font-bold text-slate-900">{compilerName}</p>
-                <p className="text-[9px] text-slate-500 font-medium">{compilerTitle}</p>
-              </div>
-            </div>
-
-            <div className="w-[45%] text-center flex flex-col items-center justify-between min-h-[220px]">
-              <div className="space-y-1 text-center">
-                <p className="font-bold uppercase tracking-wide">{approverTitle}</p>
-                <p className="text-[10px] text-slate-500 font-medium">(ເຊັນ ແລະ ປະທັບຕາເປັນທາງການ)</p>
-              </div>
-              
-              {showSeal ? (
-                sealMode === "custom" && customSealUrl ? (
-                  <div className="my-2 flex items-center justify-center">
-                    <img
-                      src={customSealUrl}
-                      alt="Official Seal"
-                      className="w-24 h-24 object-contain filter select-none"
-                    />
-                  </div>
-                ) : (
-                  <div className="relative my-3 flex items-center justify-center">
-                    <div className="w-24 h-24 rounded-full border-4 border-dashed border-red-500/40 flex flex-col items-center justify-center p-1 select-none pointer-events-none">
-                      <div className="w-20 h-20 rounded-full border-2 border-double border-red-500/50 flex flex-col items-center justify-center text-center">
-                        <span className="text-[7px] text-red-500 font-bold leading-none">ຫ້ອງວ່າການ</span>
-                        <span className="text-[8px] text-red-500 font-black leading-tight my-0.5">{provinceName}</span>
-                        <span className="text-[6px] text-red-500 font-semibold leading-none">OFFICIAL SEAL</span>
+                  ) : (
+                    <div className="relative my-3 flex items-center justify-center min-h-[96px]">
+                      <div className="w-24 h-24 rounded-full border-4 border-dashed border-red-500/40 flex flex-col items-center justify-center p-1 select-none pointer-events-none">
+                        <div className="w-20 h-20 rounded-full border-2 border-double border-red-500/50 flex flex-col items-center justify-center text-center">
+                          <span className="text-[7px] text-red-500 font-bold leading-none">ຫ້ອງວ່າການ</span>
+                          <span className="text-[8px] text-red-500 font-black leading-tight my-0.5">{provinceName}</span>
+                          <span className="text-[6px] text-red-500 font-semibold leading-none">OFFICIAL SEAL</span>
+                        </div>
+                      </div>
+                      <div className="absolute text-[8px] text-red-500 font-bold border border-red-500/30 px-1 py-0.5 rotate-[-12deg] bg-white/95">
+                        ບ່ອນປະທັບຕາ
                       </div>
                     </div>
-                    <div className="absolute text-[8px] text-red-500 font-bold border border-red-500/30 px-1 py-0.5 rotate-[-12deg] bg-white/95">
-                      ບ່ອນປະທັບຕາ
-                    </div>
-                  </div>
-                )
-              ) : (
-                <div className="h-16"></div>
-              )}
+                  )
+                ) : (
+                  <div className="h-24"></div>
+                )}
 
-              <div className="pt-2 text-center">
+                <div className="pt-2 text-center w-full">
+                  <p className="font-bold text-slate-800">......................................................</p>
+                  <p className="text-[11px] text-slate-900 mt-1 font-bold">( {approverName} )</p>
+                </div>
+              </div>
+
+              {/* Distribution List positioned under the Approver on the left */}
+              {showDistribution && (
+                <div className="text-left pt-6 mt-4 border-t border-dashed border-slate-300">
+                  <p className="font-bold underline text-[10px] uppercase text-slate-900">ບ່ອນນຳສົ່ງ (Distribution List):</p>
+                  <div className="text-[9px] font-medium text-slate-800 mt-1.5 whitespace-pre-line leading-relaxed pl-1">
+                    {distributionText || (isLao ? "(ບໍ່ມີຂໍ້ມູນບ່ອນນຳສົ່ງ)" : "(No distribution text)")}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Right Column: Report Compiler */}
+            <div className="w-[46%] text-center flex flex-col items-center justify-between">
+              <div className="space-y-1 text-center">
+                <p className="font-bold uppercase tracking-wide text-sm">{isLao ? "ຜູ້ສະຫຼຸບ ແລະ ບັນທຶກລາຍງານ" : "Report Compiler"}</p>
+                <p className="text-[10px] text-slate-500 font-medium">(ເຊັນລົງລາຍເຊັນ)</p>
+              </div>
+
+              {/* Generous signature spacing matching official height */}
+              <div className="min-h-[110px] flex items-center justify-center">
+                <span className="text-[9px] text-slate-300 italic font-mono select-none">{isLao ? "(ບ່ອນລົງລາຍເຊັນ)" : "(Signature space)"}</span>
+              </div>
+
+              <div className="pt-2 text-center w-full">
                 <p className="font-bold text-slate-800">......................................................</p>
-                <p className="text-[10px] text-slate-500 mt-1 font-semibold">( {approverName} )</p>
+                <p className="text-[11px] text-slate-900 mt-1 font-bold">{compilerName}</p>
+                <p className="text-[10px] text-slate-600 font-medium mt-0.5">{compilerTitle}</p>
               </div>
             </div>
 
