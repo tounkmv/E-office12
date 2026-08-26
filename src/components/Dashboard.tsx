@@ -455,6 +455,7 @@ export default function Dashboard({ bookings, rooms, language, setActiveTab, use
         bookings={bookings} 
         rooms={rooms} 
         language={language} 
+        onNavigateToBooking={() => setActiveTab("booking")}
       />
 
       {/* Recent Bookings Live Log Section (Admin Only) */}
