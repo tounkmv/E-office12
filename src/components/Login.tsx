@@ -285,22 +285,30 @@ export default function Login({ language, setLanguage, onLocalLogin }: LoginProp
           </div>
 
           {/* Title Headers */}
-          <div className="space-y-2 px-2 flex flex-col items-center">
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight leading-tight text-center text-white drop-shadow-[0_4px_16px_rgba(0,0,0,0.9)]">
-              {language === "lo" ? "ລະບົບຈອງຫ້ອງປະຊຸມທັນສະໄໝ" : "Modern Meeting Room Booking System"}
+          <div className="space-y-3 px-2 flex flex-col items-center">
+            {/* Main System Title */}
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight leading-tight text-center bg-gradient-to-r from-white via-slate-100 to-amber-200 bg-clip-text text-transparent drop-shadow-[0_4px_24px_rgba(0,0,0,0.95)]">
+              {language === "lo" ? "ລະບົບບໍລິຫານທັນສະໄໝ" : "Smart Modern Governance System"}
             </h1>
 
-            <div className="flex items-center justify-center gap-2 sm:gap-3 w-full">
-              <div className="h-[2px] w-6 sm:w-12 bg-gradient-to-r from-transparent via-amber-400/80 to-amber-400 rounded-full" />
-              <p className="text-base sm:text-lg md:text-xl font-black text-amber-300 tracking-wider text-center whitespace-nowrap drop-shadow-[0_4px_16px_rgba(0,0,0,0.9)]">
-                {language === "lo" ? "ຫ້ອງວ່າການແຂວງຫົວພັນ" : "Houaphanh Provincial Office"}
-              </p>
-              <div className="h-[2px] w-6 sm:w-12 bg-gradient-to-l from-transparent via-amber-400/80 to-amber-400 rounded-full" />
+            {/* Institutional Office Name Banner */}
+            <div className="flex items-center justify-center gap-2 sm:gap-3.5 w-full">
+              <div className="h-[2px] w-8 sm:w-16 bg-gradient-to-r from-transparent via-amber-400 to-amber-300 rounded-full shadow-[0_0_8px_rgba(251,191,36,0.8)]" />
+              <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-gradient-to-r from-amber-500/25 via-amber-400/30 to-amber-500/25 border border-amber-400/60 backdrop-blur-md shadow-[0_0_25px_rgba(251,191,36,0.3)]">
+                <span className="text-amber-300 text-xs sm:text-sm animate-pulse">✦</span>
+                <p className="text-base sm:text-lg md:text-xl font-black text-amber-300 tracking-wider text-center drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)]">
+                  {language === "lo" ? "ຫ້ອງວ່າການແຂວງຫົວພັນ" : "Houaphanh Provincial Governor's Office"}
+                </p>
+                <span className="text-amber-300 text-xs sm:text-sm animate-pulse">✦</span>
+              </div>
+              <div className="h-[2px] w-8 sm:w-16 bg-gradient-to-l from-transparent via-amber-400 to-amber-300 rounded-full shadow-[0_0_8px_rgba(251,191,36,0.8)]" />
             </div>
 
-            <p className="text-[10px] sm:text-xs font-black text-white/95 tracking-[0.15em] drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)] text-center uppercase">
-              SMART E-OFFICE GOVERNANCE PLATFORM
-            </p>
+            {/* Modern Technology Subtitle Tag */}
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-slate-900/80 border border-white/20 backdrop-blur-xl text-[10px] sm:text-[11px] font-black tracking-[0.2em] text-slate-200 uppercase shadow-lg shadow-black/40">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#34d399]" />
+              <span>SMART E-OFFICE GOVERNANCE PLATFORM</span>
+            </div>
           </div>
         </div>
 

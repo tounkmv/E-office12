@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { auth, signOut, collection, db, onSnapshot, doc } from "./lib/firebase";
 import { seedDefaultAdmin, getRooms } from "./lib/firebaseHelper";
-import { UserProfile, MeetingRoom, RoomBooking, AppTheme, AppLanguage } from "./types";
+import { UserProfile, MeetingRoom, RoomBooking, AppTheme, AppLanguage, Vehicle, VehicleBooking } from "./types";
 import { translations } from "./lib/translations";
 import { Building2, LogOut, Clock, ShieldAlert } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import emblemLogo from "./assets/images/emblem.png";
 import emblemSvg from "./assets/images/emblem.svg";
+import { seedDefaultVehicles } from "./lib/vehicleHelper";
 
 // Components
 import Sidebar from "./components/Sidebar";
@@ -20,6 +21,14 @@ import AdminBookings from "./components/AdminBookings";
 import ReportSystem from "./components/ReportSystem";
 import Settings from "./components/Settings";
 import ToastContainer from "./components/ToastContainer";
+
+// Vehicle System Components & Portal
+import SystemPortal from "./components/SystemPortal";
+import VehicleDashboard from "./components/VehicleDashboard";
+import VehicleBookingForm from "./components/VehicleBookingForm";
+import VehicleManagement from "./components/VehicleManagement";
+import VehicleAdminBookings from "./components/VehicleAdminBookings";
+import VehicleReports from "./components/VehicleReports";
 
 export default function App() {
   // Auth & Profile State
@@ -66,6 +75,19 @@ export default function App() {
   const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Active System State: "portal" | "meeting" | "vehicle"
+  const [activeSystem, setActiveSystemState] = useState<"portal" | "meeting" | "vehicle">(() => {
+    return (localStorage.getItem("office-active-system") as any) || "portal";
+  });
+  const setActiveSystem = (sys: "portal" | "meeting" | "vehicle") => {
+    setActiveSystemState(sys);
+    localStorage.setItem("office-active-system", sys);
+  };
+
+  // Vehicles and Vehicle Bookings state
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [vehicleBookings, setVehicleBookings] = useState<VehicleBooking[]>([]);
 
   // Sync Theme to HTML Element attribute
   useEffect(() => {
@@ -204,10 +226,81 @@ export default function App() {
       console.error("Users snapshot error:", error);
     });
 
+    // Listen to Vehicles collection
+    const vehiclesRef = collection(db, "vehicles");
+    const unsubscribeVehicles = onSnapshot(vehiclesRef, (snapshot) => {
+      const list: Vehicle[] = [];
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data() as Vehicle;
+        list.push({
+          ...data,
+          id: docSnap.id || data.id
+        });
+      });
+      if (list.length === 0) {
+        seedDefaultVehicles().then(v => setVehicles(v));
+      } else {
+        setVehicles(list);
+      }
+    }, (error) => {
+      console.error("Vehicles snapshot error:", error);
+      const local = localStorage.getItem("local_vehicles");
+      if (local) {
+        try {
+          setVehicles(JSON.parse(local));
+        } catch {
+          seedDefaultVehicles().then(v => setVehicles(v));
+        }
+      } else {
+        seedDefaultVehicles().then(v => setVehicles(v));
+      }
+    });
+
+    // Listen to Vehicle Bookings collection
+    const vehicleBookingsRef = collection(db, "vehicle_bookings");
+    const unsubscribeVehicleBookings = onSnapshot(vehicleBookingsRef, (snapshot) => {
+      const list: VehicleBooking[] = [];
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data() as VehicleBooking;
+        list.push({
+          ...data,
+          id: docSnap.id || data.id
+        });
+      });
+      setVehicleBookings(list.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || "")));
+    }, (error) => {
+      console.error("Vehicle bookings snapshot error:", error);
+      const local = localStorage.getItem("local_vehicle_bookings");
+      if (local) {
+        try {
+          setVehicleBookings(JSON.parse(local));
+        } catch {}
+      }
+    });
+
+    // Instant local sync listener for vehicle bookings
+    const handleVehicleLocalSync = () => {
+      const local = localStorage.getItem("local_vehicle_bookings");
+      if (local) {
+        try {
+          const list: VehicleBooking[] = JSON.parse(local);
+          setVehicleBookings(list.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || "")));
+        } catch {}
+      }
+    };
+    window.addEventListener("vehicle-bookings-updated", handleVehicleLocalSync);
+    window.addEventListener("vehicle-booking-created", handleVehicleLocalSync);
+    window.addEventListener("storage", handleVehicleLocalSync);
+
     return () => {
       unsubscribeRooms();
       unsubscribeBookings();
       unsubscribeUsers();
+      unsubscribeVehicles();
+      unsubscribeVehicleBookings();
+      window.removeEventListener("vehicle-bookings-updated", handleVehicleLocalSync);
+      window.removeEventListener("vehicle-booking-created", handleVehicleLocalSync);
+      window.removeEventListener("storage", handleVehicleLocalSync);
     };
   }, [userProfile]);
 
@@ -323,6 +416,10 @@ export default function App() {
           userProfile={userProfile}
           bookings={bookings}
           allUsers={allUsers}
+          activeSystem={activeSystem}
+          setActiveSystem={setActiveSystem}
+          vehicleBookings={vehicleBookings}
+          vehicles={vehicles}
         />
 
         {/* Main Content Area */}
@@ -337,53 +434,137 @@ export default function App() {
             isMobileMenuOpen={isMobileMenuOpen}
             onToggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             setActiveTab={setActiveTab}
+            activeSystem={activeSystem}
+            setActiveSystem={setActiveSystem}
           />
 
           {/* Dynamic active page viewer */}
-          <main id="app-main-content" className="flex-1 p-8 overflow-y-auto max-w-7xl w-full mx-auto">
-            {activeTab === "dashboard" && (
-              <Dashboard 
-                bookings={bookings} 
-                rooms={rooms} 
-                language={language} 
-                setActiveTab={setActiveTab}
-                userRole={userProfile.role}
-              />
-            )}
-
-            {activeTab === "booking" && (
-              <BookingForm 
-                rooms={rooms} 
-                bookings={bookings} 
-                userProfile={userProfile} 
+          <main id="app-main-content" className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto max-w-7xl w-full mx-auto">
+            {/* PORTAL VIEW: 2 MAIN WINDOWS AFTER LOGIN */}
+            {activeSystem === "portal" && (
+              <SystemPortal 
                 language={language}
-              />
-            )}
-
-            {activeTab === "rooms" && userProfile.role === "admin" && (
-              <RoomManagement 
-                rooms={rooms} 
-                language={language}
-              />
-            )}
-
-            {activeTab === "admin-bookings" && userProfile.role === "admin" && (
-              <AdminBookings 
-                rooms={rooms} 
-                bookings={bookings} 
-                userProfile={userProfile} 
-                language={language}
-              />
-            )}
-
-            {activeTab === "reports" && userProfile.role === "admin" && (
-              <ReportSystem 
-                bookings={bookings}
+                userProfile={userProfile}
                 rooms={rooms}
-                language={language}
+                roomBookings={bookings}
+                vehicles={vehicles}
+                vehicleBookings={vehicleBookings}
+                onSelectSystem={(sys) => {
+                  setActiveSystem(sys);
+                  if (sys === "meeting") {
+                    setActiveTab("dashboard");
+                  } else {
+                    setActiveTab("vehicle-dashboard");
+                  }
+                }}
               />
             )}
 
+            {/* ========================================================================= */}
+            {/* SYSTEM 1: ລະບົບຈອງຫ້ອງປະຊຸມທັນສະໄໝ (MODERN MEETING ROOM SYSTEM) */}
+            {/* ========================================================================= */}
+            {activeSystem === "meeting" && (
+              <>
+                {activeTab === "dashboard" && (
+                  <Dashboard 
+                    bookings={bookings} 
+                    rooms={rooms} 
+                    language={language} 
+                    setActiveTab={setActiveTab}
+                    userRole={userProfile.role}
+                  />
+                )}
+
+                {activeTab === "booking" && (
+                  <BookingForm 
+                    rooms={rooms} 
+                    bookings={bookings} 
+                    userProfile={userProfile} 
+                    language={language}
+                  />
+                )}
+
+                {activeTab === "rooms" && userProfile.role === "admin" && (
+                  <RoomManagement 
+                    rooms={rooms} 
+                    language={language}
+                  />
+                )}
+
+                {activeTab === "admin-bookings" && userProfile.role === "admin" && (
+                  <AdminBookings 
+                    rooms={rooms} 
+                    bookings={bookings} 
+                    userProfile={userProfile} 
+                    language={language}
+                  />
+                )}
+
+                {activeTab === "reports" && userProfile.role === "admin" && (
+                  <ReportSystem 
+                    bookings={bookings}
+                    rooms={rooms}
+                    language={language}
+                  />
+                )}
+              </>
+            )}
+
+            {/* ========================================================================= */}
+            {/* SYSTEM 2: ລະບົບການຈັດການລົດບໍລິຫານ (ADMINISTRATIVE VEHICLE SYSTEM) */}
+            {/* ========================================================================= */}
+            {activeSystem === "vehicle" && (
+              <>
+                {activeTab === "vehicle-dashboard" && (
+                  <VehicleDashboard 
+                    vehicles={vehicles}
+                    bookings={vehicleBookings}
+                    language={language}
+                    userRole={userProfile.role}
+                    onNavigateToBooking={() => setActiveTab("vehicle-booking")}
+                    onNavigateToManagement={() => setActiveTab("vehicle-management")}
+                    onNavigateToAdminBookings={() => setActiveTab("vehicle-admin-bookings")}
+                  />
+                )}
+
+                {activeTab === "vehicle-booking" && (
+                  <VehicleBookingForm 
+                    vehicles={vehicles}
+                    bookings={vehicleBookings}
+                    userProfile={userProfile}
+                    language={language}
+                    onNavigateToAdminBookings={() => setActiveTab("vehicle-admin-bookings")}
+                    onNavigateToDashboard={() => setActiveTab("vehicle-dashboard")}
+                  />
+                )}
+
+                {activeTab === "vehicle-management" && userProfile.role === "admin" && (
+                  <VehicleManagement 
+                    vehicles={vehicles}
+                    language={language}
+                  />
+                )}
+
+                {activeTab === "vehicle-admin-bookings" && userProfile.role === "admin" && (
+                  <VehicleAdminBookings 
+                    bookings={vehicleBookings}
+                    vehicles={vehicles}
+                    userProfile={userProfile}
+                    language={language}
+                  />
+                )}
+
+                {activeTab === "vehicle-reports" && (
+                  <VehicleReports 
+                    bookings={vehicleBookings}
+                    vehicles={vehicles}
+                    language={language}
+                  />
+                )}
+              </>
+            )}
+
+            {/* SHARED ADMINISTRATION & SETTINGS */}
             {activeTab === "users" && userProfile.role === "admin" && (
               <UserManagement 
                 language={language}
@@ -456,8 +637,8 @@ export default function App() {
                 <div className="space-y-3">
                   {language === "lo" ? (
                     <>
-                      <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-white leading-snug drop-shadow-md">
-                        ຍີນດີຕ້ອນຮັບເຂົ້າສູ່ ລະບົບຈອງຫ້ອງປະຊຸມທັນສະໄໝ
+                      <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-amber-200 leading-snug drop-shadow-md">
+                        ຍິນດີຕ້ອນຮັບເຂົ້າສູ່ ລະບົບບໍລິຫານທັນສະໄໝ
                       </h3>
                       <h4 className="text-lg sm:text-xl md:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-amber-400 to-amber-500 leading-snug drop-shadow-md">
                         ຫ້ອງວ່າການແຂວງຫົວພັນ
@@ -465,11 +646,11 @@ export default function App() {
                     </>
                   ) : (
                     <>
-                      <h3 className="text-lg sm:text-xl md:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-white leading-snug drop-shadow-md uppercase tracking-wide">
-                        Welcome to the Modern Meeting Room Booking System
+                      <h3 className="text-lg sm:text-xl md:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-amber-200 leading-snug drop-shadow-md uppercase tracking-wide">
+                        Welcome to the Modern Administration System
                       </h3>
                       <h4 className="text-base sm:text-lg md:text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-amber-400 to-amber-500 leading-snug drop-shadow-md uppercase tracking-wider">
-                        Houaphanh Provincial Office
+                        Houaphanh Provincial Governor's Office
                       </h4>
                     </>
                   )}

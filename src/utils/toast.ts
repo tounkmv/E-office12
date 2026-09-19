@@ -121,18 +121,39 @@ export function playNotificationSound(type: ToastType) {
 }
 
 // Global Custom Event Dispatcher for Toast Alerts
-export function showSystemToast(message: string, type: ToastType = "success", title?: string, duration = 4000) {
+export function showSystemToast(
+  messageOrOptions: string | { message: string; type?: ToastType; title?: string; duration?: number },
+  type: ToastType = "success",
+  title?: string,
+  duration = 4000
+) {
+  let finalMessage = "";
+  let finalType: ToastType = "success";
+  let finalTitle: string | undefined = undefined;
+  let finalDuration = duration;
+
+  if (typeof messageOrOptions === "object" && messageOrOptions !== null) {
+    finalMessage = messageOrOptions.message;
+    finalType = messageOrOptions.type || "success";
+    finalTitle = messageOrOptions.title;
+    if (messageOrOptions.duration) finalDuration = messageOrOptions.duration;
+  } else {
+    finalMessage = String(messageOrOptions || "");
+    finalType = type;
+    finalTitle = title;
+  }
+
   const event = new CustomEvent("system-alert-toast", {
     detail: {
       id: "toast_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
-      message,
-      type,
-      title,
-      duration
+      message: finalMessage,
+      type: finalType,
+      title: finalTitle,
+      duration: finalDuration
     } as ToastMessage
   });
   window.dispatchEvent(event);
   
   // Play the sound chime automatically
-  playNotificationSound(type);
+  playNotificationSound(finalType);
 }

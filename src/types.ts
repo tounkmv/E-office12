@@ -70,3 +70,55 @@ export interface SystemSettings {
   language: AppLanguage;
   theme: AppTheme;
 }
+
+// Vehicle Management System Types
+export type VehicleStatus = "available" | "in_use" | "maintenance";
+export type VehicleType = "sedan" | "suv" | "van" | "pickup" | "minibus";
+export type VehicleBookingStatus = "pending" | "approved" | "rejected" | "completed" | "cancelled";
+
+export interface Vehicle {
+  id: string;
+  name: string; // e.g. "Toyota Fortuner Legender 4WD"
+  plateNumber: string; // e.g. "ກກ 8899 ຫົວພັນ"
+  type: VehicleType;
+  capacity: number; // seat count e.g. 7
+  fuelType: string; // e.g. "ກາຊວນ (Diesel)"
+  status: VehicleStatus; // available, in_use, maintenance
+  imageUrl?: string;
+  defaultDriver?: string; // Assigned Driver Name
+  driverPhone?: string;
+  mileage?: number;
+  department?: string;
+  notes?: string;
+  createdAt?: string;
+}
+
+export interface VehicleBooking {
+  id: string;
+  vehicleId: string;
+  vehicleName: string;
+  vehiclePlate: string;
+  vehicleType: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  department: string;
+  phone: string;
+  purpose: string; // ຈຸດປະສົງການໃຊ້ງານ/ວຽກງານ
+  destination: string; // ຈຸດໝາຍປາຍທາງ (ແຂວງ/ເມືອງ/ສະຖານທີ່)
+  passengersCount: number; // ຈຳນວນຜູ້ເດີນທາງ
+  passengersList?: string; // ລາຍຊື່ຜູ້ຮ່ວມເດີນທາງ
+  startDate: string; // YYYY-MM-DD
+  startTime: string; // HH:MM
+  endDate: string; // YYYY-MM-DD
+  endTime: string; // HH:MM
+  status: VehicleBookingStatus; // pending, approved, rejected, completed
+  assignedDriver?: string; // ຄົນຂັບລົດທີ່ແຕ່ງຕັ້ງ
+  driverPhone?: string; // ເບີໂທຄົນຂັບລົດ
+  adminNotes?: string;
+  rejectionReason?: string;
+  createdAt: string;
+  approvedAt?: string;
+  approvedBy?: string;
+}
+

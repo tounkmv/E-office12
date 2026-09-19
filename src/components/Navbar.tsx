@@ -25,7 +25,9 @@ import {
   Key,
   Eye,
   EyeOff,
-  Menu
+  Menu,
+  Car,
+  Layers
 } from "lucide-react";
 import { db, collection, query, where, orderBy, onSnapshot, doc, updateDoc, getDocs } from "../lib/firebase";
 import { AppLanguage, SystemNotification, UserProfile } from "../types";
@@ -44,6 +46,8 @@ interface NavbarProps {
   isMobileMenuOpen?: boolean;
   onToggleMobileMenu?: () => void;
   setActiveTab?: (tab: string) => void;
+  activeSystem?: "portal" | "meeting" | "vehicle";
+  setActiveSystem?: (system: "portal" | "meeting" | "vehicle") => void;
 }
 
 const PRESET_AVATARS = [
@@ -64,7 +68,9 @@ export default function Navbar({
   onUpdateProfile,
   isMobileMenuOpen = false,
   onToggleMobileMenu,
-  setActiveTab
+  setActiveTab,
+  activeSystem = "meeting",
+  setActiveSystem
 }: NavbarProps) {
   const t = translations[language];
   const [notifications, setNotifications] = useState<SystemNotification[]>([]);
@@ -411,14 +417,64 @@ export default function Navbar({
             }}
           />
           <div className="flex flex-col min-w-0">
-            <span className="text-xs font-black text-amber-400 leading-tight truncate">
-              {isLao ? "ຫ້ອງວ່າການແຂວງ" : "Provincial Office"}
+            <span className="text-xs font-black text-white leading-tight truncate">
+              {isLao ? "ລະບົບບໍລິຫານທັນສະໄໝ" : "Modern Administration"}
             </span>
-            <span className="text-[10px] font-bold text-slate-200 uppercase leading-none tracking-wider">
-              {isLao ? "ແຂວງຫົວພັນ" : "Houaphanh"}
+            <span className="text-[10px] font-bold text-amber-300 uppercase leading-none tracking-wider truncate">
+              {isLao ? "ຫ້ອງວ່າການແຂວງຫົວພັນ" : "Houaphanh Office"}
             </span>
           </div>
         </div>
+
+        {/* System Indicator & Switcher on Navbar (Desktop & Tablet) */}
+        {setActiveSystem && (
+          <div className="hidden md:flex items-center gap-2 pl-3 border-l border-white/15">
+            <button
+              onClick={() => setActiveSystem("portal")}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-bold text-amber-300 transition-all cursor-pointer hover:scale-105 active:scale-95"
+              title={isLao ? "ກັບໄປໜ້າຫຼັກສູນລວມ 2 ລະບົບ" : "Portal Hub"}
+            >
+              <Layers className="w-3.5 h-3.5" />
+              <span>{isLao ? "ສູນ 2 ລະບົບ" : "Portal"}</span>
+            </button>
+
+            <button
+              onClick={() => {
+                if (activeSystem === "vehicle") {
+                  setActiveSystem("meeting");
+                  setActiveTab?.("dashboard");
+                } else {
+                  setActiveSystem("vehicle");
+                  setActiveTab?.("vehicle-dashboard");
+                }
+              }}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-black shadow-sm transition-all cursor-pointer border hover:scale-105 active:scale-95 ${
+                activeSystem === "vehicle"
+                  ? "bg-gradient-to-r from-amber-500 via-orange-500 to-rose-600 text-white border-amber-300/50 hover:brightness-110 shadow-amber-500/20"
+                  : "bg-gradient-to-r from-indigo-600 via-blue-600 to-purple-600 text-white border-indigo-300/50 hover:brightness-110 shadow-indigo-500/20"
+              }`}
+              title={isLao ? "ກົດເພື່ອສະຫຼັບລະບົບ" : "Click to switch system"}
+            >
+              {activeSystem === "vehicle" ? (
+                <>
+                  <Car className="w-3.5 h-3.5" />
+                  <span>{isLao ? "2. ລະບົບລົດບໍລິຫານ" : "Vehicle System"}</span>
+                  <span className="text-[10px] bg-black/25 px-1.5 py-0.5 rounded-md text-amber-200">
+                    {isLao ? "ປ່ຽນ ➜ ຫ້ອງປະຊຸມ" : "Switch ➜"}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Building2 className="w-3.5 h-3.5" />
+                  <span>{isLao ? "1. ລະບົບຫ້ອງປະຊຸມ" : "Meeting System"}</span>
+                  <span className="text-[10px] bg-black/25 px-1.5 py-0.5 rounded-md text-indigo-200">
+                    {isLao ? "ປ່ຽນ ➜ ລົດບໍລິຫານ" : "Switch ➜"}
+                  </span>
+                </>
+              )}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* 2. RIGHT COLUMN: Modern Controls & User Badge */}
@@ -784,6 +840,49 @@ export default function Navbar({
                     {isLao ? "ອ່ານແລ້ວ" : "Read"}
                   </span>
                 </div>
+
+                {/* Action Buttons for Direct Navigation */}
+                {(selectedNotification.title.includes("ລົດ") || selectedNotification.message.includes("ລົດ")) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedNotification(null);
+                      if (setActiveSystem) setActiveSystem("vehicle");
+                      if (setActiveTab) {
+                        if (userProfile?.role === "admin") {
+                          setActiveTab("vehicle-admin-bookings");
+                        } else {
+                          setActiveTab("vehicle-dashboard");
+                        }
+                      }
+                    }}
+                    className="w-full py-3 px-6 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-700 text-slate-950 font-black text-sm shadow-lg shadow-amber-500/20 hover:scale-[1.01] active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2 border border-amber-300"
+                  >
+                    <Car className="w-4 h-4 text-slate-950" />
+                    <span>{userProfile?.role === "admin" ? (isLao ? "ໄປສູນອະນຸມັດການຈອງລົດ (Go to Approvals)" : "Go to Vehicle Approvals") : (isLao ? "ຕິດຕາມສະຖານະລົດ (Dashboard)" : "View Vehicle Status")}</span>
+                  </button>
+                )}
+
+                {(selectedNotification.title.includes("ຫ້ອງ") || selectedNotification.message.includes("ຫ້ອງ")) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedNotification(null);
+                      if (setActiveSystem) setActiveSystem("meeting");
+                      if (setActiveTab) {
+                        if (userProfile?.role === "admin") {
+                          setActiveTab("admin-bookings");
+                        } else {
+                          setActiveTab("dashboard");
+                        }
+                      }
+                    }}
+                    className="w-full py-3 px-6 rounded-2xl bg-gradient-to-r from-indigo-500 via-blue-600 to-indigo-600 hover:from-indigo-600 hover:to-blue-700 text-white font-black text-sm shadow-lg shadow-indigo-500/20 hover:scale-[1.01] active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2 border border-indigo-400/30"
+                  >
+                    <Layers className="w-4 h-4" />
+                    <span>{userProfile?.role === "admin" ? (isLao ? "ໄປສູນອະນຸມັດຫ້ອງປະຊຸມ" : "Go to Room Approvals") : (isLao ? "ເບິ່ງປະຕິທິນຫ້ອງປະຊຸມ" : "View Room Calendar")}</span>
+                  </button>
+                )}
 
                 {/* Prominent Bottom Close Button */}
                 <div className="pt-2 border-t border-slate-200/60 dark:border-white/10">

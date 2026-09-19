@@ -7,7 +7,7 @@ import {
   FolderKanban, 
   FileSpreadsheet,
   Users, 
-  ShieldCheck,
+  ShieldCheck, 
   Settings as SettingsIcon,
   LogOut,
   Building2,
@@ -17,9 +17,12 @@ import {
   User as UserIcon,
   Sliders,
   ChevronRight,
-  Menu
+  Menu,
+  Car,
+  Layers,
+  ArrowLeftRight
 } from "lucide-react";
-import { AppLanguage, UserRole, UserProfile, RoomBooking } from "../types";
+import { AppLanguage, UserRole, UserProfile, RoomBooking, Vehicle, VehicleBooking } from "../types";
 import { translations } from "../lib/translations";
 import { motion, AnimatePresence } from "motion/react";
 import emblemLogo from "../assets/images/emblem.png";
@@ -37,6 +40,10 @@ interface SidebarProps {
   bookings?: RoomBooking[];
   allUsers?: UserProfile[];
   pendingUsersCount?: number;
+  activeSystem?: "portal" | "meeting" | "vehicle";
+  setActiveSystem?: (system: "portal" | "meeting" | "vehicle") => void;
+  vehicleBookings?: VehicleBooking[];
+  vehicles?: Vehicle[];
 }
 
 export default function Sidebar({ 
@@ -50,7 +57,11 @@ export default function Sidebar({
   userProfile,
   bookings = [],
   allUsers,
-  pendingUsersCount: pendingUsersCountProp
+  pendingUsersCount: pendingUsersCountProp,
+  activeSystem = "meeting",
+  setActiveSystem,
+  vehicleBookings = [],
+  vehicles = []
 }: SidebarProps) {
   const t = translations[language];
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -82,10 +93,24 @@ export default function Sidebar({
     : (allUsers ? allUsers.filter(u => u.status === "pending").length : internalPendingUsersCount);
 
   // Calculate pending and total booking counts for notification badges
-  const pendingCount = bookings.filter(b => b.status === "pending").length;
-  const totalCount = bookings.length;
+  const pendingMeetingCount = bookings.filter(b => b.status === "pending").length;
+  const pendingVehicleCount = vehicleBookings.filter(b => b.status === "pending").length;
 
-  const menuItems = [
+  const isLao = language === "lo";
+  const isVehicleSystem = activeSystem === "vehicle";
+
+  // Dynamic menu items based on active system
+  const menuItems = isVehicleSystem ? [
+    { id: "vehicle-dashboard", label: isLao ? "Dashboard ຕິດຕາມລົດ" : "Vehicle Dashboard", icon: LayoutDashboard },
+    { id: "vehicle-booking", label: isLao ? "ແບບຟອມຈອງລົດ" : "Book Vehicle", icon: CalendarClock },
+    ...(userRole === "admin" ? [
+      { id: "vehicle-management", label: isLao ? "ຈັດການຂໍ້ມູນລົດ" : "Vehicle Fleet", icon: Car },
+      { id: "vehicle-admin-bookings", label: isLao ? "ສູນອະນຸມັດການຈອງລົດ" : "Booking Approvals", icon: ShieldCheck },
+      { id: "vehicle-reports", label: isLao ? "ບົດລາຍງານການນຳໃຊ້ລົດ" : "Usage Reports", icon: FileSpreadsheet },
+      { id: "users", label: t.navUsers, icon: Users }
+    ] : []),
+    { id: "settings", label: t.navSettings, icon: SettingsIcon }
+  ] : [
     { id: "dashboard", label: t.navDashboard, icon: LayoutDashboard },
     { id: "booking", label: t.navBooking, icon: CalendarClock },
     ...(userRole === "admin" ? [
@@ -99,35 +124,102 @@ export default function Sidebar({
 
   // Helper to render navigation items
   const renderNavItems = (onItemClick?: () => void) => (
-    <nav className="flex-1 px-4 py-4 space-y-2.5 overflow-y-auto relative z-10">
+    <nav className="flex-1 px-4 py-3 space-y-2 overflow-y-auto relative z-10">
+      {/* SYSTEM SWITCHER PILL BANNER */}
+      {setActiveSystem && (
+        <div className="mb-3 p-2 rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200/60 dark:border-white/5 space-y-1.5">
+          <div className="flex items-center justify-between px-1">
+            <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+              {isLao ? "ລະບົບທີ່ກຳລັງເປີດ:" : "Active System:"}
+            </span>
+            <button
+              onClick={() => {
+                setActiveSystem("portal");
+                if (onItemClick) onItemClick();
+              }}
+              className="text-[10px] font-black text-indigo-600 dark:text-amber-400 hover:underline flex items-center gap-1 cursor-pointer"
+            >
+              <Layers className="w-3 h-3" />
+              <span>{isLao ? "ສູນ 2 ລະບົບ" : "Portal"}</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-1 bg-slate-200/60 dark:bg-slate-900/60 p-1 rounded-xl text-[11px] font-black">
+            <button
+              onClick={() => {
+                setActiveSystem("meeting");
+                setActiveTab("dashboard");
+                if (onItemClick) onItemClick();
+              }}
+              className={`py-1.5 px-2 rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer truncate ${
+                !isVehicleSystem 
+                  ? "bg-indigo-600 text-white shadow-xs" 
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+              }`}
+            >
+              <Building2 className="w-3 h-3 shrink-0" />
+              <span className="truncate">{isLao ? "1. ຫ້ອງປະຊຸມ" : "Rooms"}</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setActiveSystem("vehicle");
+                setActiveTab("vehicle-dashboard");
+                if (onItemClick) onItemClick();
+              }}
+              className={`py-1.5 px-2 rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer truncate ${
+                isVehicleSystem 
+                  ? "bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-xs" 
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+              }`}
+            >
+              <Car className="w-3 h-3 shrink-0" />
+              <span className="truncate">{isLao ? "2. ລົດບໍລິຫານ" : "Vehicles"}</span>
+              {pendingVehicleCount > 0 && (
+                <span className="w-2 h-2 rounded-full bg-rose-400 animate-ping" />
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+
       {menuItems.map((item) => {
         const Icon = item.icon;
         const isActive = activeTab === item.id;
 
-        // Custom notification badge rendering for Dashboard & Admin Bookings (Numeric pop-up badge only for pending bookings)
+        // Notification badge logic
         let badge = null;
-        if (item.id === "dashboard" && pendingCount > 0) {
+        if (item.id === "dashboard" && pendingMeetingCount > 0) {
           badge = (
             <span 
-              className="px-2 py-0.5 rounded-full text-xs font-black bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white shadow-md shadow-amber-500/40 border border-amber-300/50 animate-pulse shrink-0 flex items-center justify-center min-w-[22px] h-5.5 leading-none transition-all duration-300"
-              title={language === "lo" ? `${pendingCount} ການຈອງລໍຖ້າການອະນຸມັດ` : `${pendingCount} pending bookings`}
+              className="px-2 py-0.5 rounded-full text-xs font-black bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white shadow-md shadow-amber-500/40 border border-amber-300/50 animate-pulse shrink-0 flex items-center justify-center min-w-[22px] h-5.5 leading-none"
+              title={language === "lo" ? `${pendingMeetingCount} ການຈອງລໍຖ້າການອະນຸມັດ` : `${pendingMeetingCount} pending bookings`}
             >
-              {pendingCount}
+              {pendingMeetingCount}
             </span>
           );
-        } else if (item.id === "admin-bookings" && pendingCount > 0) {
+        } else if (item.id === "admin-bookings" && pendingMeetingCount > 0) {
           badge = (
             <span 
-              className="px-2 py-0.5 rounded-full text-xs font-black bg-gradient-to-r from-rose-600 via-red-600 to-rose-700 text-white shadow-md shadow-rose-600/40 border border-rose-300/50 animate-bounce shrink-0 flex items-center justify-center min-w-[22px] h-5.5 leading-none transition-all duration-300"
-              title={language === "lo" ? `${pendingCount} ການຈອງລໍຖ້າການອະນຸມັດ` : `${pendingCount} pending bookings`}
+              className="px-2 py-0.5 rounded-full text-xs font-black bg-gradient-to-r from-rose-600 via-red-600 to-rose-700 text-white shadow-md shadow-rose-600/40 border border-rose-300/50 animate-bounce shrink-0 flex items-center justify-center min-w-[22px] h-5.5 leading-none"
+              title={language === "lo" ? `${pendingMeetingCount} ການຈອງລໍຖ້າການອະນຸມັດ` : `${pendingMeetingCount} pending bookings`}
             >
-              {pendingCount}
+              {pendingMeetingCount}
+            </span>
+          );
+        } else if (item.id === "vehicle-admin-bookings" && pendingVehicleCount > 0) {
+          badge = (
+            <span 
+              className="px-2 py-0.5 rounded-full text-xs font-black bg-gradient-to-r from-rose-600 via-red-600 to-rose-700 text-white shadow-md shadow-rose-600/40 border border-rose-300/50 animate-bounce shrink-0 flex items-center justify-center min-w-[22px] h-5.5 leading-none"
+              title={language === "lo" ? `${pendingVehicleCount} ຄຳຂໍຈອງລົດລໍຖ້າການອະນຸມັດ` : `${pendingVehicleCount} pending requests`}
+            >
+              {pendingVehicleCount}
             </span>
           );
         } else if (item.id === "users" && effectivePendingUsersCount > 0) {
           badge = (
             <span 
-              className="px-2 py-0.5 rounded-full text-xs font-black bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white shadow-md shadow-amber-500/40 border border-amber-300/50 animate-bounce shrink-0 flex items-center justify-center min-w-[22px] h-5.5 leading-none transition-all duration-300"
+              className="px-2 py-0.5 rounded-full text-xs font-black bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white shadow-md shadow-amber-500/40 border border-amber-300/50 animate-bounce shrink-0 flex items-center justify-center min-w-[22px] h-5.5 leading-none"
               title={language === "lo" ? `${effectivePendingUsersCount} ຜູ້ໃຊ້ລໍຖ້າການອະນຸມັດ` : `${effectivePendingUsersCount} pending users`}
             >
               {effectivePendingUsersCount}
@@ -143,9 +235,11 @@ export default function Sidebar({
               setActiveTab(item.id);
               if (onItemClick) onItemClick();
             }}
-            className={`w-full flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all duration-300 text-left font-extrabold text-sm md:text-base tracking-wide relative group cursor-pointer ${
+            className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-all duration-300 text-left font-extrabold text-sm md:text-base tracking-wide relative group cursor-pointer ${
               isActive 
-                ? "bg-gradient-to-r from-purple-600 via-indigo-600 to-indigo-700 text-white shadow-lg shadow-indigo-500/30 border-l-4 border-amber-400 scale-[1.02]" 
+                ? isVehicleSystem
+                  ? "bg-gradient-to-r from-amber-600 via-orange-600 to-rose-600 text-white shadow-lg shadow-amber-600/25 border-l-4 border-yellow-300 scale-[1.02]"
+                  : "bg-gradient-to-r from-purple-600 via-indigo-600 to-indigo-700 text-white shadow-lg shadow-indigo-500/30 border-l-4 border-amber-400 scale-[1.02]" 
                 : "text-slate-600 dark:text-slate-300 hover:bg-gradient-to-r hover:from-purple-500/10 hover:to-indigo-500/10 hover:text-indigo-600 dark:hover:text-amber-400 hover:scale-[1.02] hover:translate-x-1 hover:shadow-md hover:shadow-indigo-500/5 border border-transparent hover:border-indigo-500/20"
             }`}
           >
@@ -159,7 +253,7 @@ export default function Sidebar({
             <div className="flex items-center gap-1.5 shrink-0">
               {badge}
               {isActive ? (
-                <Sparkles className="w-4.5 h-4.5 text-amber-300 animate-spin" style={{ animationDuration: '6s' }} />
+                <Sparkles className="w-4 h-4 text-amber-300 animate-spin" style={{ animationDuration: '6s' }} />
               ) : (
                 <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 text-indigo-400 transition-opacity" />
               )}
@@ -179,7 +273,14 @@ export default function Sidebar({
         <div className="absolute bottom-1/3 right-0 w-48 h-48 bg-indigo-500/10 dark:bg-indigo-600/15 rounded-full blur-3xl pointer-events-none" />
 
         {/* Sleek Brand Header Block */}
-        <div id="sidebar-header" className="p-5 h-28 bg-gradient-to-br from-[#1e1b4b] via-[#312e81] to-[#1e1b4b] text-white flex flex-col justify-center border-b-2 border-amber-400/50 relative overflow-hidden shadow-md">
+        <div 
+          id="sidebar-header" 
+          className={`p-5 h-28 text-white flex flex-col justify-center border-b-2 relative overflow-hidden shadow-md transition-colors duration-500 ${
+            isVehicleSystem 
+              ? "bg-gradient-to-br from-[#1e1b4b] via-[#3b170b] to-[#1a0c02] border-amber-400" 
+              : "bg-gradient-to-br from-[#1e1b4b] via-[#312e81] to-[#1e1b4b] border-amber-400/50"
+          }`}
+        >
           <div className="absolute top-0 right-0 w-32 h-32 bg-amber-400/10 rounded-full blur-2xl pointer-events-none animate-pulse" />
           <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-400 to-transparent opacity-80 pointer-events-none" />
           
@@ -199,15 +300,19 @@ export default function Sidebar({
                 }}
               />
             </div>
-            <div className="flex flex-col">
-              <h1 className="text-base font-black tracking-tight text-amber-400 leading-snug drop-shadow-sm">
-                {language === "lo" ? "ຫ້ອງວ່າການແຂວງ" : "Provincial Office"}
+            <div className="flex flex-col min-w-0">
+              <h1 className="text-sm lg:text-[15px] font-black tracking-tight text-white leading-snug drop-shadow-sm truncate">
+                {language === "lo" ? "ລະບົບບໍລິຫານທັນສະໄໝ" : "Modern Administration"}
               </h1>
-              <p className="text-sm font-black text-white uppercase tracking-wider">
-                {language === "lo" ? "ແຂວງຫົວພັນ" : "Houaphanh"}
+              <p className="text-xs lg:text-[13px] font-black text-amber-300 uppercase tracking-wide truncate">
+                {language === "lo" ? "ຫ້ອງວ່າການແຂວງຫົວພັນ" : "Houaphanh Provincial Office"}
               </p>
-              <span className="text-[10px] text-indigo-200 font-extrabold tracking-wider mt-1 border-t border-white/15 pt-1 block">
-                {language === "lo" ? "ລະບົບຈອງຫ້ອງປະຊຸມທັນສະໄໝ" : "MODERN BOOKING SYSTEM"}
+              <span className={`text-[9.5px] font-extrabold tracking-wider mt-1 border-t border-white/15 pt-0.5 block truncate ${
+                isVehicleSystem ? "text-amber-200" : "text-indigo-200"
+              }`}>
+                {isVehicleSystem 
+                  ? (language === "lo" ? "• ລະບົບລົດບໍລິຫານລັດຖະການ" : "• EXECUTIVE VEHICLE FLEET")
+                  : (language === "lo" ? "• ລະບົບຈອງຫ້ອງປະຊຸມທັນສະໄໝ" : "• MEETING ROOM BOOKING")}
               </span>
             </div>
           </div>
@@ -281,15 +386,19 @@ export default function Sidebar({
                         }}
                       />
                     </div>
-                    <div>
-                      <h2 className="text-sm font-black text-amber-400 leading-snug">
-                        {language === "lo" ? "ຫ້ອງວ່າການແຂວງ" : "Provincial Office"}
+                    <div className="flex flex-col min-w-0">
+                      <h2 className="text-sm font-black text-white leading-snug truncate">
+                        {language === "lo" ? "ລະບົບບໍລິຫານທັນສະໄໝ" : "Modern Administration"}
                       </h2>
-                      <p className="text-xs font-black text-white uppercase tracking-wider">
-                        {language === "lo" ? "ແຂວງຫົວພັນ" : "Houaphanh"}
+                      <p className="text-xs font-black text-amber-300 uppercase tracking-wider truncate">
+                        {language === "lo" ? "ຫ້ອງວ່າການແຂວງຫົວພັນ" : "Houaphanh Provincial Office"}
                       </p>
-                      <span className="text-[9px] text-indigo-200 font-bold block mt-0.5">
-                        {language === "lo" ? "ເມນູຫຼັກລະບົບຈອງ" : "MAIN SYSTEM MENU"}
+                      <span className={`text-[9px] font-bold block mt-0.5 truncate ${
+                        isVehicleSystem ? "text-amber-200" : "text-indigo-200"
+                      }`}>
+                        {isVehicleSystem 
+                          ? (language === "lo" ? "• ລະບົບລົດບໍລິຫານລັດຖະການ" : "• EXECUTIVE VEHICLE FLEET")
+                          : (language === "lo" ? "• ລະບົບຈອງຫ້ອງປະຊຸມທັນສະໄໝ" : "• MEETING ROOM BOOKING")}
                       </span>
                     </div>
                   </div>
