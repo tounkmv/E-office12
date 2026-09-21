@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { auth, signOut, collection, db, onSnapshot, doc } from "./lib/firebase";
-import { seedDefaultAdmin, getRooms } from "./lib/firebaseHelper";
+import { seedDefaultAdmin, getRooms, handleFirestoreError, OperationType } from "./lib/firebaseHelper";
 import { UserProfile, MeetingRoom, RoomBooking, AppTheme, AppLanguage, Vehicle, VehicleBooking } from "./types";
 import { translations } from "./lib/translations";
 import { Building2, LogOut, Clock, ShieldAlert } from "lucide-react";
@@ -35,7 +35,9 @@ export default function App() {
   const [firebaseUser, setFirebaseUser] = useState<any>(() => {
     try {
       const local = localStorage.getItem("local-auth-user");
-      return local ? JSON.parse(local) : null;
+      if (!local) return null;
+      const parsed = JSON.parse(local);
+      return parsed && typeof parsed.uid === "string" ? parsed : null;
     } catch {
       return null;
     }
@@ -43,7 +45,10 @@ export default function App() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(() => {
     try {
       const local = localStorage.getItem("local-auth-profile");
-      return local ? JSON.parse(local) : null;
+      if (!local) return null;
+      const parsed = JSON.parse(local);
+      const uid = parsed?.uid || parsed?.id;
+      return parsed && typeof uid === "string" ? { ...parsed, uid } : null;
     } catch {
       return null;
     }
@@ -113,12 +118,27 @@ export default function App() {
         const user = JSON.parse(localUser);
         const profile = JSON.parse(localProfile) as UserProfile;
         
+        const validUid = (profile && typeof profile.uid === "string" && profile.uid.trim() !== "")
+          ? profile.uid
+          : ((profile as any)?.id || (user && typeof user.uid === "string" ? user.uid : null));
+
+        if (!profile || !validUid) {
+          // Gracefully clean up stale or incomplete auth cache without throwing errors
+          localStorage.removeItem("local-auth-user");
+          localStorage.removeItem("local-auth-profile");
+          setFirebaseUser(null);
+          setUserProfile(null);
+          setAuthLoading(false);
+          return;
+        }
+
+        profile.uid = validUid;
         setFirebaseUser(user);
         setUserProfile(profile);
 
         // Pre-fetch rooms if they are active
         if (profile.status === "active") {
-          getRooms().catch(console.error);
+          getRooms().catch(() => {});
         }
 
         // Establish real-time sync with user document in Firestore
@@ -126,17 +146,23 @@ export default function App() {
         const unsubscribe = onSnapshot(userRef, (docSnap) => {
           if (docSnap.exists()) {
             const updatedProfile = docSnap.data() as UserProfile;
-            setUserProfile(updatedProfile);
-            localStorage.setItem("local-auth-profile", JSON.stringify(updatedProfile));
+            if (updatedProfile && updatedProfile.uid) {
+              setUserProfile(updatedProfile);
+              localStorage.setItem("local-auth-profile", JSON.stringify(updatedProfile));
+            }
           }
         }, (err) => {
-          console.error("Real-time user sync failed:", err);
+          console.warn("Real-time user sync notice:", err);
         });
 
         setAuthLoading(false);
         return () => unsubscribe();
-      } catch (err) {
-        console.error("Local profile parse error:", err);
+      } catch {
+        // Clear corrupted auth cache gracefully
+        localStorage.removeItem("local-auth-user");
+        localStorage.removeItem("local-auth-profile");
+        setFirebaseUser(null);
+        setUserProfile(null);
         setAuthLoading(false);
       }
     } else {
@@ -147,10 +173,12 @@ export default function App() {
   }, []);
 
   const handleLocalLogin = (profile: UserProfile) => {
+    if (!profile || !profile.uid) return;
+
     const mockUser = {
       uid: profile.uid,
-      email: profile.email,
-      displayName: profile.displayName,
+      email: profile.email || "",
+      displayName: profile.displayName || "User",
       isAnonymous: true,
       emailVerified: true
     };
@@ -165,12 +193,12 @@ export default function App() {
     const unsubscribe = onSnapshot(userRef, (docSnap) => {
       if (docSnap.exists()) {
         const updatedProfile = docSnap.data() as UserProfile;
-        setUserProfile(updatedProfile);
-        localStorage.setItem("local-auth-profile", JSON.stringify(updatedProfile));
+        if (updatedProfile && updatedProfile.uid) {
+          setUserProfile(updatedProfile);
+          localStorage.setItem("local-auth-profile", JSON.stringify(updatedProfile));
+        }
       }
     });
-
-    // In React 18+ we can store the unsubscribe in a state/ref if we want, but since they are logging in fresh, reload/mount will take care of it too.
   };
 
   // Real-time Firestore Sync (Rooms & Bookings)
@@ -190,7 +218,7 @@ export default function App() {
       });
       setRooms(list);
     }, (error) => {
-      console.error("Rooms snapshot error:", error);
+      handleFirestoreError(error, OperationType.LIST, "rooms");
     });
 
     // Listen to Bookings collection
@@ -207,7 +235,7 @@ export default function App() {
       // Sort: newest bookings first
       setBookings(list.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || "")));
     }, (error) => {
-      console.error("Bookings snapshot error:", error);
+      handleFirestoreError(error, OperationType.LIST, "bookings");
     });
 
     // Listen to Users collection
@@ -223,7 +251,7 @@ export default function App() {
       });
       setAllUsers(list);
     }, (error) => {
-      console.error("Users snapshot error:", error);
+      handleFirestoreError(error, OperationType.LIST, "users");
     });
 
     // Listen to Vehicles collection
@@ -243,7 +271,7 @@ export default function App() {
         setVehicles(list);
       }
     }, (error) => {
-      console.error("Vehicles snapshot error:", error);
+      handleFirestoreError(error, OperationType.LIST, "vehicles");
       const local = localStorage.getItem("local_vehicles");
       if (local) {
         try {
@@ -269,7 +297,7 @@ export default function App() {
       });
       setVehicleBookings(list.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || "")));
     }, (error) => {
-      console.error("Vehicle bookings snapshot error:", error);
+      handleFirestoreError(error, OperationType.LIST, "vehicle_bookings");
       const local = localStorage.getItem("local_vehicle_bookings");
       if (local) {
         try {

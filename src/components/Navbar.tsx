@@ -199,14 +199,16 @@ export default function Navbar({
 
   // Subscribe to user notifications and admin notifications
   useEffect(() => {
-    if (!userProfile) return;
+    if (!userProfile || !userProfile.uid) return;
 
     const notifRef = collection(db, "notifications");
     // Get notifications for either this specific user, or "admin" if the user is an admin
-    const allowedUserIds = [userProfile.uid];
+    const allowedUserIds = [userProfile.uid].filter(Boolean);
     if (userProfile.role === "admin") {
       allowedUserIds.push("admin");
     }
+
+    if (allowedUserIds.length === 0) return;
 
     const q = query(
       notifRef,
@@ -225,17 +227,22 @@ export default function Navbar({
     });
 
     return () => unsubscribe();
-  }, [userProfile]);
+  }, [userProfile?.uid, userProfile?.role]);
 
   // Subscribe to email logs (simulated email notifications database)
   useEffect(() => {
     if (!userProfile) return;
 
     const emailRef = collection(db, "emails");
-    // Admins can see all emails, regular users see only their own
-    const q = userProfile.role === "admin" 
-      ? query(emailRef, orderBy("sentAt", "desc"))
-      : query(emailRef, where("to", "==", userProfile.email));
+    // Admins can see all emails, regular users see only their own if email is present
+    let q;
+    if (userProfile.role === "admin") {
+      q = query(emailRef, orderBy("sentAt", "desc"));
+    } else if (userProfile.email && typeof userProfile.email === "string") {
+      q = query(emailRef, where("to", "==", userProfile.email));
+    } else {
+      return;
+    }
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const items: EmailLog[] = [];
@@ -250,7 +257,7 @@ export default function Navbar({
     });
 
     return () => unsubscribe();
-  }, [userProfile]);
+  }, [userProfile?.email, userProfile?.role]);
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
 

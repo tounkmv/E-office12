@@ -1,6 +1,42 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Meeting Rooms
+    match /rooms/{roomId} {
+      allow read, write: if true;
+    }
+
+    // Meeting Room Bookings
+    match /bookings/{bookingId} {
+      allow read, write: if true;
+    }
+
+    // User Profiles & Authentication
+    match /users/{userId} {
+      allow read, write: if true;
+    }
+
+    // System Notifications
+    match /notifications/{notificationId} {
+      allow read, write: if true;
+    }
+
+    // Administrative Fleet Vehicles
+    match /vehicles/{vehicleId} {
+      allow read, write: if true;
+    }
+
+    // Vehicle Travel Bookings & Dispatch
+    match /vehicle_bookings/{bookingId} {
+      allow read, write: if true;
+    }
+
+    // Connection testing
+    match /test/{docId} {
+      allow read, write: if true;
+    }
+
+    // Default global rule
     match /{document=**} {
       allow read, write: if true;
     }

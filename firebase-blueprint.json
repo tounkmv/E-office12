@@ -69,6 +69,62 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["id", "userId", "title", "message", "isRead", "createdAt"]
+    },
+    "vehicle": {
+      "title": "Administrative Vehicle",
+      "description": "Vehicle asset in the government office fleet",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "plateNumber": { "type": "string" },
+        "type": { "type": "string", "enum": ["sedan", "suv", "van", "pickup", "minibus"] },
+        "capacity": { "type": "integer" },
+        "fuelType": { "type": "string" },
+        "status": { "type": "string", "enum": ["available", "in_use", "maintenance"] },
+        "imageUrl": { "type": "string" },
+        "defaultDriver": { "type": "string" },
+        "driverPhone": { "type": "string" },
+        "mileage": { "type": "number" },
+        "department": { "type": "string" },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "plateNumber", "type", "capacity", "status"]
+    },
+    "vehicle_booking": {
+      "title": "Vehicle Booking",
+      "description": "Reservation record for official vehicle travel dispatch",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "vehicleId": { "type": "string" },
+        "vehicleName": { "type": "string" },
+        "vehiclePlate": { "type": "string" },
+        "vehicleType": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "department": { "type": "string" },
+        "phone": { "type": "string" },
+        "purpose": { "type": "string" },
+        "destination": { "type": "string" },
+        "passengersCount": { "type": "integer" },
+        "passengersList": { "type": "string" },
+        "startDate": { "type": "string" },
+        "startTime": { "type": "string" },
+        "endDate": { "type": "string" },
+        "endTime": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected", "completed", "cancelled"] },
+        "assignedDriver": { "type": "string" },
+        "driverPhone": { "type": "string" },
+        "adminNotes": { "type": "string" },
+        "rejectionReason": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "approvedAt": { "type": "string", "format": "date-time" },
+        "approvedBy": { "type": "string" }
+      },
+      "required": ["id", "vehicleId", "userId", "userName", "purpose", "destination", "startDate", "endDate", "status"]
     }
   },
   "firestore": {
@@ -87,6 +143,14 @@
     "/notifications/{notificationId}": {
       "schema": "notification",
       "description": "In-app notifications for users"
+    },
+    "/vehicles/{vehicleId}": {
+      "schema": "vehicle",
+      "description": "Fleet vehicles available for official administrative dispatch"
+    },
+    "/vehicle_bookings/{bookingId}": {
+      "schema": "vehicle_booking",
+      "description": "Vehicle booking and mission travel reservations"
     }
   }
 }
