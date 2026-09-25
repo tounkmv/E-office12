@@ -31,6 +31,11 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    // Leadership & Department Head Activities
+    match /leadership_activities/{activityId} {
+      allow read, write: if true;
+    }
+
     // Connection testing
     match /test/{docId} {
       allow read, write: if true;

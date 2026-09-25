@@ -1,13 +1,25 @@
 import { useState, useEffect } from "react";
 import { auth, signOut, collection, db, onSnapshot, doc } from "./lib/firebase";
 import { seedDefaultAdmin, getRooms, handleFirestoreError, OperationType } from "./lib/firebaseHelper";
-import { UserProfile, MeetingRoom, RoomBooking, AppTheme, AppLanguage, Vehicle, VehicleBooking } from "./types";
+import { 
+  UserProfile, 
+  MeetingRoom, 
+  RoomBooking, 
+  AppTheme, 
+  AppLanguage, 
+  Vehicle, 
+  VehicleBooking, 
+  LeadershipActivity,
+  hasPermission
+} from "./types";
 import { translations } from "./lib/translations";
-import { Building2, LogOut, Clock, ShieldAlert } from "lucide-react";
+import { Building2, LogOut, Clock, ShieldAlert, Car, Briefcase, ArrowRight, Layers, Lock, CheckCircle2 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import emblemLogo from "./assets/images/emblem.png";
 import emblemSvg from "./assets/images/emblem.svg";
 import { seedDefaultVehicles } from "./lib/vehicleHelper";
+import { subscribeLeadershipActivities, fetchLeadershipActivities } from "./lib/activityHelper";
+import { showSystemToast } from "./utils/toast";
 
 // Components
 import Sidebar from "./components/Sidebar";
@@ -29,6 +41,11 @@ import VehicleBookingForm from "./components/VehicleBookingForm";
 import VehicleManagement from "./components/VehicleManagement";
 import VehicleAdminBookings from "./components/VehicleAdminBookings";
 import VehicleReports from "./components/VehicleReports";
+
+// Leadership Activity Tracking Components
+import LeadershipCalendar from "./components/LeadershipCalendar";
+import LeadershipMyActivities from "./components/LeadershipMyActivities";
+import LeadershipReports from "./components/LeadershipReports";
 
 export default function App() {
   // Auth & Profile State
@@ -56,11 +73,13 @@ export default function App() {
   const [authLoading, setAuthLoading] = useState(true);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
-  // Auto-close welcome modal after 5 seconds
+  // Auto-close welcome modal after 5 seconds and display portal
   useEffect(() => {
     if (showWelcomeModal) {
       const timer = setTimeout(() => {
         setShowWelcomeModal(false);
+        setActiveSystem("portal");
+        setActiveTab("portal");
       }, 5000);
       return () => clearTimeout(timer);
     }
@@ -81,11 +100,11 @@ export default function App() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Active System State: "portal" | "meeting" | "vehicle"
-  const [activeSystem, setActiveSystemState] = useState<"portal" | "meeting" | "vehicle">(() => {
+  // Active System State: "portal" | "meeting" | "vehicle" | "leadership"
+  const [activeSystem, setActiveSystemState] = useState<"portal" | "meeting" | "vehicle" | "leadership">(() => {
     return (localStorage.getItem("office-active-system") as any) || "portal";
   });
-  const setActiveSystem = (sys: "portal" | "meeting" | "vehicle") => {
+  const setActiveSystem = (sys: "portal" | "meeting" | "vehicle" | "leadership") => {
     setActiveSystemState(sys);
     localStorage.setItem("office-active-system", sys);
   };
@@ -93,6 +112,27 @@ export default function App() {
   // Vehicles and Vehicle Bookings state
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [vehicleBookings, setVehicleBookings] = useState<VehicleBooking[]>([]);
+
+  // Leadership Activities state
+  const [leadershipActivities, setLeadershipActivities] = useState<LeadershipActivity[]>([]);
+
+  // Granular Permission Checks for the 3 Systems and features
+  const canAccessMeeting = hasPermission(userProfile, "meetingAccess");
+  const canBookMeeting = hasPermission(userProfile, "meetingBook");
+  const canApproveMeeting = hasPermission(userProfile, "meetingApprove");
+  const canManageRooms = hasPermission(userProfile, "meetingManageRooms");
+  const canMeetingReports = hasPermission(userProfile, "meetingReports");
+
+  const canAccessVehicle = hasPermission(userProfile, "vehicleAccess");
+  const canBookVehicle = hasPermission(userProfile, "vehicleBook");
+  const canApproveVehicle = hasPermission(userProfile, "vehicleApprove");
+  const canManageFleet = hasPermission(userProfile, "vehicleManageFleet");
+  const canVehicleReports = hasPermission(userProfile, "vehicleReports");
+
+  const canAccessLeadership = hasPermission(userProfile, "leadershipAccess");
+  const canCalendarLeadership = hasPermission(userProfile, "leadershipCalendar");
+  const canLogDuty = hasPermission(userProfile, "leadershipLogOwn");
+  const canDutyReports = hasPermission(userProfile, "leadershipReports");
 
   // Sync Theme to HTML Element attribute
   useEffect(() => {
@@ -186,6 +226,8 @@ export default function App() {
     setUserProfile(profile);
     localStorage.setItem("local-auth-user", JSON.stringify(mockUser));
     localStorage.setItem("local-auth-profile", JSON.stringify(profile));
+    setActiveSystem("portal");
+    setActiveTab("portal");
     setShowWelcomeModal(true);
 
     // Listen to profile updates after login
@@ -320,15 +362,27 @@ export default function App() {
     window.addEventListener("vehicle-booking-created", handleVehicleLocalSync);
     window.addEventListener("storage", handleVehicleLocalSync);
 
+    // Listen to Leadership Activities collection & local fallback
+    const unsubscribeActivities = subscribeLeadershipActivities((list) => {
+      setLeadershipActivities(list);
+    });
+
+    const handleActivityLocalSync = () => {
+      fetchLeadershipActivities().then(setLeadershipActivities);
+    };
+    window.addEventListener("leadership-activities-updated", handleActivityLocalSync);
+
     return () => {
       unsubscribeRooms();
       unsubscribeBookings();
       unsubscribeUsers();
       unsubscribeVehicles();
       unsubscribeVehicleBookings();
+      unsubscribeActivities();
       window.removeEventListener("vehicle-bookings-updated", handleVehicleLocalSync);
       window.removeEventListener("vehicle-booking-created", handleVehicleLocalSync);
       window.removeEventListener("storage", handleVehicleLocalSync);
+      window.removeEventListener("leadership-activities-updated", handleActivityLocalSync);
     };
   }, [userProfile]);
 
@@ -342,7 +396,9 @@ export default function App() {
     setUserProfile(null);
     localStorage.removeItem("local-auth-user");
     localStorage.removeItem("local-auth-profile");
-    setActiveTab("dashboard");
+    localStorage.removeItem("office-active-system");
+    setActiveSystem("portal");
+    setActiveTab("portal");
   };
 
   const t = translations[language];
@@ -468,7 +524,7 @@ export default function App() {
 
           {/* Dynamic active page viewer */}
           <main id="app-main-content" className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto max-w-7xl w-full mx-auto">
-            {/* PORTAL VIEW: 2 MAIN WINDOWS AFTER LOGIN */}
+            {/* PORTAL VIEW: 3 MAIN WINDOWS AFTER LOGIN */}
             {activeSystem === "portal" && (
               <SystemPortal 
                 language={language}
@@ -477,12 +533,15 @@ export default function App() {
                 roomBookings={bookings}
                 vehicles={vehicles}
                 vehicleBookings={vehicleBookings}
+                activities={leadershipActivities}
                 onSelectSystem={(sys) => {
                   setActiveSystem(sys);
                   if (sys === "meeting") {
                     setActiveTab("dashboard");
-                  } else {
+                  } else if (sys === "vehicle") {
                     setActiveTab("vehicle-dashboard");
+                  } else if (sys === "leadership") {
+                    setActiveTab("leadership-calendar");
                   }
                 }}
               />
@@ -492,104 +551,342 @@ export default function App() {
             {/* SYSTEM 1: ລະບົບຈອງຫ້ອງປະຊຸມທັນສະໄໝ (MODERN MEETING ROOM SYSTEM) */}
             {/* ========================================================================= */}
             {activeSystem === "meeting" && (
-              <>
-                {activeTab === "dashboard" && (
-                  <Dashboard 
-                    bookings={bookings} 
-                    rooms={rooms} 
-                    language={language} 
-                    setActiveTab={setActiveTab}
-                    userRole={userProfile.role}
-                  />
-                )}
+              !canAccessMeeting ? (
+                <div className="p-8 max-w-lg mx-auto my-12 bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/40 rounded-3xl text-center space-y-4 shadow-xl">
+                  <div className="w-16 h-16 mx-auto rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 flex items-center justify-center">
+                    <Lock className="w-8 h-8" />
+                  </div>
+                  <h3 className="text-xl font-black text-slate-900 dark:text-white">
+                    {language === "lo" ? "ທ່ານບໍ່ມີສິດເຂົ້າເຖິງລະບົບຈອງຫ້ອງປະຊຸມ" : "Access Denied: Meeting Room System"}
+                  </h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    {language === "lo" 
+                      ? "ບັນຊີຂອງທ່ານບໍ່ໄດ້ຮັບສິດໃຫ້ນຳໃຊ້ລະບົບນີ້ ກະລຸນາຕິດຕໍ່ຜູ້ດູແລລະບົບ (Admin) ເພື່ອຂໍເປີດສິດ"
+                      : "Your account does not have permission to access the meeting room system. Please contact an administrator."}
+                  </p>
+                  <button
+                    onClick={() => { setActiveSystem("portal"); setActiveTab("portal"); }}
+                    className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm cursor-pointer shadow-md inline-flex items-center gap-2"
+                  >
+                    <Layers className="w-4 h-4" />
+                    <span>{language === "lo" ? "ກັບໄປໜ້າສູນລວມ 3 ລະບົບ" : "Return to System Portal"}</span>
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {activeTab === "dashboard" && (
+                    <Dashboard 
+                      bookings={bookings} 
+                      rooms={rooms} 
+                      language={language} 
+                      setActiveTab={setActiveTab}
+                      userRole={userProfile.role}
+                    />
+                  )}
 
-                {activeTab === "booking" && (
-                  <BookingForm 
-                    rooms={rooms} 
-                    bookings={bookings} 
-                    userProfile={userProfile} 
-                    language={language}
-                  />
-                )}
+                  {activeTab === "booking" && (
+                    canBookMeeting ? (
+                      <BookingForm 
+                        rooms={rooms} 
+                        bookings={bookings} 
+                        userProfile={userProfile} 
+                        language={language}
+                      />
+                    ) : (
+                      <div className="p-8 max-w-lg mx-auto my-12 bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-900/40 rounded-3xl text-center space-y-4 shadow-xl">
+                        <div className="w-16 h-16 mx-auto rounded-2xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 flex items-center justify-center">
+                          <Lock className="w-8 h-8" />
+                        </div>
+                        <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                          {language === "lo" ? "ທ່ານບໍ່ມີສິດໃນການຈອງຫ້ອງປະຊຸມ" : "No Booking Permission"}
+                        </h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                          {language === "lo" ? "ທ່ານສາມາດເບິ່ງຕາຕະລາງປະຕິທິນໄດ້ ແຕ່ບໍ່ສາມາດສົ່ງຄຳຂໍຈອງຫ້ອງປະຊຸມໄດ້" : "You have read-only access to calendar."}
+                        </p>
+                        <button
+                          onClick={() => setActiveTab("dashboard")}
+                          className="px-5 py-2 rounded-xl bg-indigo-600 text-white font-bold text-xs"
+                        >
+                          {language === "lo" ? "ກັບໄປເບິ່ງຕາຕະລາງ" : "Back to Calendar"}
+                        </button>
+                      </div>
+                    )
+                  )}
 
-                {activeTab === "rooms" && userProfile.role === "admin" && (
-                  <RoomManagement 
-                    rooms={rooms} 
-                    language={language}
-                  />
-                )}
+                  {activeTab === "rooms" && (
+                    (userProfile.role === "admin" || canManageRooms) ? (
+                      <RoomManagement 
+                        rooms={rooms} 
+                        language={language}
+                      />
+                    ) : (
+                      <div className="p-8 max-w-lg mx-auto my-12 bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/40 rounded-3xl text-center space-y-4 shadow-xl">
+                        <div className="w-16 h-16 mx-auto rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 flex items-center justify-center">
+                          <Lock className="w-8 h-8" />
+                        </div>
+                        <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                          {language === "lo" ? "ທ່ານບໍ່ມີສິດຈັດການຂໍ້ມູນຫ້ອງປະຊຸມ" : "No Room Management Permission"}
+                        </h3>
+                      </div>
+                    )
+                  )}
 
-                {activeTab === "admin-bookings" && userProfile.role === "admin" && (
-                  <AdminBookings 
-                    rooms={rooms} 
-                    bookings={bookings} 
-                    userProfile={userProfile} 
-                    language={language}
-                  />
-                )}
+                  {activeTab === "admin-bookings" && (
+                    (userProfile.role === "admin" || canApproveMeeting) ? (
+                      <AdminBookings 
+                        rooms={rooms} 
+                        bookings={bookings} 
+                        userProfile={userProfile} 
+                        language={language}
+                      />
+                    ) : (
+                      <div className="p-8 max-w-lg mx-auto my-12 bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/40 rounded-3xl text-center space-y-4 shadow-xl">
+                        <div className="w-16 h-16 mx-auto rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 flex items-center justify-center">
+                          <Lock className="w-8 h-8" />
+                        </div>
+                        <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                          {language === "lo" ? "ທ່ານບໍ່ມີສິດອະນຸມັດການຈອງຫ້ອງປະຊຸມ" : "No Approval Permission"}
+                        </h3>
+                      </div>
+                    )
+                  )}
 
-                {activeTab === "reports" && userProfile.role === "admin" && (
-                  <ReportSystem 
-                    bookings={bookings}
-                    rooms={rooms}
-                    language={language}
-                  />
-                )}
-              </>
+                  {activeTab === "reports" && (
+                    (userProfile.role === "admin" || canMeetingReports) ? (
+                      <ReportSystem 
+                        bookings={bookings}
+                        rooms={rooms}
+                        language={language}
+                      />
+                    ) : (
+                      <div className="p-8 max-w-lg mx-auto my-12 bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/40 rounded-3xl text-center space-y-4 shadow-xl">
+                        <div className="w-16 h-16 mx-auto rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 flex items-center justify-center">
+                          <Lock className="w-8 h-8" />
+                        </div>
+                        <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                          {language === "lo" ? "ທ່ານບໍ່ມີສິດເບິ່ງບົດລາຍງານຫ້ອງປະຊຸມ" : "No Reports Permission"}
+                        </h3>
+                      </div>
+                    )
+                  )}
+                </>
+              )
             )}
 
             {/* ========================================================================= */}
             {/* SYSTEM 2: ລະບົບການຈັດການລົດບໍລິຫານ (ADMINISTRATIVE VEHICLE SYSTEM) */}
             {/* ========================================================================= */}
             {activeSystem === "vehicle" && (
-              <>
-                {activeTab === "vehicle-dashboard" && (
-                  <VehicleDashboard 
-                    vehicles={vehicles}
-                    bookings={vehicleBookings}
-                    language={language}
-                    userRole={userProfile.role}
-                    onNavigateToBooking={() => setActiveTab("vehicle-booking")}
-                    onNavigateToManagement={() => setActiveTab("vehicle-management")}
-                    onNavigateToAdminBookings={() => setActiveTab("vehicle-admin-bookings")}
-                  />
-                )}
+              !canAccessVehicle ? (
+                <div className="p-8 max-w-lg mx-auto my-12 bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/40 rounded-3xl text-center space-y-4 shadow-xl">
+                  <div className="w-16 h-16 mx-auto rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 flex items-center justify-center">
+                    <Lock className="w-8 h-8" />
+                  </div>
+                  <h3 className="text-xl font-black text-slate-900 dark:text-white">
+                    {language === "lo" ? "ທ່ານບໍ່ມີສິດເຂົ້າເຖິງລະບົບລົດບໍລິຫານ" : "Access Denied: Vehicle Fleet System"}
+                  </h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    {language === "lo" 
+                      ? "ບັນຊີຂອງທ່ານບໍ່ໄດ້ຮັບສິດໃຫ້ນຳໃຊ້ລະບົບນີ້ ກະລຸນາຕິດຕໍ່ຜູ້ດູແລລະບົບ (Admin) ເພື່ອຂໍເປີດສິດ"
+                      : "Your account does not have permission to access the vehicle fleet system. Please contact an administrator."}
+                  </p>
+                  <button
+                    onClick={() => { setActiveSystem("portal"); setActiveTab("portal"); }}
+                    className="px-6 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-sm cursor-pointer shadow-md inline-flex items-center gap-2"
+                  >
+                    <Layers className="w-4 h-4" />
+                    <span>{language === "lo" ? "ກັບໄປໜ້າສູນລວມ 3 ລະບົບ" : "Return to System Portal"}</span>
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {activeTab === "vehicle-dashboard" && (
+                    <VehicleDashboard 
+                      vehicles={vehicles}
+                      bookings={vehicleBookings}
+                      language={language}
+                      userRole={userProfile.role}
+                      onNavigateToBooking={() => setActiveTab("vehicle-booking")}
+                      onNavigateToManagement={() => setActiveTab("vehicle-management")}
+                      onNavigateToAdminBookings={() => setActiveTab("vehicle-admin-bookings")}
+                    />
+                  )}
 
-                {activeTab === "vehicle-booking" && (
-                  <VehicleBookingForm 
-                    vehicles={vehicles}
-                    bookings={vehicleBookings}
-                    userProfile={userProfile}
-                    language={language}
-                    onNavigateToAdminBookings={() => setActiveTab("vehicle-admin-bookings")}
-                    onNavigateToDashboard={() => setActiveTab("vehicle-dashboard")}
-                  />
-                )}
+                  {activeTab === "vehicle-booking" && (
+                    canBookVehicle ? (
+                      <VehicleBookingForm 
+                        vehicles={vehicles}
+                        bookings={vehicleBookings}
+                        userProfile={userProfile}
+                        language={language}
+                        onNavigateToAdminBookings={() => setActiveTab("vehicle-admin-bookings")}
+                        onNavigateToDashboard={() => setActiveTab("vehicle-dashboard")}
+                      />
+                    ) : (
+                      <div className="p-8 max-w-lg mx-auto my-12 bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-900/40 rounded-3xl text-center space-y-4 shadow-xl">
+                        <div className="w-16 h-16 mx-auto rounded-2xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 flex items-center justify-center">
+                          <Lock className="w-8 h-8" />
+                        </div>
+                        <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                          {language === "lo" ? "ທ່ານບໍ່ມີສິດໃນການຈອງລົດບໍລິຫານ" : "No Vehicle Booking Permission"}
+                        </h3>
+                        <button
+                          onClick={() => setActiveTab("vehicle-dashboard")}
+                          className="px-5 py-2 rounded-xl bg-amber-600 text-white font-bold text-xs"
+                        >
+                          {language === "lo" ? "ກັບໄປເບິ່ງສະຖານະລົດ" : "Back to Fleet Status"}
+                        </button>
+                      </div>
+                    )
+                  )}
 
-                {activeTab === "vehicle-management" && userProfile.role === "admin" && (
-                  <VehicleManagement 
-                    vehicles={vehicles}
-                    language={language}
-                  />
-                )}
+                  {activeTab === "vehicle-management" && (
+                    (userProfile.role === "admin" || canManageFleet) ? (
+                      <VehicleManagement 
+                        vehicles={vehicles}
+                        language={language}
+                      />
+                    ) : (
+                      <div className="p-8 max-w-lg mx-auto my-12 bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/40 rounded-3xl text-center space-y-4 shadow-xl">
+                        <div className="w-16 h-16 mx-auto rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 flex items-center justify-center">
+                          <Lock className="w-8 h-8" />
+                        </div>
+                        <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                          {language === "lo" ? "ທ່ານບໍ່ມີສິດຈັດການຂໍ້ມູນລົດບໍລິຫານ" : "No Fleet Management Permission"}
+                        </h3>
+                      </div>
+                    )
+                  )}
 
-                {activeTab === "vehicle-admin-bookings" && userProfile.role === "admin" && (
-                  <VehicleAdminBookings 
-                    bookings={vehicleBookings}
-                    vehicles={vehicles}
-                    userProfile={userProfile}
-                    language={language}
-                  />
-                )}
+                  {activeTab === "vehicle-admin-bookings" && (
+                    (userProfile.role === "admin" || canApproveVehicle) ? (
+                      <VehicleAdminBookings 
+                        bookings={vehicleBookings}
+                        vehicles={vehicles}
+                        userProfile={userProfile}
+                        language={language}
+                      />
+                    ) : (
+                      <div className="p-8 max-w-lg mx-auto my-12 bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/40 rounded-3xl text-center space-y-4 shadow-xl">
+                        <div className="w-16 h-16 mx-auto rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 flex items-center justify-center">
+                          <Lock className="w-8 h-8" />
+                        </div>
+                        <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                          {language === "lo" ? "ທ່ານບໍ່ມີສິດອະນຸມັດການຈອງລົດ" : "No Vehicle Approval Permission"}
+                        </h3>
+                      </div>
+                    )
+                  )}
 
-                {activeTab === "vehicle-reports" && (
-                  <VehicleReports 
-                    bookings={vehicleBookings}
-                    vehicles={vehicles}
-                    language={language}
-                  />
-                )}
-              </>
+                  {activeTab === "vehicle-reports" && (
+                    (userProfile.role === "admin" || canVehicleReports) ? (
+                      <VehicleReports 
+                        bookings={vehicleBookings}
+                        vehicles={vehicles}
+                        language={language}
+                      />
+                    ) : (
+                      <div className="p-8 max-w-lg mx-auto my-12 bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/40 rounded-3xl text-center space-y-4 shadow-xl">
+                        <div className="w-16 h-16 mx-auto rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 flex items-center justify-center">
+                          <Lock className="w-8 h-8" />
+                        </div>
+                        <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                          {language === "lo" ? "ທ່ານບໍ່ມີສິດເບິ່ງບົດລາຍງານການນຳໃຊ້ລົດ" : "No Vehicle Reports Permission"}
+                        </h3>
+                      </div>
+                    )
+                  )}
+                </>
+              )
+            )}
+
+            {/* ========================================================================= */}
+            {/* SYSTEM 3: ລະບົບຕິດຕາມການເຄື່ອນໄຫວວຽກຂອງຄະນະ (LEADERSHIP ACTIVITY SYSTEM) */}
+            {/* ========================================================================= */}
+            {activeSystem === "leadership" && (
+              !canAccessLeadership ? (
+                <div className="p-8 max-w-lg mx-auto my-12 bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/40 rounded-3xl text-center space-y-4 shadow-xl">
+                  <div className="w-16 h-16 mx-auto rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 flex items-center justify-center">
+                    <Lock className="w-8 h-8" />
+                  </div>
+                  <h3 className="text-xl font-black text-slate-900 dark:text-white">
+                    {language === "lo" ? "ທ່ານບໍ່ມີສິດເຂົ້າເຖິງລະບົບຕິດຕາມການເຄື່ອນໄຫວວຽກ" : "Access Denied: Duty Tracker System"}
+                  </h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    {language === "lo" 
+                      ? "ບັນຊີຂອງທ່ານບໍ່ໄດ້ຮັບສິດໃຫ້ນຳໃຊ້ລະບົບນີ້ ກະລຸນາຕິດຕໍ່ຜູ້ດູແລລະບົບ (Admin) ເພື່ອຂໍເປີດສິດ"
+                      : "Your account does not have permission to access the duty tracking system. Please contact an administrator."}
+                  </p>
+                  <button
+                    onClick={() => { setActiveSystem("portal"); setActiveTab("portal"); }}
+                    className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm cursor-pointer shadow-md inline-flex items-center gap-2"
+                  >
+                    <Layers className="w-4 h-4" />
+                    <span>{language === "lo" ? "ກັບໄປໜ້າສູນລວມ 3 ລະບົບ" : "Return to System Portal"}</span>
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {activeTab === "leadership-calendar" && (
+                    (userProfile.role === "admin" || canCalendarLeadership) ? (
+                      <LeadershipCalendar 
+                        activities={leadershipActivities}
+                        userProfile={userProfile}
+                        language={language}
+                        onRefresh={() => fetchLeadershipActivities().then(setLeadershipActivities)}
+                      />
+                    ) : (
+                      <div className="p-8 max-w-lg mx-auto my-12 bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/40 rounded-3xl text-center space-y-4 shadow-xl">
+                        <div className="w-16 h-16 mx-auto rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 flex items-center justify-center">
+                          <Lock className="w-8 h-8" />
+                        </div>
+                        <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                          {language === "lo" ? "ທ່ານບໍ່ມີສິດເບິ່ງປະຕິທິນວຽກ" : "No Duty Calendar Permission"}
+                        </h3>
+                      </div>
+                    )
+                  )}
+
+                  {activeTab === "leadership-my-activities" && (
+                    (userProfile.role === "admin" || canLogDuty) ? (
+                      <LeadershipMyActivities 
+                        activities={leadershipActivities}
+                        userProfile={userProfile}
+                        language={language}
+                        onRefresh={() => fetchLeadershipActivities().then(setLeadershipActivities)}
+                      />
+                    ) : (
+                      <div className="p-8 max-w-lg mx-auto my-12 bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/40 rounded-3xl text-center space-y-4 shadow-xl">
+                        <div className="w-16 h-16 mx-auto rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 flex items-center justify-center">
+                          <Lock className="w-8 h-8" />
+                        </div>
+                        <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                          {language === "lo" ? "ທ່ານບໍ່ມີສິດບັນທຶກວຽກງານ" : "No Duty Logging Permission"}
+                        </h3>
+                      </div>
+                    )
+                  )}
+
+                  {activeTab === "leadership-reports" && (
+                    (userProfile.role === "admin" || canDutyReports) ? (
+                      <LeadershipReports 
+                        activities={leadershipActivities}
+                        userProfile={userProfile}
+                        language={language}
+                      />
+                    ) : (
+                      <div className="p-8 max-w-lg mx-auto my-12 bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/40 rounded-3xl text-center space-y-4 shadow-xl">
+                        <div className="w-16 h-16 mx-auto rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 flex items-center justify-center">
+                          <Lock className="w-8 h-8" />
+                        </div>
+                        <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                          {language === "lo" ? "ທ່ານບໍ່ມີສິດເບິ່ງບົດລາຍງານວຽກ" : "No Duty Reports Permission"}
+                        </h3>
+                      </div>
+                    )
+                  )}
+                </>
+              )
             )}
 
             {/* SHARED ADMINISTRATION & SETTINGS */}
@@ -624,30 +921,37 @@ export default function App() {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md"
           >
-            {/* Click backdrop to close */}
-            <div className="absolute inset-0" onClick={() => setShowWelcomeModal(false)} />
+            {/* Click backdrop to close and go to portal */}
+            <div 
+              className="absolute inset-0 cursor-pointer" 
+              onClick={() => {
+                setShowWelcomeModal(false);
+                setActiveSystem("portal");
+                setActiveTab("portal");
+              }} 
+            />
 
             {/* Glowing background light */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-amber-500/20 rounded-full blur-[100px] pointer-events-none animate-pulse" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-amber-500/15 rounded-full blur-[120px] pointer-events-none animate-pulse" />
 
             <motion.div
               initial={{ scale: 0.9, y: 20, opacity: 0 }}
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.9, y: 20, opacity: 0 }}
               transition={{ type: "spring", duration: 0.6 }}
-              className="relative w-full max-w-2xl bg-slate-900/95 dark:bg-slate-950/95 border-2 border-amber-400/60 shadow-[0_0_60px_rgba(251,191,36,0.35)] rounded-[32px] p-8 md:p-12 text-center overflow-hidden"
+              className="relative w-full max-w-3xl bg-slate-900/95 dark:bg-slate-950/95 border-2 border-amber-400/60 shadow-[0_0_60px_rgba(251,191,36,0.35)] rounded-[32px] p-6 sm:p-10 text-center overflow-hidden max-h-[90vh] overflow-y-auto"
             >
               {/* Decorative top color stripe (Red, Amber, Blue) matching high-class official look */}
               <div className="absolute top-0 left-0 right-0 h-[5px] bg-gradient-to-r from-red-600 via-amber-400 to-blue-600 shadow-sm" />
               
               {/* Emblem Centered at the top */}
-              <div className="relative mb-8 flex justify-center">
+              <div className="relative mb-5 flex justify-center">
                 <div className="absolute -inset-2 bg-gradient-to-r from-amber-400 via-rose-500 to-amber-600 rounded-full blur-xl opacity-70 animate-pulse" />
-                <div className="relative p-3.5 bg-slate-950/90 rounded-full border-2 border-amber-400 shadow-xl">
+                <div className="relative p-3 bg-slate-950/90 rounded-full border-2 border-amber-400 shadow-xl">
                   <img
                     src={emblemLogo}
                     alt="Laos National Emblem"
-                    className="w-24 h-24 md:w-28 md:h-28 object-contain filter drop-shadow-[0_4px_12px_rgba(251,191,36,0.6)]"
+                    className="w-20 h-20 sm:w-24 sm:h-24 object-contain filter drop-shadow-[0_4px_12px_rgba(251,191,36,0.6)]"
                     referrerPolicy="no-referrer"
                     onError={(e) => {
                       if (e.currentTarget.src !== emblemSvg) {
@@ -661,67 +965,274 @@ export default function App() {
               </div>
 
               {/* Welcoming Text Content */}
-              <div className="space-y-6">
-                <div className="space-y-3">
+              <div className="space-y-4">
+                <div className="space-y-2">
                   {language === "lo" ? (
                     <>
-                      <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-amber-200 leading-snug drop-shadow-md">
+                      <h3 className="text-lg sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-amber-200 leading-snug drop-shadow-md">
                         ຍິນດີຕ້ອນຮັບເຂົ້າສູ່ ລະບົບບໍລິຫານທັນສະໄໝ
                       </h3>
-                      <h4 className="text-lg sm:text-xl md:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-amber-400 to-amber-500 leading-snug drop-shadow-md">
+                      <h4 className="text-base sm:text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-amber-400 to-amber-500 leading-snug drop-shadow-md">
                         ຫ້ອງວ່າການແຂວງຫົວພັນ
                       </h4>
                     </>
                   ) : (
                     <>
-                      <h3 className="text-lg sm:text-xl md:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-amber-200 leading-snug drop-shadow-md uppercase tracking-wide">
-                        Welcome to the Modern Administration System
+                      <h3 className="text-base sm:text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-amber-200 leading-snug drop-shadow-md uppercase tracking-wide">
+                        Welcome to Modern Administration System
                       </h3>
-                      <h4 className="text-base sm:text-lg md:text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-amber-400 to-amber-500 leading-snug drop-shadow-md uppercase tracking-wider">
+                      <h4 className="text-sm sm:text-lg font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-amber-400 to-amber-500 leading-snug drop-shadow-md uppercase tracking-wider">
                         Houaphanh Provincial Governor's Office
                       </h4>
                     </>
                   )}
                 </div>
 
-                {/* Divider Line */}
-                <div className="flex items-center justify-center gap-2 py-2">
-                  <div className="h-[1.5px] w-20 bg-gradient-to-r from-transparent to-amber-400/40" />
-                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-                  <div className="h-[1.5px] w-20 bg-gradient-to-l from-transparent to-amber-400/40" />
-                </div>
-
                 {/* Personalized greet with name */}
                 {userProfile && (
-                  <div className="bg-white/5 backdrop-blur-md rounded-2xl px-6 py-3.5 border border-white/10 inline-block mx-auto max-w-sm shadow-inner">
+                  <div className="bg-white/5 backdrop-blur-md rounded-2xl px-5 py-2.5 border border-white/10 inline-flex flex-wrap items-center justify-center gap-2 mx-auto shadow-inner">
                     <p className="text-xs sm:text-sm text-slate-300 font-bold">
                       {language === "lo" ? "ສະບາຍດີ, ທ່ານ" : "Hello,"}{" "}
-                      <span className="text-amber-400 font-black text-sm sm:text-base">
+                      <span className="text-amber-400 font-black">
                         {(userProfile.displayName || "").replace(/^ທ່ານ\s*/, "").trim()}
                       </span>
                     </p>
                     {userProfile.department && (
-                      <div className="mt-2.5 px-3 py-1 bg-amber-400/10 rounded-lg inline-block border border-amber-400/20">
-                        <p className="text-[10px] text-amber-300 font-extrabold uppercase tracking-wider">
-                          {userProfile.department}
-                        </p>
-                      </div>
+                      <span className="px-2.5 py-0.5 bg-amber-400/10 rounded-lg border border-amber-400/20 text-[10px] text-amber-300 font-extrabold uppercase tracking-wider">
+                        {userProfile.department}
+                      </span>
                     )}
                   </div>
                 )}
+
+                {/* Divider Line */}
+                <div className="flex items-center justify-center gap-2 py-1">
+                  <div className="h-[1px] w-16 bg-gradient-to-r from-transparent to-amber-400/40" />
+                  <span className="text-[11px] font-black uppercase text-amber-300/80 tracking-wider">
+                    {language === "lo" ? "ເລືອກລະບົບທີ່ຕ້ອງການເຂົ້າໃຊ້ງານ" : "Select System to Access"}
+                  </span>
+                  <div className="h-[1px] w-16 bg-gradient-to-l from-transparent to-amber-400/40" />
+                </div>
+
+                {/* The 3 Systems Mini Cards Selection */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 text-left">
+                  
+                  {/* Card 1: ລະບົບຈອງຫ້ອງປະຊຸມ */}
+                  <button
+                    onClick={() => {
+                      if (!canAccessMeeting) {
+                        showSystemToast.warning(
+                          language === "lo"
+                            ? "ທ່ານບໍ່ມີສິດເຂົ້າເຖິງ ລະບົບຈອງຫ້ອງປະຊຸມ ກະລຸນາຕິດຕໍ່ຜູ້ດູແລລະບົບ"
+                            : "You do not have permission for the Meeting Room System"
+                        );
+                        return;
+                      }
+                      setShowWelcomeModal(false);
+                      setActiveSystem("meeting");
+                      setActiveTab("dashboard");
+                    }}
+                    className={`group relative p-4 rounded-2xl bg-gradient-to-br from-indigo-950/70 via-indigo-900/50 to-slate-900/80 border-2 transition-all duration-200 cursor-pointer flex flex-col justify-between ${
+                      canAccessMeeting
+                        ? "border-indigo-500/40 hover:border-indigo-400 hover:shadow-lg hover:shadow-indigo-500/20"
+                        : "border-slate-700/50 opacity-60 hover:opacity-80"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-md transition-transform ${
+                        canAccessMeeting 
+                          ? "bg-indigo-600 text-white shadow-indigo-600/30 group-hover:scale-105" 
+                          : "bg-slate-700 text-slate-400"
+                      }`}>
+                        <Building2 className="w-5 h-5" />
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
+                          {language === "lo" ? "ລະບົບ 1" : "Sys #1"}
+                        </span>
+                        {!canAccessMeeting ? (
+                          <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md bg-rose-500/20 text-rose-300 border border-rose-500/30 flex items-center gap-1">
+                            <Lock className="w-2.5 h-2.5" />
+                            <span>{language === "lo" ? "ຈຳກັດສິດ" : "Restricted"}</span>
+                          </span>
+                        ) : (
+                          <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                            <CheckCircle2 className="w-2.5 h-2.5" />
+                            <span>{language === "lo" ? "ໄດ້ຮັບສິດ" : "Authorized"}</span>
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <h5 className="text-sm font-black text-white group-hover:text-indigo-300 transition-colors leading-tight">
+                        {language === "lo" ? "1. ຈອງຫ້ອງປະຊຸມ" : "1. Meeting Rooms"}
+                      </h5>
+                      <p className="text-[11px] text-slate-400 mt-1 leading-snug">
+                        {language === "lo" ? "ຫ້ອງປະຊຸມ, ຕາຕະລາງ, ການຈອງ & ອະນຸມັດ" : "Room schedule, booking & approvals"}
+                      </p>
+                    </div>
+                    <div className="mt-3 pt-2 border-t border-white/10 flex items-center justify-between text-[11px] font-bold text-indigo-400 group-hover:text-indigo-300">
+                      <span>{canAccessMeeting ? (language === "lo" ? "ເຂົ້າໃຊ້ງານ" : "Enter") : (language === "lo" ? "ບໍ່ມີສິດ" : "No Access")}</span>
+                      {canAccessMeeting ? (
+                        <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                      ) : (
+                        <Lock className="w-3.5 h-3.5 text-rose-400" />
+                      )}
+                    </div>
+                  </button>
+
+                  {/* Card 2: ລະບົບການຈັດການລົດບໍລິຫານ */}
+                  <button
+                    onClick={() => {
+                      if (!canAccessVehicle) {
+                        showSystemToast.warning(
+                          language === "lo"
+                            ? "ທ່ານບໍ່ມີສິດເຂົ້າເຖິງ ລະບົບລົດບໍລິຫານ ກະລຸນາຕິດຕໍ່ຜູ້ດູແລລະບົບ"
+                            : "You do not have permission for the Vehicle Fleet System"
+                        );
+                        return;
+                      }
+                      setShowWelcomeModal(false);
+                      setActiveSystem("vehicle");
+                      setActiveTab("vehicle-dashboard");
+                    }}
+                    className={`group relative p-4 rounded-2xl bg-gradient-to-br from-amber-950/70 via-orange-900/50 to-slate-900/80 border-2 transition-all duration-200 cursor-pointer flex flex-col justify-between ${
+                      canAccessVehicle
+                        ? "border-amber-500/40 hover:border-amber-400 hover:shadow-lg hover:shadow-amber-500/20"
+                        : "border-slate-700/50 opacity-60 hover:opacity-80"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-md transition-transform ${
+                        canAccessVehicle 
+                          ? "bg-amber-600 text-white shadow-amber-600/30 group-hover:scale-105" 
+                          : "bg-slate-700 text-slate-400"
+                      }`}>
+                        <Car className="w-5 h-5" />
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/30">
+                          {language === "lo" ? "ລະບົບ 2" : "Sys #2"}
+                        </span>
+                        {!canAccessVehicle ? (
+                          <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md bg-rose-500/20 text-rose-300 border border-rose-500/30 flex items-center gap-1">
+                            <Lock className="w-2.5 h-2.5" />
+                            <span>{language === "lo" ? "ຈຳກັດສິດ" : "Restricted"}</span>
+                          </span>
+                        ) : (
+                          <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                            <CheckCircle2 className="w-2.5 h-2.5" />
+                            <span>{language === "lo" ? "ໄດ້ຮັບສິດ" : "Authorized"}</span>
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <h5 className="text-sm font-black text-white group-hover:text-amber-300 transition-colors leading-tight">
+                        {language === "lo" ? "2. ລົດບໍລິຫານ" : "2. Vehicle Fleet"}
+                      </h5>
+                      <p className="text-[11px] text-slate-400 mt-1 leading-snug">
+                        {language === "lo" ? "ລົດລັດຖະການ, ຕາຕະລາງ, ຄົນຂັບ & ລາຍງານ" : "Official trips, drivers & reports"}
+                      </p>
+                    </div>
+                    <div className="mt-3 pt-2 border-t border-white/10 flex items-center justify-between text-[11px] font-bold text-amber-400 group-hover:text-amber-300">
+                      <span>{canAccessVehicle ? (language === "lo" ? "ເຂົ້າໃຊ້ງານ" : "Enter") : (language === "lo" ? "ບໍ່ມີສິດ" : "No Access")}</span>
+                      {canAccessVehicle ? (
+                        <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                      ) : (
+                        <Lock className="w-3.5 h-3.5 text-rose-400" />
+                      )}
+                    </div>
+                  </button>
+
+                  {/* Card 3: ລະບົບຕິດຕາມການເຄື່ອນໄຫວວຽກ */}
+                  <button
+                    onClick={() => {
+                      if (!canAccessLeadership) {
+                        showSystemToast.warning(
+                          language === "lo"
+                            ? "ທ່ານບໍ່ມີສິດເຂົ້າເຖິງ ລະບົບຕິດຕາມການເຄື່ອນໄຫວວຽກ ກະລຸນາຕິດຕໍ່ຜູ້ດູແລລະບົບ"
+                            : "You do not have permission for the Duty Activity System"
+                        );
+                        return;
+                      }
+                      setShowWelcomeModal(false);
+                      setActiveSystem("leadership");
+                      setActiveTab("leadership-calendar");
+                    }}
+                    className={`group relative p-4 rounded-2xl bg-gradient-to-br from-emerald-950/70 via-teal-900/50 to-slate-900/80 border-2 transition-all duration-200 cursor-pointer flex flex-col justify-between ${
+                      canAccessLeadership
+                        ? "border-emerald-500/40 hover:border-emerald-400 hover:shadow-lg hover:shadow-emerald-500/20"
+                        : "border-slate-700/50 opacity-60 hover:opacity-80"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-md transition-transform ${
+                        canAccessLeadership 
+                          ? "bg-emerald-600 text-white shadow-emerald-600/30 group-hover:scale-105" 
+                          : "bg-slate-700 text-slate-400"
+                      }`}>
+                        <Briefcase className="w-5 h-5" />
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                          {language === "lo" ? "ລະບົບ 3" : "Sys #3"}
+                        </span>
+                        {!canAccessLeadership ? (
+                          <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md bg-rose-500/20 text-rose-300 border border-rose-500/30 flex items-center gap-1">
+                            <Lock className="w-2.5 h-2.5" />
+                            <span>{language === "lo" ? "ຈຳກັດສິດ" : "Restricted"}</span>
+                          </span>
+                        ) : (
+                          <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                            <CheckCircle2 className="w-2.5 h-2.5" />
+                            <span>{language === "lo" ? "ໄດ້ຮັບສິດ" : "Authorized"}</span>
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <h5 className="text-sm font-black text-white group-hover:text-emerald-300 transition-colors leading-tight">
+                        {language === "lo" ? "3. ຕິດຕາມການເຄື່ອນໄຫວວຽກ" : "3. Duty Activity Tracking"}
+                      </h5>
+                      <p className="text-[11px] text-slate-400 mt-1 leading-snug">
+                        {language === "lo" ? "ວຽກຄະນະ/ຫົວໜ້າ, ປະຕິທິນ, ບັນທຶກ & ລາຍງານ" : "Executive duties, calendar & reports"}
+                      </p>
+                    </div>
+                    <div className="mt-3 pt-2 border-t border-white/10 flex items-center justify-between text-[11px] font-bold text-emerald-400 group-hover:text-emerald-300">
+                      <span>{canAccessLeadership ? (language === "lo" ? "ເຂົ້າໃຊ້ງານ" : "Enter") : (language === "lo" ? "ບໍ່ມີສິດ" : "No Access")}</span>
+                      {canAccessLeadership ? (
+                        <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                      ) : (
+                        <Lock className="w-3.5 h-3.5 text-rose-400" />
+                      )}
+                    </div>
+                  </button>
+
+                </div>
               </div>
 
-              {/* Action Proceed Button with Visual Timer Progress */}
-              <div className="mt-8 space-y-4">
+              {/* Action Proceed to 3-System Portal Button with Timer Progress */}
+              <div className="mt-6 space-y-3">
                 <button
-                  onClick={() => setShowWelcomeModal(false)}
-                  className="w-full sm:w-auto px-10 py-3 bg-gradient-to-r from-amber-500 via-amber-400 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 rounded-xl font-black text-xs md:text-sm shadow-lg shadow-amber-400/20 hover:shadow-xl hover:shadow-amber-400/35 hover:scale-[1.02] active:scale-95 transition-all duration-300 cursor-pointer flex items-center justify-center gap-2 mx-auto border border-amber-300/30"
+                  onClick={() => {
+                    setShowWelcomeModal(false);
+                    setActiveSystem("portal");
+                    setActiveTab("portal");
+                  }}
+                  className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-amber-500 via-amber-400 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 rounded-2xl font-black text-xs md:text-sm shadow-lg shadow-amber-400/20 hover:shadow-xl hover:shadow-amber-400/35 hover:scale-[1.02] active:scale-95 transition-all duration-300 cursor-pointer flex items-center justify-center gap-2 mx-auto border border-amber-300/40"
                 >
-                  <span>{language === "lo" ? "ເຂົ້າສູ່ໜ້າຫຼັກ" : "Proceed to Dashboard"}</span>
+                  <Layers className="w-4 h-4" />
+                  <span>{language === "lo" ? "ເຂົ້າສູ່ໜ້າຕ່າງທັງ 3 ລະບົບ (System Portal Hub)" : "Open 3-System Portal Hub"}</span>
+                  <ArrowRight className="w-4 h-4" />
                 </button>
 
+                <p className="text-[11px] text-slate-400">
+                  {language === "lo" ? "ລະບົບຈະນຳທ່ານເຂົ້າສູ່ໜ້າຕ່າງທັງ 3 ລະບົບໂດຍອັດຕະໂນມັດ..." : "Automatically entering system portal hub..."}
+                </p>
+
                 {/* Countdown animation progress bar */}
-                <div className="w-32 mx-auto h-1 bg-slate-800 rounded-full overflow-hidden">
+                <div className="w-36 mx-auto h-1.5 bg-slate-800 rounded-full overflow-hidden">
                   <motion.div
                     initial={{ width: "100%" }}
                     animate={{ width: "0%" }}

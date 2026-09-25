@@ -12,7 +12,8 @@
         "department": { "type": "string" },
         "phone": { "type": "string" },
         "status": { "type": "string", "enum": ["active", "pending", "inactive"] },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "createdAt": { "type": "string", "format": "date-time" },
+        "permissions": { "type": "object" }
       },
       "required": ["uid", "email", "role", "status"]
     },
@@ -125,6 +126,34 @@
         "approvedBy": { "type": "string" }
       },
       "required": ["id", "vehicleId", "userId", "userName", "purpose", "destination", "startDate", "endDate", "status"]
+    },
+    "leadership_activity": {
+      "title": "Leadership & Department Duty Activity",
+      "description": "Duty or mission log for provincial office leadership, department heads, and sector chiefs",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "roleTitle": { "type": "string" },
+        "department": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "category": { "type": "string", "enum": ["meeting", "mission", "inspection", "ceremony", "internal", "training", "other"] },
+        "location": { "type": "string" },
+        "startDate": { "type": "string" },
+        "startTime": { "type": "string" },
+        "endDate": { "type": "string" },
+        "endTime": { "type": "string" },
+        "status": { "type": "string", "enum": ["scheduled", "in_progress", "completed", "cancelled"] },
+        "priority": { "type": "string", "enum": ["normal", "important", "urgent"] },
+        "participants": { "type": "string" },
+        "outcome": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "userName", "department", "title", "category", "startDate", "endDate", "status"]
     }
   },
   "firestore": {
@@ -151,6 +180,10 @@
     "/vehicle_bookings/{bookingId}": {
       "schema": "vehicle_booking",
       "description": "Vehicle booking and mission travel reservations"
+    },
+    "/leadership_activities/{activityId}": {
+      "schema": "leadership_activity",
+      "description": "Leadership, department head, and division chief work activities and missions"
     }
   }
 }

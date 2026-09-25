@@ -4,6 +4,230 @@ export type BookingStatus = "pending" | "approved" | "rejected";
 export type RoomStatus = "active" | "inactive";
 export type NotificationType = "info" | "success" | "warning" | "error";
 
+// Granular System Permissions across 3 Systems
+export interface SystemPermissions {
+  // SYSTEM 1: ລະບົບຈອງຫ້ອງປະຊຸມ (Meeting Room System)
+  meetingAccess: boolean; // ສິດເຂົ້າເຖິງລະບົບຈອງຫ້ອງປະຊຸມ
+  meetingBook: boolean; // ສິດສ້າງຄຳຂໍຈອງຫ້ອງປະຊຸມ
+  meetingApprove: boolean; // ສິດອະນຸມັດ/ປະຕິເສດ ແລະ ຄຸ້ມຄອງການຈອງ
+  meetingManageRooms: boolean; // ສິດເພີ່ມ/ແກ້ໄຂ/ລົບຫ້ອງປະຊຸມ
+  meetingReports: boolean; // ສິດເບິ່ງບົດລາຍງານການຈອງຫ້ອງ
+
+  // SYSTEM 2: ລະບົບການຈັດການລົດບໍລິຫານ (Vehicle Fleet System)
+  vehicleAccess: boolean; // ສິດເຂົ້າເຖິງລະບົບລົດບໍລິຫານ
+  vehicleBook: boolean; // ສິດສ້າງຄຳຂໍຈອງລົດລັດຖະການ
+  vehicleApprove: boolean; // ສິດອະນຸມັດ ແລະ ແຕ່ງຕັ້ງຄົນຂັບລົດ
+  vehicleManageFleet: boolean; // ສິດເພີ່ມ/ແກ້ໄຂ/ລົບຂໍ້ມູນລົດ
+  vehicleReports: boolean; // ສິດເບິ່ງບົດລາຍງານການນຳໃຊ້ລົດ
+
+  // SYSTEM 3: ລະບົບຕິດຕາມການເຄື່ອນໄຫວວຽກຂອງຄະນະ (Leadership & Duty Activity System)
+  leadershipAccess: boolean; // ສິດເຂົ້າເຖິງລະບົບຕິດຕາມການເຄື່ອນໄຫວວຽກ
+  leadershipCalendar: boolean; // ສິດເບິ່ງປະຕິທິນການເຄື່ອນໄຫວວຽກ
+  leadershipLogOwn: boolean; // ສິດບັນທຶກ ແລະ ຄຸ້ມຄອງວຽກຕົນເອງ
+  leadershipManageAll: boolean; // ສິດຄຸ້ມຄອງ ແລະ ກວດກາວຽກຂອງທຸກຄົນ
+  leadershipReports: boolean; // ສິດສ້າງ ແລະ ສົ່ງອອກບົດລາຍງານ ອາທິດ/ເດືອນ/ປີ
+}
+
+export const DEFAULT_USER_PERMISSIONS: SystemPermissions = {
+  meetingAccess: true,
+  meetingBook: true,
+  meetingApprove: false,
+  meetingManageRooms: false,
+  meetingReports: false,
+
+  vehicleAccess: true,
+  vehicleBook: true,
+  vehicleApprove: false,
+  vehicleManageFleet: false,
+  vehicleReports: false,
+
+  leadershipAccess: true,
+  leadershipCalendar: true,
+  leadershipLogOwn: true,
+  leadershipManageAll: false,
+  leadershipReports: true,
+};
+
+export const DEFAULT_ADMIN_PERMISSIONS: SystemPermissions = {
+  meetingAccess: true,
+  meetingBook: true,
+  meetingApprove: true,
+  meetingManageRooms: true,
+  meetingReports: true,
+
+  vehicleAccess: true,
+  vehicleBook: true,
+  vehicleApprove: true,
+  vehicleManageFleet: true,
+  vehicleReports: true,
+
+  leadershipAccess: true,
+  leadershipCalendar: true,
+  leadershipLogOwn: true,
+  leadershipManageAll: true,
+  leadershipReports: true,
+};
+
+export const PRESET_MEETING_OFFICER: SystemPermissions = {
+  meetingAccess: true,
+  meetingBook: true,
+  meetingApprove: true,
+  meetingManageRooms: true,
+  meetingReports: true,
+
+  vehicleAccess: false,
+  vehicleBook: false,
+  vehicleApprove: false,
+  vehicleManageFleet: false,
+  vehicleReports: false,
+
+  leadershipAccess: false,
+  leadershipCalendar: false,
+  leadershipLogOwn: false,
+  leadershipManageAll: false,
+  leadershipReports: false,
+};
+
+export const PRESET_VEHICLE_OFFICER: SystemPermissions = {
+  meetingAccess: false,
+  meetingBook: false,
+  meetingApprove: false,
+  meetingManageRooms: false,
+  meetingReports: false,
+
+  vehicleAccess: true,
+  vehicleBook: true,
+  vehicleApprove: true,
+  vehicleManageFleet: true,
+  vehicleReports: true,
+
+  leadershipAccess: false,
+  leadershipCalendar: false,
+  leadershipLogOwn: false,
+  leadershipManageAll: false,
+  leadershipReports: false,
+};
+
+export const PRESET_LEADERSHIP_OFFICER: SystemPermissions = {
+  meetingAccess: false,
+  meetingBook: false,
+  meetingApprove: false,
+  meetingManageRooms: false,
+  meetingReports: false,
+
+  vehicleAccess: false,
+  vehicleBook: false,
+  vehicleApprove: false,
+  vehicleManageFleet: false,
+  vehicleReports: false,
+
+  leadershipAccess: true,
+  leadershipCalendar: true,
+  leadershipLogOwn: true,
+  leadershipManageAll: true,
+  leadershipReports: true,
+};
+
+export const PRESET_VIEW_ONLY: SystemPermissions = {
+  meetingAccess: true,
+  meetingBook: false,
+  meetingApprove: false,
+  meetingManageRooms: false,
+  meetingReports: true,
+
+  vehicleAccess: true,
+  vehicleBook: false,
+  vehicleApprove: false,
+  vehicleManageFleet: false,
+  vehicleReports: true,
+
+  leadershipAccess: true,
+  leadershipCalendar: true,
+  leadershipLogOwn: false,
+  leadershipManageAll: false,
+  leadershipReports: true,
+};
+
+export const PRESET_REVOKED: SystemPermissions = {
+  meetingAccess: false,
+  meetingBook: false,
+  meetingApprove: false,
+  meetingManageRooms: false,
+  meetingReports: false,
+
+  vehicleAccess: false,
+  vehicleBook: false,
+  vehicleApprove: false,
+  vehicleManageFleet: false,
+  vehicleReports: false,
+
+  leadershipAccess: false,
+  leadershipCalendar: false,
+  leadershipLogOwn: false,
+  leadershipManageAll: false,
+  leadershipReports: false,
+};
+
+export function hasPermission(
+  user: UserProfile | null | undefined, 
+  permissionKey: keyof SystemPermissions
+): boolean {
+  if (!user) return false;
+  // Admin role defaults to true unless explicitly overridden
+  if (user.role === "admin") {
+    if (user.permissions && user.permissions[permissionKey] !== undefined) {
+      return !!user.permissions[permissionKey];
+    }
+    return true;
+  }
+  // Regular user: check assigned permissions, fallback to default user permissions
+  if (user.permissions && user.permissions[permissionKey] !== undefined) {
+    return !!user.permissions[permissionKey];
+  }
+  return DEFAULT_USER_PERMISSIONS[permissionKey] ?? false;
+}
+
+export function countSystemPermissions(user: UserProfile | null | undefined): {
+  meetingCount: number;
+  meetingTotal: number;
+  vehicleCount: number;
+  vehicleTotal: number;
+  leadershipCount: number;
+  leadershipTotal: number;
+  totalEnabled: number;
+  totalFeatures: number;
+} {
+  const meetingKeys: (keyof SystemPermissions)[] = [
+    "meetingAccess", "meetingBook", "meetingApprove", "meetingManageRooms", "meetingReports"
+  ];
+  const vehicleKeys: (keyof SystemPermissions)[] = [
+    "vehicleAccess", "vehicleBook", "vehicleApprove", "vehicleManageFleet", "vehicleReports"
+  ];
+  const leadershipKeys: (keyof SystemPermissions)[] = [
+    "leadershipAccess", "leadershipCalendar", "leadershipLogOwn", "leadershipManageAll", "leadershipReports"
+  ];
+
+  let meetingCount = 0;
+  meetingKeys.forEach(k => { if (hasPermission(user, k)) meetingCount++; });
+
+  let vehicleCount = 0;
+  vehicleKeys.forEach(k => { if (hasPermission(user, k)) vehicleCount++; });
+
+  let leadershipCount = 0;
+  leadershipKeys.forEach(k => { if (hasPermission(user, k)) leadershipCount++; });
+
+  return {
+    meetingCount,
+    meetingTotal: meetingKeys.length,
+    vehicleCount,
+    vehicleTotal: vehicleKeys.length,
+    leadershipCount,
+    leadershipTotal: leadershipKeys.length,
+    totalEnabled: meetingCount + vehicleCount + leadershipCount,
+    totalFeatures: meetingKeys.length + vehicleKeys.length + leadershipKeys.length
+  };
+}
+
 export interface UserProfile {
   uid: string;
   displayName: string;
@@ -17,6 +241,7 @@ export interface UserProfile {
   bio?: string;
   username?: string;
   password?: string;
+  permissions?: Partial<SystemPermissions>;
 }
 
 export interface MeetingRoom {
@@ -120,5 +345,34 @@ export interface VehicleBooking {
   createdAt: string;
   approvedAt?: string;
   approvedBy?: string;
+}
+
+// Leadership and Duty Tracking System Types
+export type ActivityCategory = "meeting" | "mission" | "inspection" | "ceremony" | "internal" | "training" | "other";
+export type ActivityStatus = "scheduled" | "in_progress" | "completed" | "cancelled";
+export type ActivityPriority = "normal" | "important" | "urgent";
+
+export interface LeadershipActivity {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail?: string;
+  userAvatar?: string;
+  roleTitle?: string; // e.g. "ຫົວໜ້າຫ້ອງວ່າການແຂວງ", "ຫົວໜ້າພະແນກ", "ຮອງຫົວໜ້າພະແນກ", "ຫົວໜ້າຂະແໜງ", "ຮອງຫົວໜ້າຂະແໜງ", "ວິຊາການ"
+  department: string; // e.g. "ຂະແໜງຄົ້ນຄວ້າ-ສັງລວມ", "ຂະແໜງບໍລິຫານ-ພິທີການ", "ຂະແໜງການເງິນ-ບັນຊີ", "ຂະແໜງກວດກາ"
+  title: string;
+  description?: string;
+  category: ActivityCategory;
+  location: string;
+  startDate: string; // YYYY-MM-DD
+  startTime: string; // HH:MM
+  endDate: string; // YYYY-MM-DD
+  endTime: string; // HH:MM
+  status: ActivityStatus;
+  priority: ActivityPriority;
+  participants?: string; // ຄະນະເຂົ້າຮ່ວມ / ຜູ້ຕິດຕາມ
+  outcome?: string; // ຜົນການຈັດຕັ້ງປະຕິບັດ / ຂໍ້ສະຫຼຸບຫຍໍ້
+  createdAt: string;
+  updatedAt?: string;
 }
 

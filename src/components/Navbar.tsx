@@ -27,10 +27,11 @@ import {
   EyeOff,
   Menu,
   Car,
-  Layers
+  Layers,
+  Briefcase
 } from "lucide-react";
 import { db, collection, query, where, orderBy, onSnapshot, doc, updateDoc, getDocs } from "../lib/firebase";
-import { AppLanguage, SystemNotification, UserProfile } from "../types";
+import { AppLanguage, SystemNotification, UserProfile, hasPermission } from "../types";
 import { translations } from "../lib/translations";
 import { EmailLog, updateUserProfile, markEmailAsRead, markAllEmailsAsRead } from "../lib/firebaseHelper";
 import { showSystemToast } from "../utils/toast";
@@ -46,8 +47,8 @@ interface NavbarProps {
   isMobileMenuOpen?: boolean;
   onToggleMobileMenu?: () => void;
   setActiveTab?: (tab: string) => void;
-  activeSystem?: "portal" | "meeting" | "vehicle";
-  setActiveSystem?: (system: "portal" | "meeting" | "vehicle") => void;
+  activeSystem?: "portal" | "meeting" | "vehicle" | "leadership";
+  setActiveSystem?: (system: "portal" | "meeting" | "vehicle" | "leadership") => void;
 }
 
 const PRESET_AVATARS = [
@@ -434,54 +435,100 @@ export default function Navbar({
         </div>
 
         {/* System Indicator & Switcher on Navbar (Desktop & Tablet) */}
-        {setActiveSystem && (
-          <div className="hidden md:flex items-center gap-2 pl-3 border-l border-white/15">
-            <button
-              onClick={() => setActiveSystem("portal")}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-bold text-amber-300 transition-all cursor-pointer hover:scale-105 active:scale-95"
-              title={isLao ? "ກັບໄປໜ້າຫຼັກສູນລວມ 2 ລະບົບ" : "Portal Hub"}
-            >
-              <Layers className="w-3.5 h-3.5" />
-              <span>{isLao ? "ສູນ 2 ລະບົບ" : "Portal"}</span>
-            </button>
+        {setActiveSystem && (() => {
+          const canAccessMeeting = hasPermission(userProfile, "meetingAccess");
+          const canAccessVehicle = hasPermission(userProfile, "vehicleAccess");
+          const canAccessLeadership = hasPermission(userProfile, "leadershipAccess");
 
-            <button
-              onClick={() => {
-                if (activeSystem === "vehicle") {
-                  setActiveSystem("meeting");
-                  setActiveTab?.("dashboard");
-                } else {
-                  setActiveSystem("vehicle");
-                  setActiveTab?.("vehicle-dashboard");
-                }
-              }}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-black shadow-sm transition-all cursor-pointer border hover:scale-105 active:scale-95 ${
-                activeSystem === "vehicle"
-                  ? "bg-gradient-to-r from-amber-500 via-orange-500 to-rose-600 text-white border-amber-300/50 hover:brightness-110 shadow-amber-500/20"
-                  : "bg-gradient-to-r from-indigo-600 via-blue-600 to-purple-600 text-white border-indigo-300/50 hover:brightness-110 shadow-indigo-500/20"
-              }`}
-              title={isLao ? "ກົດເພື່ອສະຫຼັບລະບົບ" : "Click to switch system"}
-            >
-              {activeSystem === "vehicle" ? (
-                <>
-                  <Car className="w-3.5 h-3.5" />
-                  <span>{isLao ? "2. ລະບົບລົດບໍລິຫານ" : "Vehicle System"}</span>
-                  <span className="text-[10px] bg-black/25 px-1.5 py-0.5 rounded-md text-amber-200">
-                    {isLao ? "ປ່ຽນ ➜ ຫ້ອງປະຊຸມ" : "Switch ➜"}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <Building2 className="w-3.5 h-3.5" />
-                  <span>{isLao ? "1. ລະບົບຫ້ອງປະຊຸມ" : "Meeting System"}</span>
-                  <span className="text-[10px] bg-black/25 px-1.5 py-0.5 rounded-md text-indigo-200">
-                    {isLao ? "ປ່ຽນ ➜ ລົດບໍລິຫານ" : "Switch ➜"}
-                  </span>
-                </>
-              )}
-            </button>
-          </div>
-        )}
+          const authorizedSystems: ("portal" | "meeting" | "vehicle" | "leadership")[] = ["portal"];
+          if (canAccessMeeting) authorizedSystems.push("meeting");
+          if (canAccessVehicle) authorizedSystems.push("vehicle");
+          if (canAccessLeadership) authorizedSystems.push("leadership");
+
+          const handleCycleSystem = () => {
+            if (authorizedSystems.length <= 1) {
+              setActiveSystem("portal");
+              setActiveTab?.("portal");
+              return;
+            }
+            const currentIdx = authorizedSystems.indexOf(activeSystem);
+            const nextIdx = (currentIdx + 1) % authorizedSystems.length;
+            const nextSystem = authorizedSystems[nextIdx];
+            setActiveSystem(nextSystem);
+            if (nextSystem === "portal") setActiveTab?.("portal");
+            else if (nextSystem === "meeting") setActiveTab?.("dashboard");
+            else if (nextSystem === "vehicle") setActiveTab?.("vehicle-dashboard");
+            else if (nextSystem === "leadership") setActiveTab?.("leadership-calendar");
+          };
+
+          return (
+            <div className="hidden md:flex items-center gap-2 pl-3 border-l border-white/15">
+              <button
+                onClick={() => {
+                  setActiveSystem("portal");
+                  setActiveTab?.("portal");
+                }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer hover:scale-105 active:scale-95 ${
+                  activeSystem === "portal"
+                    ? "bg-amber-400 text-slate-950 font-black border-amber-300 shadow-md shadow-amber-400/30"
+                    : "bg-white/10 hover:bg-white/20 border-white/20 text-amber-300"
+                }`}
+                title={isLao ? "ກັບໄປໜ້າຫຼັກສູນລວມ 3 ລະບົບ" : "Portal Hub"}
+              >
+                <Layers className="w-3.5 h-3.5" />
+                <span>{isLao ? "ສູນ 3 ລະບົບ" : "Portal Hub"}</span>
+              </button>
+
+              <button
+                onClick={handleCycleSystem}
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-black shadow-sm transition-all cursor-pointer border hover:scale-105 active:scale-95 ${
+                  activeSystem === "portal"
+                    ? "bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 text-white border-indigo-400/50 hover:brightness-110 shadow-indigo-500/20"
+                    : activeSystem === "leadership"
+                    ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white border-emerald-300/50 hover:brightness-110 shadow-emerald-500/20"
+                    : activeSystem === "vehicle"
+                    ? "bg-gradient-to-r from-amber-500 via-orange-500 to-rose-600 text-white border-amber-300/50 hover:brightness-110 shadow-amber-500/20"
+                    : "bg-gradient-to-r from-indigo-600 via-blue-600 to-purple-600 text-white border-indigo-300/50 hover:brightness-110 shadow-indigo-500/20"
+                }`}
+                title={isLao ? "ກົດເພື່ອສະຫຼັບລະບົບທີ່ໄດ້ຮັບສິດ" : "Click to switch authorized system"}
+              >
+                {activeSystem === "portal" ? (
+                  <>
+                    <Layers className="w-3.5 h-3.5" />
+                    <span>{isLao ? "ເລືອກລະບົບ" : "Choose System"}</span>
+                    <span className="text-[10px] bg-black/25 px-1.5 py-0.5 rounded-md text-amber-200">
+                      {authorizedSystems.length > 1 ? (isLao ? "ສະຫຼັບ ➜" : "Cycle ➜") : (isLao ? "ສູນຫຼັກ" : "Hub")}
+                    </span>
+                  </>
+                ) : activeSystem === "leadership" ? (
+                  <>
+                    <Briefcase className="w-3.5 h-3.5" />
+                    <span>{isLao ? "3. ລະບົບຕິດຕາມວຽກ" : "Duty System"}</span>
+                    <span className="text-[10px] bg-black/25 px-1.5 py-0.5 rounded-md text-emerald-200">
+                      {isLao ? "ສະຫຼັບ ➜" : "Switch ➜"}
+                    </span>
+                  </>
+                ) : activeSystem === "vehicle" ? (
+                  <>
+                    <Car className="w-3.5 h-3.5" />
+                    <span>{isLao ? "2. ລະບົບລົດບໍລິຫານ" : "Vehicle System"}</span>
+                    <span className="text-[10px] bg-black/25 px-1.5 py-0.5 rounded-md text-amber-200">
+                      {isLao ? "ສະຫຼັບ ➜" : "Switch ➜"}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Building2 className="w-3.5 h-3.5" />
+                    <span>{isLao ? "1. ລະບົບຫ້ອງປະຊຸມ" : "Meeting System"}</span>
+                    <span className="text-[10px] bg-black/25 px-1.5 py-0.5 rounded-md text-indigo-200">
+                      {isLao ? "ສະຫຼັບ ➜" : "Switch ➜"}
+                    </span>
+                  </>
+                )}
+              </button>
+            </div>
+          );
+        })()}
       </div>
 
       {/* 2. RIGHT COLUMN: Modern Controls & User Badge */}

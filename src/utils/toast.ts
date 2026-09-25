@@ -157,3 +157,8 @@ export function showSystemToast(
   // Play the sound chime automatically
   playNotificationSound(finalType);
 }
+
+showSystemToast.success = (msg: string, title?: string, duration?: number) => showSystemToast(msg, "success", title, duration);
+showSystemToast.error = (msg: string, title?: string, duration?: number) => showSystemToast(msg, "error", title, duration);
+showSystemToast.warning = (msg: string, title?: string, duration?: number) => showSystemToast(msg, "warning", title, duration);
+showSystemToast.info = (msg: string, title?: string, duration?: number) => showSystemToast(msg, "info", title, duration);

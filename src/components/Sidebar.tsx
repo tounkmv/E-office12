@@ -20,9 +20,21 @@ import {
   Menu,
   Car,
   Layers,
-  ArrowLeftRight
+  ArrowLeftRight,
+  Briefcase,
+  CalendarDays,
+  CheckSquare,
+  Lock
 } from "lucide-react";
-import { AppLanguage, UserRole, UserProfile, RoomBooking, Vehicle, VehicleBooking } from "../types";
+import { 
+  AppLanguage, 
+  UserRole, 
+  UserProfile, 
+  RoomBooking, 
+  Vehicle, 
+  VehicleBooking,
+  hasPermission
+} from "../types";
 import { translations } from "../lib/translations";
 import { motion, AnimatePresence } from "motion/react";
 import emblemLogo from "../assets/images/emblem.png";
@@ -40,8 +52,8 @@ interface SidebarProps {
   bookings?: RoomBooking[];
   allUsers?: UserProfile[];
   pendingUsersCount?: number;
-  activeSystem?: "portal" | "meeting" | "vehicle";
-  setActiveSystem?: (system: "portal" | "meeting" | "vehicle") => void;
+  activeSystem?: "portal" | "meeting" | "vehicle" | "leadership";
+  setActiveSystem?: (system: "portal" | "meeting" | "vehicle" | "leadership") => void;
   vehicleBookings?: VehicleBooking[];
   vehicles?: Vehicle[];
 }
@@ -97,26 +109,105 @@ export default function Sidebar({
   const pendingVehicleCount = vehicleBookings.filter(b => b.status === "pending").length;
 
   const isLao = language === "lo";
+  const isPortal = activeSystem === "portal";
   const isVehicleSystem = activeSystem === "vehicle";
+  const isLeadershipSystem = activeSystem === "leadership";
 
-  // Dynamic menu items based on active system
-  const menuItems = isVehicleSystem ? [
-    { id: "vehicle-dashboard", label: isLao ? "Dashboard ຕິດຕາມລົດ" : "Vehicle Dashboard", icon: LayoutDashboard },
-    { id: "vehicle-booking", label: isLao ? "ແບບຟອມຈອງລົດ" : "Book Vehicle", icon: CalendarClock },
+  // Granular Permission Checks for Menu Items
+  const canAccessMeeting = hasPermission(userProfile, "meetingAccess");
+  const canBookMeeting = hasPermission(userProfile, "meetingBook");
+  const canApproveMeeting = hasPermission(userProfile, "meetingApprove");
+  const canManageRooms = hasPermission(userProfile, "meetingManageRooms");
+  const canMeetingReports = hasPermission(userProfile, "meetingReports");
+
+  const canAccessVehicle = hasPermission(userProfile, "vehicleAccess");
+  const canBookVehicle = hasPermission(userProfile, "vehicleBook");
+  const canApproveVehicle = hasPermission(userProfile, "vehicleApprove");
+  const canManageFleet = hasPermission(userProfile, "vehicleManageFleet");
+  const canVehicleReports = hasPermission(userProfile, "vehicleReports");
+
+  const canAccessLeadership = hasPermission(userProfile, "leadershipAccess");
+  const canCalendarLeadership = hasPermission(userProfile, "leadershipCalendar");
+  const canLogDuty = hasPermission(userProfile, "leadershipLogOwn");
+  const canDutyReports = hasPermission(userProfile, "leadershipReports");
+
+  // Dynamic menu items based on active system and user permissions
+  const menuItems = isPortal ? [
+    { 
+      id: "portal", 
+      label: isLao ? "ສູນລວມ 3 ລະບົບ (Hub)" : "System Portal Hub", 
+      icon: Layers, 
+      action: () => { setActiveSystem?.("portal"); setActiveTab("portal"); } 
+    },
+    ...(canAccessMeeting ? [{ 
+      id: "goto-meeting", 
+      label: isLao ? "1. ລະບົບຈອງຫ້ອງປະຊຸມ" : "1. Meeting Room System", 
+      icon: Building2, 
+      action: () => { setActiveSystem?.("meeting"); setActiveTab("dashboard"); } 
+    }] : []),
+    ...(canAccessVehicle ? [{ 
+      id: "goto-vehicle", 
+      label: isLao ? "2. ລະບົບລົດບໍລິຫານ" : "2. Vehicle Fleet System", 
+      icon: Car, 
+      action: () => { setActiveSystem?.("vehicle"); setActiveTab("vehicle-dashboard"); } 
+    }] : []),
+    ...(canAccessLeadership ? [{ 
+      id: "goto-leadership", 
+      label: isLao ? "3. ລະບົບຕິດຕາມການເຄື່ອນໄຫວວຽກ" : "3. Duty Activity Tracking", 
+      icon: Briefcase, 
+      action: () => { setActiveSystem?.("leadership"); setActiveTab("leadership-calendar"); } 
+    }] : []),
     ...(userRole === "admin" ? [
-      { id: "vehicle-management", label: isLao ? "ຈັດການຂໍ້ມູນລົດ" : "Vehicle Fleet", icon: Car },
-      { id: "vehicle-admin-bookings", label: isLao ? "ສູນອະນຸມັດການຈອງລົດ" : "Booking Approvals", icon: ShieldCheck },
-      { id: "vehicle-reports", label: isLao ? "ບົດລາຍງານການນຳໃຊ້ລົດ" : "Usage Reports", icon: FileSpreadsheet },
+      { id: "users", label: t.navUsers, icon: Users, action: () => { setActiveTab("users"); } }
+    ] : []),
+    { id: "settings", label: t.navSettings, icon: SettingsIcon, action: () => { setActiveTab("settings"); } }
+  ] : isLeadershipSystem ? [
+    ...(canCalendarLeadership ? [
+      { id: "leadership-calendar", label: isLao ? "ປະຕິທິນການເຄື່ອນໄຫວວຽກ" : "Duty Calendar", icon: CalendarDays }
+    ] : []),
+    ...(canLogDuty ? [
+      { id: "leadership-my-activities", label: isLao ? "ວຽກງານຂອງຂ້າພະເຈົ້າ" : "My Activities", icon: Briefcase }
+    ] : []),
+    ...(canDutyReports ? [
+      { id: "leadership-reports", label: isLao ? "ບົດລາຍງານ ອາທິດ/ເດືອນ/ປີ" : "Duty Reports", icon: FileSpreadsheet }
+    ] : []),
+    ...(userRole === "admin" ? [
+      { id: "users", label: t.navUsers, icon: Users }
+    ] : []),
+    { id: "settings", label: t.navSettings, icon: SettingsIcon }
+  ] : isVehicleSystem ? [
+    { id: "vehicle-dashboard", label: isLao ? "Dashboard ຕິດຕາມລົດ" : "Vehicle Dashboard", icon: LayoutDashboard },
+    ...(canBookVehicle ? [
+      { id: "vehicle-booking", label: isLao ? "ແບບຟອມຈອງລົດ" : "Book Vehicle", icon: CalendarClock }
+    ] : []),
+    ...(canManageFleet ? [
+      { id: "vehicle-management", label: isLao ? "ຈັດການຂໍ້ມູນລົດ" : "Vehicle Fleet", icon: Car }
+    ] : []),
+    ...(canApproveVehicle ? [
+      { id: "vehicle-admin-bookings", label: isLao ? "ສູນອະນຸມັດການຈອງລົດ" : "Booking Approvals", icon: ShieldCheck }
+    ] : []),
+    ...(canVehicleReports ? [
+      { id: "vehicle-reports", label: isLao ? "ບົດລາຍງານການນຳໃຊ້ລົດ" : "Usage Reports", icon: FileSpreadsheet }
+    ] : []),
+    ...(userRole === "admin" ? [
       { id: "users", label: t.navUsers, icon: Users }
     ] : []),
     { id: "settings", label: t.navSettings, icon: SettingsIcon }
   ] : [
     { id: "dashboard", label: t.navDashboard, icon: LayoutDashboard },
-    { id: "booking", label: t.navBooking, icon: CalendarClock },
+    ...(canBookMeeting ? [
+      { id: "booking", label: t.navBooking, icon: CalendarClock }
+    ] : []),
+    ...(canManageRooms ? [
+      { id: "rooms", label: t.navRooms, icon: FolderKanban }
+    ] : []),
+    ...(canApproveMeeting ? [
+      { id: "admin-bookings", label: t.navAdminBookings || (language === "lo" ? "ສູນຄວບຄຸມ ແລະ ການຈັດການຈອງທັງໝົດ" : "Control Center & Bookings"), icon: ShieldCheck }
+    ] : []),
+    ...(canMeetingReports ? [
+      { id: "reports", label: t.navReports || "ລະບົບລາຍງານ", icon: FileSpreadsheet }
+    ] : []),
     ...(userRole === "admin" ? [
-      { id: "rooms", label: t.navRooms, icon: FolderKanban },
-      { id: "admin-bookings", label: t.navAdminBookings || (language === "lo" ? "ສູນຄວບຄຸມ ແລະ ການຈັດການຈອງທັງໝົດ" : "Control Center & Bookings"), icon: ShieldCheck },
-      { id: "reports", label: t.navReports || "ລະບົບລາຍງານ", icon: FileSpreadsheet },
       { id: "users", label: t.navUsers, icon: Users }
     ] : []),
     { id: "settings", label: t.navSettings, icon: SettingsIcon }
@@ -140,44 +231,78 @@ export default function Sidebar({
               className="text-[10px] font-black text-indigo-600 dark:text-amber-400 hover:underline flex items-center gap-1 cursor-pointer"
             >
               <Layers className="w-3 h-3" />
-              <span>{isLao ? "ສູນ 2 ລະບົບ" : "Portal"}</span>
+              <span>{isLao ? "ສູນ 3 ລະບົບ" : "Portal"}</span>
             </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-1 bg-slate-200/60 dark:bg-slate-900/60 p-1 rounded-xl text-[11px] font-black">
+          <div className="grid grid-cols-3 gap-1 bg-slate-200/60 dark:bg-slate-900/60 p-1 rounded-xl text-[10px] font-black">
             <button
               onClick={() => {
+                if (!canAccessMeeting) return;
                 setActiveSystem("meeting");
                 setActiveTab("dashboard");
                 if (onItemClick) onItemClick();
               }}
-              className={`py-1.5 px-2 rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer truncate ${
-                !isVehicleSystem 
-                  ? "bg-indigo-600 text-white shadow-xs" 
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+              disabled={!canAccessMeeting}
+              className={`py-1.5 px-1.5 rounded-lg transition-all flex items-center justify-center gap-1 truncate ${
+                !canAccessMeeting
+                  ? "opacity-40 cursor-not-allowed text-slate-400"
+                  : activeSystem === "meeting"
+                  ? "bg-indigo-600 text-white shadow-xs cursor-pointer" 
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
               }`}
+              title={canAccessMeeting ? (isLao ? "ຫ້ອງປະຊຸມ" : "Rooms") : (isLao ? "ບໍ່ມີສິດເຂົ້າເຖິງ" : "No Access")}
             >
               <Building2 className="w-3 h-3 shrink-0" />
-              <span className="truncate">{isLao ? "1. ຫ້ອງປະຊຸມ" : "Rooms"}</span>
+              <span className="truncate">{isLao ? "ຫ້ອງປະຊຸມ" : "Rooms"}</span>
+              {!canAccessMeeting && <Lock className="w-2.5 h-2.5 shrink-0" />}
             </button>
 
             <button
               onClick={() => {
+                if (!canAccessVehicle) return;
                 setActiveSystem("vehicle");
                 setActiveTab("vehicle-dashboard");
                 if (onItemClick) onItemClick();
               }}
-              className={`py-1.5 px-2 rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer truncate ${
-                isVehicleSystem 
-                  ? "bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-xs" 
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+              disabled={!canAccessVehicle}
+              className={`py-1.5 px-1.5 rounded-lg transition-all flex items-center justify-center gap-1 truncate ${
+                !canAccessVehicle
+                  ? "opacity-40 cursor-not-allowed text-slate-400"
+                  : isVehicleSystem 
+                  ? "bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-xs cursor-pointer" 
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
               }`}
+              title={canAccessVehicle ? (isLao ? "ລົດບໍລິຫານ" : "Vehicles") : (isLao ? "ບໍ່ມີສິດເຂົ້າເຖິງ" : "No Access")}
             >
               <Car className="w-3 h-3 shrink-0" />
-              <span className="truncate">{isLao ? "2. ລົດບໍລິຫານ" : "Vehicles"}</span>
-              {pendingVehicleCount > 0 && (
-                <span className="w-2 h-2 rounded-full bg-rose-400 animate-ping" />
+              <span className="truncate">{isLao ? "ລົດບໍລິຫານ" : "Vehicles"}</span>
+              {!canAccessVehicle && <Lock className="w-2.5 h-2.5 shrink-0" />}
+              {pendingVehicleCount > 0 && canAccessVehicle && (
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-ping" />
               )}
+            </button>
+
+            <button
+              onClick={() => {
+                if (!canAccessLeadership) return;
+                setActiveSystem("leadership");
+                setActiveTab("leadership-calendar");
+                if (onItemClick) onItemClick();
+              }}
+              disabled={!canAccessLeadership}
+              className={`py-1.5 px-1.5 rounded-lg transition-all flex items-center justify-center gap-1 truncate ${
+                !canAccessLeadership
+                  ? "opacity-40 cursor-not-allowed text-slate-400"
+                  : isLeadershipSystem 
+                  ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-xs cursor-pointer" 
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
+              }`}
+              title={canAccessLeadership ? (isLao ? "ຕິດຕາມວຽກ" : "Duty") : (isLao ? "ບໍ່ມີສິດເຂົ້າເຖິງ" : "No Access")}
+            >
+              <Briefcase className="w-3 h-3 shrink-0" />
+              <span className="truncate">{isLao ? "ຕິດຕາມວຽກ" : "Duty"}</span>
+              {!canAccessLeadership && <Lock className="w-2.5 h-2.5 shrink-0" />}
             </button>
           </div>
         </div>
@@ -185,7 +310,7 @@ export default function Sidebar({
 
       {menuItems.map((item) => {
         const Icon = item.icon;
-        const isActive = activeTab === item.id;
+        const isActive = (isPortal && item.id === "portal") || (!isPortal && activeTab === item.id);
 
         // Notification badge logic
         let badge = null;
@@ -232,13 +357,21 @@ export default function Sidebar({
             key={item.id}
             id={`sidebar-tab-${item.id}`}
             onClick={() => {
-              setActiveTab(item.id);
+              if ((item as any).action) {
+                (item as any).action();
+              } else {
+                setActiveTab(item.id);
+              }
               if (onItemClick) onItemClick();
             }}
             className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-all duration-300 text-left font-extrabold text-sm md:text-base tracking-wide relative group cursor-pointer ${
               isActive 
-                ? isVehicleSystem
+                ? isPortal
+                  ? "bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 text-white shadow-lg shadow-indigo-600/30 border-l-4 border-amber-400 scale-[1.02]"
+                  : isVehicleSystem
                   ? "bg-gradient-to-r from-amber-600 via-orange-600 to-rose-600 text-white shadow-lg shadow-amber-600/25 border-l-4 border-yellow-300 scale-[1.02]"
+                  : isLeadershipSystem
+                  ? "bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 text-white shadow-lg shadow-emerald-600/25 border-l-4 border-emerald-300 scale-[1.02]"
                   : "bg-gradient-to-r from-purple-600 via-indigo-600 to-indigo-700 text-white shadow-lg shadow-indigo-500/30 border-l-4 border-amber-400 scale-[1.02]" 
                 : "text-slate-600 dark:text-slate-300 hover:bg-gradient-to-r hover:from-purple-500/10 hover:to-indigo-500/10 hover:text-indigo-600 dark:hover:text-amber-400 hover:scale-[1.02] hover:translate-x-1 hover:shadow-md hover:shadow-indigo-500/5 border border-transparent hover:border-indigo-500/20"
             }`}
@@ -276,7 +409,9 @@ export default function Sidebar({
         <div 
           id="sidebar-header" 
           className={`p-5 h-28 text-white flex flex-col justify-center border-b-2 relative overflow-hidden shadow-md transition-colors duration-500 ${
-            isVehicleSystem 
+            isLeadershipSystem
+              ? "bg-gradient-to-br from-[#064e3b] via-[#042f2e] to-[#0f172a] border-emerald-400"
+              : isVehicleSystem 
               ? "bg-gradient-to-br from-[#1e1b4b] via-[#3b170b] to-[#1a0c02] border-amber-400" 
               : "bg-gradient-to-br from-[#1e1b4b] via-[#312e81] to-[#1e1b4b] border-amber-400/50"
           }`}
@@ -289,7 +424,7 @@ export default function Sidebar({
               <img 
                 src={emblemLogo} 
                 alt="Laos State Emblem" 
-                className="w-14 h-14 object-contain filter drop-shadow-[0_2px_8px_rgba(251,191,36,0.4)]"
+                className="w-14 h-14 object-contain filter drop-shadow-[0_2px_8px_rgba(251,191,36,0.4)]" 
                 referrerPolicy="no-referrer"
                 onError={(e) => { 
                   if (e.currentTarget.src !== emblemSvg) {
@@ -308,9 +443,13 @@ export default function Sidebar({
                 {language === "lo" ? "ຫ້ອງວ່າການແຂວງຫົວພັນ" : "Houaphanh Provincial Office"}
               </p>
               <span className={`text-[9.5px] font-extrabold tracking-wider mt-1 border-t border-white/15 pt-0.5 block truncate ${
-                isVehicleSystem ? "text-amber-200" : "text-indigo-200"
+                isPortal ? "text-amber-300" : isLeadershipSystem ? "text-emerald-200" : isVehicleSystem ? "text-amber-200" : "text-indigo-200"
               }`}>
-                {isVehicleSystem 
+                {isPortal
+                  ? (language === "lo" ? "• ສູນລວມ 3 ລະບົບບໍລິຫານຫຼັກ" : "• 3-SYSTEM MANAGEMENT HUB")
+                  : isLeadershipSystem
+                  ? (language === "lo" ? "• ລະບົບຕິດຕາມການເຄື່ອນໄຫວວຽກ" : "• EXECUTIVE DUTY TRACKER")
+                  : isVehicleSystem 
                   ? (language === "lo" ? "• ລະບົບລົດບໍລິຫານລັດຖະການ" : "• EXECUTIVE VEHICLE FLEET")
                   : (language === "lo" ? "• ລະບົບຈອງຫ້ອງປະຊຸມທັນສະໄໝ" : "• MEETING ROOM BOOKING")}
               </span>
@@ -394,9 +533,13 @@ export default function Sidebar({
                         {language === "lo" ? "ຫ້ອງວ່າການແຂວງຫົວພັນ" : "Houaphanh Provincial Office"}
                       </p>
                       <span className={`text-[9px] font-bold block mt-0.5 truncate ${
-                        isVehicleSystem ? "text-amber-200" : "text-indigo-200"
+                        isPortal ? "text-amber-300" : isLeadershipSystem ? "text-emerald-200" : isVehicleSystem ? "text-amber-200" : "text-indigo-200"
                       }`}>
-                        {isVehicleSystem 
+                        {isPortal
+                          ? (language === "lo" ? "• ສູນລວມ 3 ລະບົບບໍລິຫານຫຼັກ" : "• 3-SYSTEM MANAGEMENT HUB")
+                          : isLeadershipSystem
+                          ? (language === "lo" ? "• ລະບົບຕິດຕາມການເຄື່ອນໄຫວວຽກ" : "• EXECUTIVE DUTY TRACKER")
+                          : isVehicleSystem 
                           ? (language === "lo" ? "• ລະບົບລົດບໍລິຫານລັດຖະການ" : "• EXECUTIVE VEHICLE FLEET")
                           : (language === "lo" ? "• ລະບົບຈອງຫ້ອງປະຊຸມທັນສະໄໝ" : "• MEETING ROOM BOOKING")}
                       </span>
