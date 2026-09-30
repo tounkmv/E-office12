@@ -20,26 +20,31 @@ import {
   Camera,
   Check,
   AlertCircle,
+  AlertTriangle,
   Layers,
   Armchair,
   FileText
 } from "lucide-react";
-import { AppLanguage, MeetingRoom, RoomStatus } from "../types";
+import { AppLanguage, MeetingRoom, RoomStatus, RoomBooking } from "../types";
 import { translations } from "../lib/translations";
 import { addRoom, deleteRoom, updateRoom } from "../lib/firebaseHelper";
 import { showSystemToast } from "../utils/toast";
 import { motion, AnimatePresence } from "motion/react";
+import largeRoomImg from "../assets/images/large_conference_room_1782891812375.jpg";
+import mediumRoomImg from "../assets/images/medium_meeting_room_1782891824721.jpg";
+import vipRoomImg from "../assets/images/vip_meeting_room_1782891837889.jpg";
 
 interface RoomManagementProps {
   rooms: MeetingRoom[];
+  bookings?: RoomBooking[];
   language: AppLanguage;
 }
 
 // Preset Luxury Room Images for quick picking
 const PRESET_ROOM_IMAGES = [
-  { id: "img1", name: "Large Conference Room", url: "/src/assets/images/large_conference_room_1782891812375.jpg" },
-  { id: "img2", name: "Medium Meeting Room", url: "/src/assets/images/medium_meeting_room_1782891824721.jpg" },
-  { id: "img3", name: "VIP Meeting Room", url: "/src/assets/images/vip_meeting_room_1782891837889.jpg" },
+  { id: "img1", name: "Large Conference Room", url: largeRoomImg },
+  { id: "img2", name: "Medium Meeting Room", url: mediumRoomImg },
+  { id: "img3", name: "VIP Meeting Room", url: vipRoomImg },
   { id: "img4", name: "Executive Suite", url: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80" },
   { id: "img5", name: "Glass Boardroom", url: "https://images.unsplash.com/photo-1517502884422-41eaead166d4?auto=format&fit=crop&w=800&q=80" },
   { id: "img6", name: "Creative Hub", url: "https://images.unsplash.com/photo-1527192491265-7e15c55b1ed2?auto=format&fit=crop&w=800&q=80" },
@@ -59,7 +64,7 @@ const PRESET_EQUIPMENT_CHIPS = [
   "ເຄື່ອງດື່ມ & ກາເຟ / Refreshments"
 ];
 
-export default function RoomManagement({ rooms, language }: RoomManagementProps) {
+export default function RoomManagement({ rooms, bookings = [], language }: RoomManagementProps) {
   const t = translations[language];
   const isLao = language === "lo";
 
@@ -82,6 +87,8 @@ export default function RoomManagement({ rooms, language }: RoomManagementProps)
 
   const [toast, setToast] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [deletingRoom, setDeletingRoom] = useState<MeetingRoom | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -211,8 +218,16 @@ export default function RoomManagement({ rooms, language }: RoomManagementProps)
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!name || !capacity || !location) return;
+    if (!name.trim()) {
+      triggerToast(isLao ? "ກະລຸນາປ້ອນຊື່ຫ້ອງປະຊຸມໃຫ້ຄົບຖ້ວນ" : "Please provide room name", "error");
+      return;
+    }
+    if (!location.trim()) {
+      triggerToast(isLao ? "ກະລຸນາປ້ອນທີ່ຕັ້ງຂອງຫ້ອງປະຊຸມ" : "Please provide room location", "error");
+      return;
+    }
 
+    const safeCapacity = Number(capacity) || 1;
     setLoading(true);
 
     // Merge custom input if left pending
@@ -225,11 +240,11 @@ export default function RoomManagement({ rooms, language }: RoomManagementProps)
       if (editingRoom) {
         // Edit Room
         const updated: Partial<MeetingRoom> = {
-          name,
-          capacity,
+          name: name.trim(),
+          capacity: safeCapacity,
           equipment: finalEquipment,
-          location,
-          description,
+          location: location.trim(),
+          description: description.trim(),
           imageUrl: imageUrl || PRESET_ROOM_IMAGES[0].url,
           status
         };
@@ -240,11 +255,11 @@ export default function RoomManagement({ rooms, language }: RoomManagementProps)
         const newId = "room_" + Date.now();
         const newRoom: MeetingRoom = {
           id: newId,
-          name,
-          capacity,
+          name: name.trim(),
+          capacity: safeCapacity,
           equipment: finalEquipment,
-          location,
-          description,
+          location: location.trim(),
+          description: description.trim(),
           imageUrl: imageUrl || PRESET_ROOM_IMAGES[0].url,
           status
         };
@@ -252,6 +267,7 @@ export default function RoomManagement({ rooms, language }: RoomManagementProps)
         triggerToast(isLao ? "ເພີ່ມຫ້ອງປະຊຸມໃໝ່ເຂົ້າລະບົບສຳເລັດແລ້ວ" : "New room added successfully", "success");
       }
       setShowModal(false);
+      setEditingRoom(null);
     } catch (err: any) {
       console.error("Room save error:", err);
       triggerToast(t.error + ": " + err.message, "error");
@@ -260,17 +276,63 @@ export default function RoomManagement({ rooms, language }: RoomManagementProps)
     }
   };
 
-  const handleDelete = async (roomId: string, roomName: string) => {
-    const confirmMsg = isLao 
-      ? `ທ່ານແນ່ໃຈບໍ່ວ່າຕ້ອງການລຶບຫ້ອງປະຊຸມ "${roomName}" ອອກຈາກລະບົບ?`
-      : `Are you sure you want to delete room "${roomName}"?`;
-    if (!window.confirm(confirmMsg)) return;
+  // Open Custom Delete Modal (Replaces blocked window.confirm)
+  const handleRequestDelete = (room: MeetingRoom) => {
+    setDeletingRoom(room);
+  };
+
+  // Direct ID-based Delete Handler (safely routes to custom modal)
+  const handleDelete = (id: string, name?: string) => {
+    const room = rooms.find(r => r.id === id);
+    if (room) {
+      setDeletingRoom(room);
+    } else {
+      setDeletingRoom({
+        id,
+        name: name || (isLao ? "ຫ້ອງປະຊຸມ" : "Meeting Room"),
+        capacity: 0,
+        equipment: [],
+        location: "",
+        description: "",
+        imageUrl: "",
+        status: "active"
+      });
+    }
+  };
+
+  // Confirm Delete Handler
+  const handleConfirmDelete = async () => {
+    if (!deletingRoom) return;
+    setDeleteLoading(true);
 
     try {
-      await deleteRoom(roomId);
-      triggerToast(isLao ? "ລຶບຫ້ອງປະຊຸມອອກຈາກລະບົບສຳເລັດ" : "Room deleted successfully", "info");
+      await deleteRoom(deletingRoom.id);
+      triggerToast(
+        isLao ? `ລຶບຫ້ອງປະຊຸມ "${deletingRoom.name}" ອອກຈາກລະບົບສຳເລັດແລ້ວ` : "Room deleted successfully", 
+        "success"
+      );
+      setDeletingRoom(null);
     } catch (err: any) {
       console.error("Room delete error:", err);
+      triggerToast((t.error || "ເກີດຂໍ້ຜິດພາດ") + ": " + (err.message || String(err)), "error");
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  // Quick 1-click status toggle directly from card/table
+  const handleToggleStatus = async (room: MeetingRoom) => {
+    const nextStatus: RoomStatus = room.status === "active" ? "inactive" : "active";
+    try {
+      await updateRoom(room.id, { status: nextStatus });
+      triggerToast(
+        isLao 
+          ? `ປ່ຽນສະຖານະຫ້ອງ "${room.name}" ເປັນ ${nextStatus === "active" ? "🟢 ພ້ອມເປີດໃຊ້ງານ" : "🔴 ປິດປັບປຸງ"}` 
+          : `Room status updated to ${nextStatus}`,
+        "success"
+      );
+    } catch (err: any) {
+      console.error("Toggle status error:", err);
       triggerToast(t.error + ": " + err.message, "error");
     }
   };

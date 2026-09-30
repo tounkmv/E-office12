@@ -35,8 +35,8 @@ export const translations: Record<AppLanguage, Record<string, string>> = {
     navRooms: "ຈັດການຫ້ອງປະຊຸມ",
     navAdminBookings: "ສູນຄວບຄຸມ ແລະ ການຈັດການຈອງທັງໝົດ",
     navReports: "ລະບົບລາຍງານ",
-    navUsers: "ຈັດການຜູ້ໃຊ້",
-    navSettings: "ຕັ້ງຄ່າ",
+    navUsers: "ຈັດການຜູ້ໃຊ້ງານ",
+    navSettings: "ຕັ້ງຄ່າລະບົບ",
 
     // Dashboard Page
     dbTotalBookings: "ການຈອງທັງໝົດ",

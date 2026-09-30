@@ -112,6 +112,7 @@ export default function Sidebar({
   const isPortal = activeSystem === "portal";
   const isVehicleSystem = activeSystem === "vehicle";
   const isLeadershipSystem = activeSystem === "leadership";
+  const isMeetingSystem = activeSystem === "meeting";
 
   // Granular Permission Checks for Menu Items
   const canAccessMeeting = hasPermission(userProfile, "meetingAccess");
@@ -235,7 +236,8 @@ export default function Sidebar({
             </button>
           </div>
 
-          <div className="grid grid-cols-3 gap-1 bg-slate-200/60 dark:bg-slate-900/60 p-1 rounded-xl text-[10px] font-black">
+          <div className="grid grid-cols-3 gap-1.5 bg-slate-200/70 dark:bg-slate-900/80 p-1.5 rounded-2xl border border-slate-300/40 dark:border-white/5 shadow-inner">
+            {/* 1. Meeting Room System Button */}
             <button
               onClick={() => {
                 if (!canAccessMeeting) return;
@@ -244,20 +246,41 @@ export default function Sidebar({
                 if (onItemClick) onItemClick();
               }}
               disabled={!canAccessMeeting}
-              className={`py-1.5 px-1.5 rounded-lg transition-all flex items-center justify-center gap-1 truncate ${
+              className={`group relative flex flex-col items-center justify-between p-1.5 rounded-xl transition-all duration-200 cursor-pointer overflow-hidden ${
                 !canAccessMeeting
-                  ? "opacity-40 cursor-not-allowed text-slate-400"
-                  : activeSystem === "meeting"
-                  ? "bg-indigo-600 text-white shadow-xs cursor-pointer" 
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
+                  ? "opacity-40 cursor-not-allowed bg-slate-100 dark:bg-slate-800/40 text-slate-400 border border-slate-200 dark:border-white/5"
+                  : isMeetingSystem
+                  ? "bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-md shadow-indigo-600/30 border border-indigo-400/50 scale-[1.02]"
+                  : "bg-white dark:bg-slate-800/90 text-slate-700 dark:text-slate-200 border border-indigo-200/70 dark:border-indigo-900/40 hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-xs shadow-2xs"
               }`}
-              title={canAccessMeeting ? (isLao ? "ຫ້ອງປະຊຸມ" : "Rooms") : (isLao ? "ບໍ່ມີສິດເຂົ້າເຖິງ" : "No Access")}
+              title={canAccessMeeting ? (isLao ? "ລະບົບຈອງຫ້ອງປະຊຸມ" : "Rooms") : (isLao ? "ບໍ່ມີສິດເຂົ້າເຖິງ" : "No Access")}
             >
-              <Building2 className="w-3 h-3 shrink-0" />
-              <span className="truncate">{isLao ? "ຫ້ອງປະຊຸມ" : "Rooms"}</span>
-              {!canAccessMeeting && <Lock className="w-2.5 h-2.5 shrink-0" />}
+              {/* Top Color Accent Band */}
+              <div className={`w-full h-1 rounded-full mb-1 transition-all duration-200 ${
+                !canAccessMeeting
+                  ? "bg-slate-300 dark:bg-slate-700"
+                  : isMeetingSystem
+                  ? "bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]"
+                  : "bg-gradient-to-r from-blue-500 via-indigo-500 to-blue-600 shadow-xs"
+              }`} />
+
+              <div className="w-full flex items-center justify-center gap-1 min-w-0">
+                <div className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 shadow-2xs ${
+                  isMeetingSystem
+                    ? "bg-white/25 text-white"
+                    : "bg-indigo-100 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 border border-indigo-200/80 dark:border-indigo-800/80"
+                }`}>
+                  <Building2 className="w-3.5 h-3.5 shrink-0" />
+                </div>
+                <span className="truncate text-[10px] font-black">{isLao ? "ຫ້ອງປະຊຸມ" : "Rooms"}</span>
+                {!canAccessMeeting && <Lock className="w-2.5 h-2.5 shrink-0 opacity-60" />}
+                {pendingMeetingCount > 0 && canAccessMeeting && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-ping shrink-0" />
+                )}
+              </div>
             </button>
 
+            {/* 2. Vehicle Fleet System Button */}
             <button
               onClick={() => {
                 if (!canAccessVehicle) return;
@@ -266,23 +289,41 @@ export default function Sidebar({
                 if (onItemClick) onItemClick();
               }}
               disabled={!canAccessVehicle}
-              className={`py-1.5 px-1.5 rounded-lg transition-all flex items-center justify-center gap-1 truncate ${
+              className={`group relative flex flex-col items-center justify-between p-1.5 rounded-xl transition-all duration-200 cursor-pointer overflow-hidden ${
                 !canAccessVehicle
-                  ? "opacity-40 cursor-not-allowed text-slate-400"
+                  ? "opacity-40 cursor-not-allowed bg-slate-100 dark:bg-slate-800/40 text-slate-400 border border-slate-200 dark:border-white/5"
                   : isVehicleSystem 
-                  ? "bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-xs cursor-pointer" 
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
+                  ? "bg-gradient-to-r from-amber-600 via-orange-600 to-rose-600 text-white shadow-md shadow-amber-600/30 border border-amber-400/50 scale-[1.02]"
+                  : "bg-white dark:bg-slate-800/90 text-slate-700 dark:text-slate-200 border border-amber-200/70 dark:border-amber-900/40 hover:border-amber-400 hover:text-amber-600 dark:hover:text-amber-400 hover:shadow-xs shadow-2xs"
               }`}
               title={canAccessVehicle ? (isLao ? "ລະບົບຈັດການລົດບໍລິຫານ" : "Vehicles") : (isLao ? "ບໍ່ມີສິດເຂົ້າເຖິງ" : "No Access")}
             >
-              <Car className="w-3 h-3 shrink-0" />
-              <span className="truncate">{isLao ? "ຈັດການລົດ" : "Vehicles"}</span>
-              {!canAccessVehicle && <Lock className="w-2.5 h-2.5 shrink-0" />}
-              {pendingVehicleCount > 0 && canAccessVehicle && (
-                <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-ping" />
-              )}
+              {/* Top Color Accent Band */}
+              <div className={`w-full h-1 rounded-full mb-1 transition-all duration-200 ${
+                !canAccessVehicle
+                  ? "bg-slate-300 dark:bg-slate-700"
+                  : isVehicleSystem
+                  ? "bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]"
+                  : "bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 shadow-xs"
+              }`} />
+
+              <div className="w-full flex items-center justify-center gap-1 min-w-0">
+                <div className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 shadow-2xs ${
+                  isVehicleSystem
+                    ? "bg-white/25 text-white"
+                    : "bg-amber-100 dark:bg-amber-950/80 text-amber-600 dark:text-amber-400 border border-amber-200/80 dark:border-amber-800/80"
+                }`}>
+                  <Car className="w-3.5 h-3.5 shrink-0" />
+                </div>
+                <span className="truncate text-[10px] font-black">{isLao ? "ຈັດການລົດ" : "Vehicles"}</span>
+                {!canAccessVehicle && <Lock className="w-2.5 h-2.5 shrink-0 opacity-60" />}
+                {pendingVehicleCount > 0 && canAccessVehicle && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-ping shrink-0" />
+                )}
+              </div>
             </button>
 
+            {/* 3. Leadership / Duty Activity Tracking System Button */}
             <button
               onClick={() => {
                 if (!canAccessLeadership) return;
@@ -291,18 +332,35 @@ export default function Sidebar({
                 if (onItemClick) onItemClick();
               }}
               disabled={!canAccessLeadership}
-              className={`py-1.5 px-1.5 rounded-lg transition-all flex items-center justify-center gap-1 truncate ${
+              className={`group relative flex flex-col items-center justify-between p-1.5 rounded-xl transition-all duration-200 cursor-pointer overflow-hidden ${
                 !canAccessLeadership
-                  ? "opacity-40 cursor-not-allowed text-slate-400"
+                  ? "opacity-40 cursor-not-allowed bg-slate-100 dark:bg-slate-800/40 text-slate-400 border border-slate-200 dark:border-white/5"
                   : isLeadershipSystem 
-                  ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-xs cursor-pointer" 
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
+                  ? "bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 text-white shadow-md shadow-emerald-600/30 border border-emerald-400/50 scale-[1.02]"
+                  : "bg-white dark:bg-slate-800/90 text-slate-700 dark:text-slate-200 border border-emerald-200/70 dark:border-emerald-900/40 hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:shadow-xs shadow-2xs"
               }`}
-              title={canAccessLeadership ? (isLao ? "ຕິດຕາມວຽກ" : "Duty") : (isLao ? "ບໍ່ມີສິດເຂົ້າເຖິງ" : "No Access")}
+              title={canAccessLeadership ? (isLao ? "ລະບົບຕິດຕາມການເຄື່ອນໄຫວວຽກ" : "Duty") : (isLao ? "ບໍ່ມີສິດເຂົ້າເຖິງ" : "No Access")}
             >
-              <Briefcase className="w-3 h-3 shrink-0" />
-              <span className="truncate">{isLao ? "ຕິດຕາມວຽກ" : "Duty"}</span>
-              {!canAccessLeadership && <Lock className="w-2.5 h-2.5 shrink-0" />}
+              {/* Top Color Accent Band */}
+              <div className={`w-full h-1 rounded-full mb-1 transition-all duration-200 ${
+                !canAccessLeadership
+                  ? "bg-slate-300 dark:bg-slate-700"
+                  : isLeadershipSystem
+                  ? "bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]"
+                  : "bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 shadow-xs"
+              }`} />
+
+              <div className="w-full flex items-center justify-center gap-1 min-w-0">
+                <div className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 shadow-2xs ${
+                  isLeadershipSystem
+                    ? "bg-white/25 text-white"
+                    : "bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-800/80"
+                }`}>
+                  <Briefcase className="w-3.5 h-3.5 shrink-0" />
+                </div>
+                <span className="truncate text-[10px] font-black">{isLao ? "ຕິດຕາມວຽກ" : "Duty"}</span>
+                {!canAccessLeadership && <Lock className="w-2.5 h-2.5 shrink-0 opacity-60" />}
+              </div>
             </button>
           </div>
         </div>
@@ -310,7 +368,7 @@ export default function Sidebar({
 
       {menuItems.map((item) => {
         const Icon = item.icon;
-        const isActive = (isPortal && item.id === "portal") || (!isPortal && activeTab === item.id);
+        const isActive = (item.id === activeTab) || (isPortal && activeTab === "portal" && item.id === "portal");
 
         // Notification badge logic
         let badge = null;

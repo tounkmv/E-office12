@@ -13,7 +13,7 @@ import {
   hasPermission
 } from "./types";
 import { translations } from "./lib/translations";
-import { Building2, LogOut, Clock, ShieldAlert, Car, Briefcase, ArrowRight, Layers, Lock, CheckCircle2 } from "lucide-react";
+import { Building2, LogOut, Clock, ShieldAlert, Car, Briefcase, ArrowRight, ArrowLeft, X, Layers, Lock, CheckCircle2 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import emblemLogo from "./assets/images/emblem.png";
 import emblemSvg from "./assets/images/emblem.svg";
@@ -144,6 +144,14 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem("office-lang", language);
   }, [language]);
+
+  // Scroll to top immediately when activeTab or activeSystem changes
+  useEffect(() => {
+    const el = document.getElementById("app-main-content");
+    if (el) {
+      el.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [activeTab, activeSystem]);
 
   // Auth Loader & Profile Synchronizer
   useEffect(() => {
@@ -525,7 +533,7 @@ export default function App() {
           {/* Dynamic active page viewer */}
           <main id="app-main-content" className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto max-w-7xl w-full mx-auto">
             {/* PORTAL VIEW: 3 MAIN WINDOWS AFTER LOGIN */}
-            {activeSystem === "portal" && (
+            {activeSystem === "portal" && activeTab === "portal" && (
               <SystemPortal 
                 language={language}
                 userProfile={userProfile}
@@ -889,22 +897,90 @@ export default function App() {
               )
             )}
 
-            {/* SHARED ADMINISTRATION & SETTINGS */}
+            {/* SHARED ADMINISTRATION & SETTINGS AS DEDICATED NEW WINDOW / VIEW */}
             {activeTab === "users" && userProfile.role === "admin" && (
-              <UserManagement 
-                language={language}
-              />
+              <div className="space-y-4 animate-in fade-in zoom-in-95 duration-200">
+                {/* Window Top Navigation Bar */}
+                <div className="flex items-center justify-between p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xs">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <button
+                      onClick={() => {
+                        setActiveSystem("portal");
+                        setActiveTab("portal");
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs border border-slate-200/80 dark:border-white/10 active:scale-95"
+                    >
+                      <ArrowLeft className="w-3.5 h-3.5" />
+                      <span>{language === "lo" ? "ກັບໄປສູນຄວບຄຸມລະບົບ" : "Back to Control Center"}</span>
+                    </button>
+                    <span className="text-slate-300 dark:text-slate-700">/</span>
+                    <span className="text-xs font-black text-violet-600 dark:text-violet-400">
+                      {language === "lo" ? "ຈັດການຜູ້ໃຊ້ງານ" : "User Management"}
+                    </span>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      setActiveSystem("portal");
+                      setActiveTab("portal");
+                    }}
+                    className="p-1.5 sm:px-3 sm:py-1.5 rounded-xl bg-slate-100 hover:bg-rose-50 dark:bg-slate-800 dark:hover:bg-rose-950/40 text-slate-600 hover:text-rose-600 dark:text-slate-300 dark:hover:text-rose-400 transition-all cursor-pointer flex items-center gap-1.5 text-xs font-black border border-slate-200/60 dark:border-white/5 active:scale-95"
+                    title={language === "lo" ? "ປິດໜ້າຕ່າງ" : "Close"}
+                  >
+                    <span>{language === "lo" ? "ປິດໜ້າຕ່າງ" : "Close"}</span>
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                <UserManagement 
+                  language={language}
+                />
+              </div>
             )}
 
             {activeTab === "settings" && (
-              <Settings 
-                language={language} 
-                setLanguage={setLanguage} 
-                theme={theme} 
-                setTheme={setTheme} 
-                userProfile={userProfile}
-                onUpdateProfile={setUserProfile}
-              />
+              <div className="space-y-4 animate-in fade-in zoom-in-95 duration-200">
+                {/* Window Top Navigation Bar */}
+                <div className="flex items-center justify-between p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-xs">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <button
+                      onClick={() => {
+                        setActiveSystem("portal");
+                        setActiveTab("portal");
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs border border-slate-200/80 dark:border-white/10 active:scale-95"
+                    >
+                      <ArrowLeft className="w-3.5 h-3.5" />
+                      <span>{language === "lo" ? "ກັບໄປສູນຄວບຄຸມລະບົບ" : "Back to Control Center"}</span>
+                    </button>
+                    <span className="text-slate-300 dark:text-slate-700">/</span>
+                    <span className="text-xs font-black text-indigo-600 dark:text-indigo-400">
+                      {language === "lo" ? "ຕັ້ງຄ່າລະບົບ" : "System Settings"}
+                    </span>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      setActiveSystem("portal");
+                      setActiveTab("portal");
+                    }}
+                    className="p-1.5 sm:px-3 sm:py-1.5 rounded-xl bg-slate-100 hover:bg-rose-50 dark:bg-slate-800 dark:hover:bg-rose-950/40 text-slate-600 hover:text-rose-600 dark:text-slate-300 dark:hover:text-rose-400 transition-all cursor-pointer flex items-center gap-1.5 text-xs font-black border border-slate-200/60 dark:border-white/5 active:scale-95"
+                    title={language === "lo" ? "ປິດໜ້າຕ່າງ" : "Close"}
+                  >
+                    <span>{language === "lo" ? "ປິດໜ້າຕ່າງ" : "Close"}</span>
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                <Settings 
+                  language={language} 
+                  setLanguage={setLanguage} 
+                  theme={theme} 
+                  setTheme={setTheme} 
+                  userProfile={userProfile}
+                  onUpdateProfile={setUserProfile}
+                />
+              </div>
             )}
           </main>
 
