@@ -1053,7 +1053,7 @@ export default function UserManagement({ language }: UserManagementProps) {
                         <option value="user">👤 {isLao ? "ສິດຜູ້ໃຊ້ທົ່ວໄປ (Standard: ຈອງຫ້ອງ, ຈອງລົດ, ບັນທຶກວຽກ)" : "Standard User (Book & Log)"}</option>
                         <option value="admin">👑 {isLao ? "ໃຫ້ສິດທັງໝົດທຸກລະບົບ (Full Admin: 14 ຟັງຊັນ)" : "Full Admin (All Features)"}</option>
                         <option value="meeting">🏢 {isLao ? "ສະເພາະລະບົບຫ້ອງປະຊຸມ (Meeting Specialist)" : "Meeting Rooms Only"}</option>
-                        <option value="vehicle">🚗 {isLao ? "ສະເພາະລະບົບລົດບໍລິຫານ (Vehicle Fleet Specialist)" : "Vehicle Fleet Only"}</option>
+                        <option value="vehicle">🚗 {isLao ? "ສະເພາະລະບົບຈັດການລົດບໍລິຫານ (Vehicle Fleet Specialist)" : "Vehicle Fleet Only"}</option>
                         <option value="leadership">💼 {isLao ? "ສະເພາະລະບົບຕິດຕາມວຽກ (Duty Tracking Specialist)" : "Duty Tracking Only"}</option>
                         <option value="view">👁️ {isLao ? "ສິດເບິ່ງຢ່າງດຽວ (View Only: ບໍ່ສາມາດສ້າງ/ອະນຸມັດ)" : "View Only"}</option>
                       </select>
@@ -1260,7 +1260,7 @@ export default function UserManagement({ language }: UserManagementProps) {
                     {/* Button to open permissions directly */}
                     <div className="pt-2 sm:col-span-2 border-t border-slate-200/60 dark:border-white/5 flex flex-wrap items-center justify-between gap-2">
                       <div className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
-                        {isLao ? "ກຳນົດສິດລະອຽດທັງ 3 ລະບົບ (ຫ້ອງປະຊຸມ, ລົດບໍລິຫານ, ຕິດຕາມວຽກ):" : "Granular 3-System Permissions:"}
+                        {isLao ? "ກຳນົດສິດລະອຽດທັງ 3 ລະບົບ (ຫ້ອງປະຊຸມ, ຈັດການລົດບໍລິຫານ, ຕິດຕາມວຽກ):" : "Granular 3-System Permissions:"}
                       </div>
                       <button
                         type="button"
@@ -1474,7 +1474,7 @@ export default function UserManagement({ language }: UserManagementProps) {
                     onClick={() => applyPermissionPreset("vehicle")}
                     className="px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 text-amber-700 dark:text-amber-300 text-xs font-black border border-amber-200 dark:border-amber-800 transition-all cursor-pointer"
                   >
-                    🚗 {isLao ? "ສະເພາະລົດບໍລິຫານ" : "Vehicle Only"}
+                    🚗 {isLao ? "ສະເພາະລະບົບຈັດການລົດບໍລິຫານ" : "Vehicle Fleet Only"}
                   </button>
 
                   <button
@@ -1515,7 +1515,7 @@ export default function UserManagement({ language }: UserManagementProps) {
                   }`}
                 >
                   <Building2 className="w-3.5 h-3.5" />
-                  <span>{isLao ? "1. ຫ້ອງປະຊຸມ" : "1. Meeting"}</span>
+                  <span>{isLao ? "ລະບົບຫ້ອງປະຊຸມ" : "Meeting Rooms"}</span>
                   <span className={`w-2 h-2 rounded-full ${permissionsDraft.meetingAccess ? "bg-emerald-400" : "bg-rose-400"}`} />
                 </button>
 
@@ -1529,7 +1529,7 @@ export default function UserManagement({ language }: UserManagementProps) {
                   }`}
                 >
                   <Car className="w-3.5 h-3.5" />
-                  <span>{isLao ? "2. ລົດບໍລິຫານ" : "2. Vehicles"}</span>
+                  <span>{isLao ? "ລະບົບຈັດການລົດບໍລິຫານ" : "Vehicles"}</span>
                   <span className={`w-2 h-2 rounded-full ${permissionsDraft.vehicleAccess ? "bg-emerald-400" : "bg-rose-400"}`} />
                 </button>
 
@@ -1543,7 +1543,7 @@ export default function UserManagement({ language }: UserManagementProps) {
                   }`}
                 >
                   <Briefcase className="w-3.5 h-3.5" />
-                  <span>{isLao ? "3. ຕິດຕາມວຽກ" : "3. Duty"}</span>
+                  <span>{isLao ? "ລະບົບຕິດຕາມວຽກ" : "Duty"}</span>
                   <span className={`w-2 h-2 rounded-full ${permissionsDraft.leadershipAccess ? "bg-emerald-400" : "bg-rose-400"}`} />
                 </button>
               </div>
@@ -1710,10 +1710,10 @@ export default function UserManagement({ language }: UserManagementProps) {
                       </div>
                       <div>
                         <h4 className="font-black text-sm text-slate-800 dark:text-slate-100">
-                          {isLao ? "ເປີດສິດການເຂົ້າເຖິງລະບົບລົດບໍລິຫານ" : "Enable Vehicle System Access"}
+                          {isLao ? "ເປີດສິດການເຂົ້າເຖິງລະບົບຈັດການລົດບໍລິຫານ" : "Enable Vehicle System Access"}
                         </h4>
                         <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                          {isLao ? "ອະນຸຍາດໃຫ້ຜູ້ໃຊ້ນີ້ສາມາດເບິ່ງເຫັນ ແລະ ເຂົ້າໃຊ້ລະບົບລົດບໍລິຫານໄດ້" : "Permits user to see and open the vehicle system"}
+                          {isLao ? "ອະນຸຍາດໃຫ້ຜູ້ໃຊ້ນີ້ສາມາດເບິ່ງເຫັນ ແລະ ເຂົ້າໃຊ້ລະບົບຈັດການລົດບໍລິຫານໄດ້" : "Permits user to see and open the vehicle system"}
                         </p>
                       </div>
                     </div>
@@ -1735,7 +1735,7 @@ export default function UserManagement({ language }: UserManagementProps) {
                   <div className={`space-y-2 pt-2 transition-opacity ${permissionsDraft.vehicleAccess ? "opacity-100" : "opacity-40 pointer-events-none"}`}>
                     <div className="flex items-center justify-between px-1">
                       <span className="text-[11px] font-black uppercase text-amber-700 dark:text-amber-300 tracking-wider block">
-                        {isLao ? "ຟັງຊັນຍ່ອຍໃນລະບົບລົດບໍລິຫານ:" : "Vehicle System Sub-features:"}
+                        {isLao ? "ຟັງຊັນຍ່ອຍໃນລະບົບຈັດການລົດບໍລິຫານ:" : "Vehicle System Sub-features:"}
                       </span>
                       <div className="flex items-center gap-1.5">
                         <button

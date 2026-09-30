@@ -141,19 +141,19 @@ export default function Sidebar({
     },
     ...(canAccessMeeting ? [{ 
       id: "goto-meeting", 
-      label: isLao ? "1. ລະບົບຈອງຫ້ອງປະຊຸມ" : "1. Meeting Room System", 
+      label: isLao ? "ລະບົບຈອງຫ້ອງປະຊຸມ" : "Meeting Room System", 
       icon: Building2, 
       action: () => { setActiveSystem?.("meeting"); setActiveTab("dashboard"); } 
     }] : []),
     ...(canAccessVehicle ? [{ 
       id: "goto-vehicle", 
-      label: isLao ? "2. ລະບົບລົດບໍລິຫານ" : "2. Vehicle Fleet System", 
+      label: isLao ? "ລະບົບຈັດການລົດບໍລິຫານ" : "Vehicle Fleet System", 
       icon: Car, 
       action: () => { setActiveSystem?.("vehicle"); setActiveTab("vehicle-dashboard"); } 
     }] : []),
     ...(canAccessLeadership ? [{ 
       id: "goto-leadership", 
-      label: isLao ? "3. ລະບົບຕິດຕາມການເຄື່ອນໄຫວວຽກ" : "3. Duty Activity Tracking", 
+      label: isLao ? "ລະບົບຕິດຕາມການເຄື່ອນໄຫວວຽກ" : "Duty Activity Tracking", 
       icon: Briefcase, 
       action: () => { setActiveSystem?.("leadership"); setActiveTab("leadership-calendar"); } 
     }] : []),
@@ -273,10 +273,10 @@ export default function Sidebar({
                   ? "bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-xs cursor-pointer" 
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
               }`}
-              title={canAccessVehicle ? (isLao ? "ລົດບໍລິຫານ" : "Vehicles") : (isLao ? "ບໍ່ມີສິດເຂົ້າເຖິງ" : "No Access")}
+              title={canAccessVehicle ? (isLao ? "ລະບົບຈັດການລົດບໍລິຫານ" : "Vehicles") : (isLao ? "ບໍ່ມີສິດເຂົ້າເຖິງ" : "No Access")}
             >
               <Car className="w-3 h-3 shrink-0" />
-              <span className="truncate">{isLao ? "ລົດບໍລິຫານ" : "Vehicles"}</span>
+              <span className="truncate">{isLao ? "ຈັດການລົດ" : "Vehicles"}</span>
               {!canAccessVehicle && <Lock className="w-2.5 h-2.5 shrink-0" />}
               {pendingVehicleCount > 0 && canAccessVehicle && (
                 <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-ping" />
@@ -450,7 +450,7 @@ export default function Sidebar({
                   : isLeadershipSystem
                   ? (language === "lo" ? "• ລະບົບຕິດຕາມການເຄື່ອນໄຫວວຽກ" : "• EXECUTIVE DUTY TRACKER")
                   : isVehicleSystem 
-                  ? (language === "lo" ? "• ລະບົບລົດບໍລິຫານລັດຖະການ" : "• EXECUTIVE VEHICLE FLEET")
+                  ? (language === "lo" ? "• ລະບົບຈັດການລົດບໍລິຫານ" : "• EXECUTIVE VEHICLE FLEET")
                   : (language === "lo" ? "• ລະບົບຈອງຫ້ອງປະຊຸມທັນສະໄໝ" : "• MEETING ROOM BOOKING")}
               </span>
             </div>
@@ -540,7 +540,7 @@ export default function Sidebar({
                           : isLeadershipSystem
                           ? (language === "lo" ? "• ລະບົບຕິດຕາມການເຄື່ອນໄຫວວຽກ" : "• EXECUTIVE DUTY TRACKER")
                           : isVehicleSystem 
-                          ? (language === "lo" ? "• ລະບົບລົດບໍລິຫານລັດຖະການ" : "• EXECUTIVE VEHICLE FLEET")
+                          ? (language === "lo" ? "• ລະບົບຈັດການລົດບໍລິຫານ" : "• EXECUTIVE VEHICLE FLEET")
                           : (language === "lo" ? "• ລະບົບຈອງຫ້ອງປະຊຸມທັນສະໄໝ" : "• MEETING ROOM BOOKING")}
                       </span>
                     </div>

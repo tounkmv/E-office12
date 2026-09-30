@@ -503,7 +503,7 @@ export default function Navbar({
                 ) : activeSystem === "leadership" ? (
                   <>
                     <Briefcase className="w-3.5 h-3.5" />
-                    <span>{isLao ? "3. ລະບົບຕິດຕາມວຽກ" : "Duty System"}</span>
+                    <span>{isLao ? "ລະບົບຕິດຕາມວຽກ" : "Duty System"}</span>
                     <span className="text-[10px] bg-black/25 px-1.5 py-0.5 rounded-md text-emerald-200">
                       {isLao ? "ສະຫຼັບ ➜" : "Switch ➜"}
                     </span>
@@ -511,7 +511,7 @@ export default function Navbar({
                 ) : activeSystem === "vehicle" ? (
                   <>
                     <Car className="w-3.5 h-3.5" />
-                    <span>{isLao ? "2. ລະບົບລົດບໍລິຫານ" : "Vehicle System"}</span>
+                    <span>{isLao ? "ລະບົບຈັດການລົດບໍລິຫານ" : "Vehicle System"}</span>
                     <span className="text-[10px] bg-black/25 px-1.5 py-0.5 rounded-md text-amber-200">
                       {isLao ? "ສະຫຼັບ ➜" : "Switch ➜"}
                     </span>
@@ -519,7 +519,7 @@ export default function Navbar({
                 ) : (
                   <>
                     <Building2 className="w-3.5 h-3.5" />
-                    <span>{isLao ? "1. ລະບົບຫ້ອງປະຊຸມ" : "Meeting System"}</span>
+                    <span>{isLao ? "ລະບົບຫ້ອງປະຊຸມ" : "Meeting System"}</span>
                     <span className="text-[10px] bg-black/25 px-1.5 py-0.5 rounded-md text-indigo-200">
                       {isLao ? "ສະຫຼັບ ➜" : "Switch ➜"}
                     </span>

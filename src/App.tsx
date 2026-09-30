@@ -683,7 +683,7 @@ export default function App() {
                     <Lock className="w-8 h-8" />
                   </div>
                   <h3 className="text-xl font-black text-slate-900 dark:text-white">
-                    {language === "lo" ? "ທ່ານບໍ່ມີສິດເຂົ້າເຖິງລະບົບລົດບໍລິຫານ" : "Access Denied: Vehicle Fleet System"}
+                    {language === "lo" ? "ທ່ານບໍ່ມີສິດເຂົ້າເຖິງລະບົບຈັດການລົດບໍລິຫານ" : "Access Denied: Vehicle Fleet System"}
                   </h3>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
                     {language === "lo" 
@@ -1048,7 +1048,7 @@ export default function App() {
                       </div>
                       <div className="flex flex-col items-end gap-1">
                         <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
-                          {language === "lo" ? "ລະບົບ 1" : "Sys #1"}
+                          {language === "lo" ? "ຫ້ອງປະຊຸມ" : "Rooms"}
                         </span>
                         {!canAccessMeeting ? (
                           <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md bg-rose-500/20 text-rose-300 border border-rose-500/30 flex items-center gap-1">
@@ -1065,7 +1065,7 @@ export default function App() {
                     </div>
                     <div>
                       <h5 className="text-sm font-black text-white group-hover:text-indigo-300 transition-colors leading-tight">
-                        {language === "lo" ? "1. ຈອງຫ້ອງປະຊຸມ" : "1. Meeting Rooms"}
+                        {language === "lo" ? "ລະບົບຈອງຫ້ອງປະຊຸມ" : "Meeting Room System"}
                       </h5>
                       <p className="text-[11px] text-slate-400 mt-1 leading-snug">
                         {language === "lo" ? "ຫ້ອງປະຊຸມ, ຕາຕະລາງ, ການຈອງ & ອະນຸມັດ" : "Room schedule, booking & approvals"}
@@ -1087,7 +1087,7 @@ export default function App() {
                       if (!canAccessVehicle) {
                         showSystemToast.warning(
                           language === "lo"
-                            ? "ທ່ານບໍ່ມີສິດເຂົ້າເຖິງ ລະບົບລົດບໍລິຫານ ກະລຸນາຕິດຕໍ່ຜູ້ດູແລລະບົບ"
+                            ? "ທ່ານບໍ່ມີສິດເຂົ້າເຖິງ ລະບົບຈັດການລົດບໍລິຫານ ກະລຸນາຕິດຕໍ່ຜູ້ດູແລລະບົບ"
                             : "You do not have permission for the Vehicle Fleet System"
                         );
                         return;
@@ -1112,7 +1112,7 @@ export default function App() {
                       </div>
                       <div className="flex flex-col items-end gap-1">
                         <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/30">
-                          {language === "lo" ? "ລະບົບ 2" : "Sys #2"}
+                          {language === "lo" ? "ຈັດການລົດ" : "Fleet"}
                         </span>
                         {!canAccessVehicle ? (
                           <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md bg-rose-500/20 text-rose-300 border border-rose-500/30 flex items-center gap-1">
@@ -1129,7 +1129,7 @@ export default function App() {
                     </div>
                     <div>
                       <h5 className="text-sm font-black text-white group-hover:text-amber-300 transition-colors leading-tight">
-                        {language === "lo" ? "2. ລົດບໍລິຫານ" : "2. Vehicle Fleet"}
+                        {language === "lo" ? "ລະບົບຈັດການລົດບໍລິຫານ" : "Vehicle Fleet System"}
                       </h5>
                       <p className="text-[11px] text-slate-400 mt-1 leading-snug">
                         {language === "lo" ? "ລົດລັດຖະການ, ຕາຕະລາງ, ຄົນຂັບ & ລາຍງານ" : "Official trips, drivers & reports"}
@@ -1176,7 +1176,7 @@ export default function App() {
                       </div>
                       <div className="flex flex-col items-end gap-1">
                         <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
-                          {language === "lo" ? "ລະບົບ 3" : "Sys #3"}
+                          {language === "lo" ? "ຕິດຕາມວຽກ" : "Duty"}
                         </span>
                         {!canAccessLeadership ? (
                           <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md bg-rose-500/20 text-rose-300 border border-rose-500/30 flex items-center gap-1">
@@ -1193,7 +1193,7 @@ export default function App() {
                     </div>
                     <div>
                       <h5 className="text-sm font-black text-white group-hover:text-emerald-300 transition-colors leading-tight">
-                        {language === "lo" ? "3. ຕິດຕາມການເຄື່ອນໄຫວວຽກ" : "3. Duty Activity Tracking"}
+                        {language === "lo" ? "ລະບົບຕິດຕາມການເຄື່ອນໄຫວວຽກ" : "Duty Activity Tracking"}
                       </h5>
                       <p className="text-[11px] text-slate-400 mt-1 leading-snug">
                         {language === "lo" ? "ວຽກຄະນະ/ຫົວໜ້າ, ປະຕິທິນ, ບັນທຶກ & ລາຍງານ" : "Executive duties, calendar & reports"}

@@ -177,60 +177,73 @@ export default function SystemPortal({
           {canAccessMeeting && <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl group-hover:bg-indigo-500/15 transition-all pointer-events-none" />}
 
           <div className="space-y-4">
-            <div className="flex items-start justify-between gap-4">
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform shrink-0 ${
-                canAccessMeeting
-                  ? "bg-gradient-to-br from-indigo-500 to-blue-600 text-white shadow-indigo-500/30"
-                  : "bg-slate-200 dark:bg-slate-800 text-slate-400"
-              }`}>
-                <Building2 className="w-7 h-7" />
+            <div className="flex items-center justify-between gap-3 h-16 shrink-0">
+              {/* Modern 3D Elevated Glass Icon Container */}
+              <div className="relative shrink-0">
+                <div className={`absolute -inset-1 rounded-2xl blur-md transition-all duration-300 ${
+                  canAccessMeeting 
+                    ? "bg-gradient-to-r from-indigo-500 via-blue-600 to-indigo-700 opacity-60 group-hover:opacity-100 group-hover:scale-105" 
+                    : "opacity-0"
+                }`} />
+                <div className={`relative w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-xl overflow-hidden ${
+                  canAccessMeeting
+                    ? "bg-gradient-to-br from-indigo-500 via-blue-600 to-indigo-700 text-white border border-white/30 shadow-indigo-600/35 ring-4 ring-indigo-500/15 group-hover:scale-105 group-hover:-translate-y-0.5"
+                    : "bg-slate-200 dark:bg-slate-800 text-slate-400 border border-slate-300 dark:border-white/10"
+                }`}>
+                  <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/25 to-transparent pointer-events-none" />
+                  <Building2 className="w-8 h-8 relative z-10 filter drop-shadow-[0_2px_5px_rgba(0,0,0,0.3)] transition-transform duration-300 group-hover:scale-110" />
+                </div>
+                {pendingRoomBookings > 0 && userProfile.role === "admin" && canAccessMeeting && (
+                  <span className="absolute -top-1.5 -right-1.5 z-20 px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white shadow-md animate-pulse border-2 border-white dark:border-slate-900" title={`${pendingRoomBookings} ${isLao ? "ລໍຖ້າອະນຸມັດ" : "pending"}`}>
+                    {pendingRoomBookings}
+                  </span>
+                )}
               </div>
-              <div className="flex flex-col items-end gap-1">
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
-                  {isLao ? "ລະບົບທີ 1" : "System #1"}
+
+              <div className="h-16 flex flex-col justify-between items-end shrink-0">
+                <span className="px-2.5 py-1 rounded-xl text-[10.5px] font-black uppercase tracking-wider bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/80 shadow-xs flex items-center gap-1.5">
+                  <Building2 className="w-3 h-3 text-indigo-500 shrink-0" />
+                  <span>{isLao ? "ຫ້ອງປະຊຸມ" : "Meeting"}</span>
                 </span>
                 {canAccessMeeting ? (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                  <span className="px-2.5 py-1 rounded-xl text-[10.5px] font-black bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5 shadow-xs">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />
                     <span>{isLao ? "ໄດ້ຮັບສິດ" : "Authorized"}</span>
                   </span>
                 ) : (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30 flex items-center gap-1">
-                    <Lock className="w-3 h-3 text-rose-500" />
+                  <span className="px-2.5 py-1 rounded-xl text-[10.5px] font-black bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30 flex items-center gap-1.5 shadow-xs">
+                    <Lock className="w-3 h-3 text-rose-500 shrink-0" />
                     <span>{isLao ? "ຈຳກັດສິດ" : "Restricted"}</span>
-                  </span>
-                )}
-                {pendingRoomBookings > 0 && userProfile.role === "admin" && canAccessMeeting && (
-                  <span className="mt-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white animate-pulse">
-                    {pendingRoomBookings} {isLao ? "ລໍຖ້າອະນຸມັດ" : "pending"}
                   </span>
                 )}
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white tracking-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                1. ລະບົບຈອງຫ້ອງປະຊຸມທັນສະໄໝ
-              </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
+            <div className="space-y-2 pt-1">
+              <div className="h-10 flex items-center">
+                <h2 className="text-base sm:text-lg xl:text-xl font-black text-slate-900 dark:text-white tracking-tight leading-normal group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors whitespace-nowrap overflow-hidden text-ellipsis" title={isLao ? "ລະບົບຈອງຫ້ອງປະຊຸມ" : "Meeting Room System"}>
+                  {isLao ? "ລະບົບຈອງຫ້ອງປະຊຸມ" : "Meeting Room System"}
+                </h2>
+              </div>
+              <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-300 font-medium leading-relaxed h-10 flex items-center line-clamp-2">
                 {isLao
-                  ? "ຄຸ້ມຄອງ, ກວດສອບຕາຕະລາງປະຕິທິນ, ຈອງຫ້ອງປະຊຸມ, ອະນຸມັດ ແລະ ສ້າງບົດລາຍງານ."
+                  ? "ຄຸ້ມຄອງ, ກວດສອບຕາຕະລາງ, ຈອງຫ້ອງປະຊຸມ, ອະນຸມັດ ແລະ ສ້າງບົດລາຍງານ."
                   : "Meeting room reservations, schedule calendar, approval workflows, and reports."}
               </p>
             </div>
 
             <div className="grid grid-cols-3 gap-2 pt-2">
-              <div className="p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 text-center">
-                <span className="text-[9px] text-slate-400 font-bold block">{isLao ? "ຫ້ອງທັງໝົດ" : "Rooms"}</span>
-                <span className="text-sm sm:text-base font-black text-slate-900 dark:text-white">{rooms.length}</span>
+              <div className="h-[58px] flex flex-col items-center justify-center p-2 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 text-center">
+                <span className="text-[10.5px] text-slate-400 font-bold block truncate">{isLao ? "ຫ້ອງທັງໝົດ" : "Rooms"}</span>
+                <span className="text-base sm:text-lg font-black text-slate-900 dark:text-white leading-tight mt-0.5">{rooms.length}</span>
               </div>
-              <div className="p-2.5 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/40 text-center">
-                <span className="text-[9px] text-indigo-600 dark:text-indigo-400 font-bold block">{isLao ? "ປະຊຸມມື້ນີ້" : "Today"}</span>
-                <span className="text-sm sm:text-base font-black text-indigo-700 dark:text-indigo-300">{todayRoomMeetings}</span>
+              <div className="h-[58px] flex flex-col items-center justify-center p-2 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/40 text-center">
+                <span className="text-[10.5px] text-indigo-600 dark:text-indigo-400 font-bold block truncate">{isLao ? "ປະຊຸມມື້ນີ້" : "Today"}</span>
+                <span className="text-base sm:text-lg font-black text-indigo-700 dark:text-indigo-300 leading-tight mt-0.5">{todayRoomMeetings}</span>
               </div>
-              <div className="p-2.5 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/40 text-center">
-                <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold block">{isLao ? "ອະນຸມັດ" : "Approved"}</span>
-                <span className="text-sm sm:text-base font-black text-emerald-700 dark:text-emerald-300">{approvedRoomBookings}</span>
+              <div className="h-[58px] flex flex-col items-center justify-center p-2 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/40 text-center">
+                <span className="text-[10.5px] text-emerald-600 dark:text-emerald-400 font-bold block truncate">{isLao ? "ອະນຸມັດ" : "Approved"}</span>
+                <span className="text-base sm:text-lg font-black text-emerald-700 dark:text-emerald-300 leading-tight mt-0.5">{approvedRoomBookings}</span>
               </div>
             </div>
           </div>
@@ -303,60 +316,73 @@ export default function SystemPortal({
           {canAccessVehicle && <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl group-hover:bg-amber-500/15 transition-all pointer-events-none" />}
 
           <div className="space-y-4">
-            <div className="flex items-start justify-between gap-4">
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform shrink-0 ${
-                canAccessVehicle
-                  ? "bg-gradient-to-br from-amber-500 via-orange-500 to-rose-600 text-white shadow-amber-500/30"
-                  : "bg-slate-200 dark:bg-slate-800 text-slate-400"
-              }`}>
-                <Car className="w-7 h-7" />
+            <div className="flex items-center justify-between gap-3 h-16 shrink-0">
+              {/* Modern 3D Elevated Glass Icon Container */}
+              <div className="relative shrink-0">
+                <div className={`absolute -inset-1 rounded-2xl blur-md transition-all duration-300 ${
+                  canAccessVehicle 
+                    ? "bg-gradient-to-r from-amber-500 via-orange-500 to-rose-600 opacity-60 group-hover:opacity-100 group-hover:scale-105" 
+                    : "opacity-0"
+                }`} />
+                <div className={`relative w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-xl overflow-hidden ${
+                  canAccessVehicle
+                    ? "bg-gradient-to-br from-amber-500 via-orange-500 to-rose-600 text-white border border-white/30 shadow-orange-600/35 ring-4 ring-orange-500/15 group-hover:scale-105 group-hover:-translate-y-0.5"
+                    : "bg-slate-200 dark:bg-slate-800 text-slate-400 border border-slate-300 dark:border-white/10"
+                }`}>
+                  <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/25 to-transparent pointer-events-none" />
+                  <Car className="w-8 h-8 relative z-10 filter drop-shadow-[0_2px_5px_rgba(0,0,0,0.3)] transition-transform duration-300 group-hover:scale-110" />
+                </div>
+                {pendingVehicleBookings > 0 && userProfile.role === "admin" && canAccessVehicle && (
+                  <span className="absolute -top-1.5 -right-1.5 z-20 px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white shadow-md animate-pulse border-2 border-white dark:border-slate-900" title={`${pendingVehicleBookings} ${isLao ? "ລໍຖ້າອະນຸມັດ" : "pending"}`}>
+                    {pendingVehicleBookings}
+                  </span>
+                )}
               </div>
-              <div className="flex flex-col items-end gap-1">
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
-                  {isLao ? "ລະບົບທີ 2" : "System #2"}
+
+              <div className="h-16 flex flex-col justify-between items-end shrink-0">
+                <span className="px-2.5 py-1 rounded-xl text-[10.5px] font-black uppercase tracking-wider bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/80 shadow-xs flex items-center gap-1.5">
+                  <Car className="w-3 h-3 text-amber-500 shrink-0" />
+                  <span>{isLao ? "ລົດບໍລິຫານ" : "Fleet"}</span>
                 </span>
                 {canAccessVehicle ? (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                  <span className="px-2.5 py-1 rounded-xl text-[10.5px] font-black bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5 shadow-xs">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />
                     <span>{isLao ? "ໄດ້ຮັບສິດ" : "Authorized"}</span>
                   </span>
                 ) : (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30 flex items-center gap-1">
-                    <Lock className="w-3 h-3 text-rose-500" />
+                  <span className="px-2.5 py-1 rounded-xl text-[10.5px] font-black bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30 flex items-center gap-1.5 shadow-xs">
+                    <Lock className="w-3 h-3 text-rose-500 shrink-0" />
                     <span>{isLao ? "ຈຳກັດສິດ" : "Restricted"}</span>
-                  </span>
-                )}
-                {pendingVehicleBookings > 0 && userProfile.role === "admin" && canAccessVehicle && (
-                  <span className="mt-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white animate-pulse">
-                    {pendingVehicleBookings} {isLao ? "ລໍຖ້າອະນຸມັດ" : "pending"}
                   </span>
                 )}
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white tracking-tight group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
-                2. ລະບົບການຈັດການລົດບໍລິຫານ
-              </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
+            <div className="space-y-2 pt-1">
+              <div className="h-10 flex items-center">
+                <h2 className="text-base sm:text-lg xl:text-xl font-black text-slate-900 dark:text-white tracking-tight leading-normal group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors whitespace-nowrap overflow-hidden text-ellipsis" title={isLao ? "ລະບົບຈັດການລົດບໍລິຫານ" : "Vehicle Fleet Management System"}>
+                  {isLao ? "ລະບົບຈັດການລົດບໍລິຫານ" : "Vehicle Fleet Management System"}
+                </h2>
+              </div>
+              <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-300 font-medium leading-relaxed h-10 flex items-center line-clamp-2">
                 {isLao
-                  ? "ຕິດຕາມສະຖານະລົດ, ຈອງລົດລັດຖະການ, ແຕ່ງຕັ້ງຄົນຂັບ, ປະຕິທິນການເດີນທາງ ແລະ ລາຍງານ."
+                  ? "ຕິດຕາມສະຖານະລົດ, ຈອງລົດລັດຖະການ, ແຕ່ງຕັ້ງຄົນຂັບ, ປະຕິທິນ ແລະ ລາຍງານ."
                   : "Vehicle dispatch, official trip booking, driver assignment, and usage reports."}
               </p>
             </div>
 
             <div className="grid grid-cols-3 gap-2 pt-2">
-              <div className="p-2.5 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/40 text-center">
-                <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold block">{isLao ? "ລົດຫວ່າງ" : "Available"}</span>
-                <span className="text-sm sm:text-base font-black text-emerald-700 dark:text-emerald-300">{availableVehicles} {isLao ? "ຄັນ" : ""}</span>
+              <div className="h-[58px] flex flex-col items-center justify-center p-2 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/40 text-center">
+                <span className="text-[10.5px] text-emerald-600 dark:text-emerald-400 font-bold block truncate">{isLao ? "ລົດຫວ່າງ" : "Available"}</span>
+                <span className="text-base sm:text-lg font-black text-emerald-700 dark:text-emerald-300 leading-tight mt-0.5">{availableVehicles}</span>
               </div>
-              <div className="p-2.5 rounded-2xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/40 text-center">
-                <span className="text-[9px] text-blue-600 dark:text-blue-400 font-bold block">{isLao ? "ໃຊ້ງານ" : "In Use"}</span>
-                <span className="text-sm sm:text-base font-black text-blue-700 dark:text-blue-300">{inUseVehicles} {isLao ? "ຄັນ" : ""}</span>
+              <div className="h-[58px] flex flex-col items-center justify-center p-2 rounded-2xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/40 text-center">
+                <span className="text-[10.5px] text-blue-600 dark:text-blue-400 font-bold block truncate">{isLao ? "ໃຊ້ງານ" : "In Use"}</span>
+                <span className="text-base sm:text-lg font-black text-blue-700 dark:text-blue-300 leading-tight mt-0.5">{inUseVehicles}</span>
               </div>
-              <div className="p-2.5 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/40 text-center">
-                <span className="text-[9px] text-amber-600 dark:text-amber-400 font-bold block">{isLao ? "ຄຳຂໍ" : "Requests"}</span>
-                <span className="text-sm sm:text-base font-black text-amber-700 dark:text-amber-300">{vehicleBookings.length}</span>
+              <div className="h-[58px] flex flex-col items-center justify-center p-2 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/40 text-center">
+                <span className="text-[10.5px] text-amber-600 dark:text-amber-400 font-bold block truncate">{isLao ? "ຄຳຂໍ" : "Requests"}</span>
+                <span className="text-base sm:text-lg font-black text-amber-700 dark:text-amber-300 leading-tight mt-0.5">{vehicleBookings.length}</span>
               </div>
             </div>
           </div>
@@ -368,7 +394,7 @@ export default function SystemPortal({
                   onClick={() => onSelectSystem("vehicle", "vehicle-dashboard")}
                   className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-amber-600 via-orange-600 to-rose-600 hover:from-amber-500 hover:to-orange-500 text-white font-extrabold text-xs shadow-md shadow-amber-600/25 flex items-center justify-center gap-2 group-hover:shadow-amber-600/40 transition-all cursor-pointer active:scale-[0.99]"
                 >
-                  <span>{isLao ? "ເຂົ້າສູ່ລະບົບລົດບໍລິຫານ" : "Enter Vehicle System"}</span>
+                  <span>{isLao ? "ເຂົ້າສູ່ລະບົບຈັດການລົດບໍລິຫານ" : "Enter Vehicle System"}</span>
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </button>
 
@@ -429,58 +455,73 @@ export default function SystemPortal({
           {canAccessLeadership && <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl group-hover:bg-emerald-500/15 transition-all pointer-events-none" />}
 
           <div className="space-y-4">
-            <div className="flex items-start justify-between gap-4">
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform shrink-0 ${
-                canAccessLeadership
-                  ? "bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 text-white shadow-emerald-500/30"
-                  : "bg-slate-200 dark:bg-slate-800 text-slate-400"
-              }`}>
-                <Briefcase className="w-7 h-7" />
+            <div className="flex items-center justify-between gap-3 h-16 shrink-0">
+              {/* Modern 3D Elevated Glass Icon Container */}
+              <div className="relative shrink-0">
+                <div className={`absolute -inset-1 rounded-2xl blur-md transition-all duration-300 ${
+                  canAccessLeadership 
+                    ? "bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 opacity-60 group-hover:opacity-100 group-hover:scale-105" 
+                    : "opacity-0"
+                }`} />
+                <div className={`relative w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-xl overflow-hidden ${
+                  canAccessLeadership
+                    ? "bg-gradient-to-br from-emerald-500 via-teal-600 to-cyan-600 text-white border border-white/30 shadow-teal-600/35 ring-4 ring-teal-500/15 group-hover:scale-105 group-hover:-translate-y-0.5"
+                    : "bg-slate-200 dark:bg-slate-800 text-slate-400 border border-slate-300 dark:border-white/10"
+                }`}>
+                  <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/25 to-transparent pointer-events-none" />
+                  <Briefcase className="w-8 h-8 relative z-10 filter drop-shadow-[0_2px_5px_rgba(0,0,0,0.3)] transition-transform duration-300 group-hover:scale-110" />
+                </div>
+                {activities.length > 0 && canAccessLeadership && (
+                  <span className="absolute -top-1.5 -right-1.5 z-20 px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-600 text-white shadow-md border-2 border-white dark:border-slate-900" title={`${activities.length} ${isLao ? "ວຽກງານ" : "tasks"}`}>
+                    {activities.length}
+                  </span>
+                )}
               </div>
-              <div className="flex flex-col items-end gap-1">
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                  {isLao ? "ລະບົບທີ 3" : "System #3"}
+
+              <div className="h-16 flex flex-col justify-between items-end shrink-0">
+                <span className="px-2.5 py-1 rounded-xl text-[10.5px] font-black uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80 shadow-xs flex items-center gap-1.5">
+                  <Briefcase className="w-3 h-3 text-emerald-500 shrink-0" />
+                  <span>{isLao ? "ການເຄື່ອນໄຫວວຽກ" : "Duty"}</span>
                 </span>
                 {canAccessLeadership ? (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                  <span className="px-2.5 py-1 rounded-xl text-[10.5px] font-black bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5 shadow-xs">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />
                     <span>{isLao ? "ໄດ້ຮັບສິດ" : "Authorized"}</span>
                   </span>
                 ) : (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30 flex items-center gap-1">
-                    <Lock className="w-3 h-3 text-rose-500" />
+                  <span className="px-2.5 py-1 rounded-xl text-[10.5px] font-black bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30 flex items-center gap-1.5 shadow-xs">
+                    <Lock className="w-3 h-3 text-rose-500 shrink-0" />
                     <span>{isLao ? "ຈຳກັດສິດ" : "Restricted"}</span>
                   </span>
                 )}
-                <span className="mt-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500 text-white">
-                  {activities.length} {isLao ? "ວຽກງານ" : "tasks"}
-                </span>
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white tracking-tight group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-                3. ລະບົບຕິດຕາມການເຄື່ອນໄຫວວຽກ
-              </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
+            <div className="space-y-2 pt-1">
+              <div className="h-10 flex items-center">
+                <h2 className="text-base sm:text-lg xl:text-xl font-black text-slate-900 dark:text-white tracking-tight leading-normal group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors whitespace-nowrap overflow-hidden text-ellipsis" title={isLao ? "ລະບົບຕິດຕາມການເຄື່ອນໄຫວວຽກ" : "Duty & Activity Tracking System"}>
+                  {isLao ? "ລະບົບຕິດຕາມການເຄື່ອນໄຫວວຽກ" : "Duty & Activity Tracking System"}
+                </h2>
+              </div>
+              <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-300 font-medium leading-relaxed h-10 flex items-center line-clamp-2">
                 {isLao
-                  ? "ຕິດຕາມວຽກຂອງຄະນະ & ຫົວໜ້າຂະແໜງ, ລະບົບປະຕິທິນ, ບັນທຶກວຽກຕົນເອງ ແລະ ລາຍງານ ອາທິດ/ເດືອນ/ປີ."
+                  ? "ຕິດຕາມວຽກຄະນະ & ຫົວໜ້າຂະແໜງ, ປະຕິທິນ, ບັນທຶກວຽກຕົນເອງ ແລະ ລາຍງານ."
                   : "Track executive & department head activities, interactive calendar, self duty logging, and periodic reports."}
               </p>
             </div>
 
             <div className="grid grid-cols-3 gap-2 pt-2">
-              <div className="p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 text-center">
-                <span className="text-[9px] text-slate-400 font-bold block">{isLao ? "ມື້ນີ້" : "Today"}</span>
-                <span className="text-sm sm:text-base font-black text-slate-900 dark:text-white">{todayActivities}</span>
+              <div className="h-[58px] flex flex-col items-center justify-center p-2 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 text-center">
+                <span className="text-[10.5px] text-slate-400 font-bold block truncate">{isLao ? "ມື້ນີ້" : "Today"}</span>
+                <span className="text-base sm:text-lg font-black text-slate-900 dark:text-white leading-tight mt-0.5">{todayActivities}</span>
               </div>
-              <div className="p-2.5 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/40 text-center">
-                <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold block">{isLao ? "ສຳເລັດ" : "Done"}</span>
-                <span className="text-sm sm:text-base font-black text-emerald-700 dark:text-emerald-300">{completedActivities}</span>
+              <div className="h-[58px] flex flex-col items-center justify-center p-2 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/40 text-center">
+                <span className="text-[10.5px] text-emerald-600 dark:text-emerald-400 font-bold block truncate">{isLao ? "ສຳເລັດ" : "Done"}</span>
+                <span className="text-base sm:text-lg font-black text-emerald-700 dark:text-emerald-300 leading-tight mt-0.5">{completedActivities}</span>
               </div>
-              <div className="p-2.5 rounded-2xl bg-cyan-50/70 dark:bg-cyan-950/30 border border-cyan-100 dark:border-cyan-900/40 text-center">
-                <span className="text-[9px] text-cyan-600 dark:text-cyan-400 font-bold block">{isLao ? "ວຽກຂ້ອຍ" : "My Work"}</span>
-                <span className="text-sm sm:text-base font-black text-cyan-700 dark:text-cyan-300">{myActivitiesCount}</span>
+              <div className="h-[58px] flex flex-col items-center justify-center p-2 rounded-2xl bg-cyan-50/70 dark:bg-cyan-950/30 border border-cyan-100 dark:border-cyan-900/40 text-center">
+                <span className="text-[10.5px] text-cyan-600 dark:text-cyan-400 font-bold block truncate">{isLao ? "ວຽກຂ້ອຍ" : "My Work"}</span>
+                <span className="text-base sm:text-lg font-black text-cyan-700 dark:text-cyan-300 leading-tight mt-0.5">{myActivitiesCount}</span>
               </div>
             </div>
           </div>
