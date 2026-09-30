@@ -473,10 +473,10 @@ export default function Navbar({
                     ? "bg-amber-400 text-slate-950 font-black border-amber-300 shadow-md shadow-amber-400/30"
                     : "bg-white/10 hover:bg-white/20 border-white/20 text-amber-300"
                 }`}
-                title={isLao ? "ກັບໄປໜ້າຫຼັກສູນລວມ 3 ລະບົບ" : "Portal Hub"}
+                title={isLao ? "ກັບໄປໜ້າສູນຄວບຄຸມລະບົບທັງໝົດ" : "System Control Center"}
               >
                 <Layers className="w-3.5 h-3.5" />
-                <span>{isLao ? "ສູນ 3 ລະບົບ" : "Portal Hub"}</span>
+                <span>{isLao ? "ສູນຄວບຄຸມລະບົບທັງໝົດ" : "Control Center"}</span>
               </button>
 
               <button

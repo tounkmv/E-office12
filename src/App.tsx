@@ -569,7 +569,7 @@ export default function App() {
                     className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm cursor-pointer shadow-md inline-flex items-center gap-2"
                   >
                     <Layers className="w-4 h-4" />
-                    <span>{language === "lo" ? "ກັບໄປໜ້າສູນລວມ 3 ລະບົບ" : "Return to System Portal"}</span>
+                    <span>{language === "lo" ? "ກັບໄປໜ້າສູນຄວບຄຸມລະບົບທັງໝົດ" : "Return to Control Center"}</span>
                   </button>
                 </div>
               ) : (
@@ -695,7 +695,7 @@ export default function App() {
                     className="px-6 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-sm cursor-pointer shadow-md inline-flex items-center gap-2"
                   >
                     <Layers className="w-4 h-4" />
-                    <span>{language === "lo" ? "ກັບໄປໜ້າສູນລວມ 3 ລະບົບ" : "Return to System Portal"}</span>
+                    <span>{language === "lo" ? "ກັບໄປໜ້າສູນຄວບຄຸມລະບົບທັງໝົດ" : "Return to Control Center"}</span>
                   </button>
                 </div>
               ) : (
@@ -822,7 +822,7 @@ export default function App() {
                     className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm cursor-pointer shadow-md inline-flex items-center gap-2"
                   >
                     <Layers className="w-4 h-4" />
-                    <span>{language === "lo" ? "ກັບໄປໜ້າສູນລວມ 3 ລະບົບ" : "Return to System Portal"}</span>
+                    <span>{language === "lo" ? "ກັບໄປໜ້າສູນຄວບຄຸມລະບົບທັງໝົດ" : "Return to Control Center"}</span>
                   </button>
                 </div>
               ) : (
@@ -1223,12 +1223,12 @@ export default function App() {
                   className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-amber-500 via-amber-400 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 rounded-2xl font-black text-xs md:text-sm shadow-lg shadow-amber-400/20 hover:shadow-xl hover:shadow-amber-400/35 hover:scale-[1.02] active:scale-95 transition-all duration-300 cursor-pointer flex items-center justify-center gap-2 mx-auto border border-amber-300/40"
                 >
                   <Layers className="w-4 h-4" />
-                  <span>{language === "lo" ? "ເຂົ້າສູ່ໜ້າຕ່າງທັງ 3 ລະບົບ (System Portal Hub)" : "Open 3-System Portal Hub"}</span>
+                  <span>{language === "lo" ? "ເຂົ້າສູ່ ສູນຄວບຄຸມລະບົບທັງໝົດ (Control Center)" : "Open System Control Center"}</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
 
                 <p className="text-[11px] text-slate-400">
-                  {language === "lo" ? "ລະບົບຈະນຳທ່ານເຂົ້າສູ່ໜ້າຕ່າງທັງ 3 ລະບົບໂດຍອັດຕະໂນມັດ..." : "Automatically entering system portal hub..."}
+                  {language === "lo" ? "ລະບົບຈະນຳທ່ານເຂົ້າສູ່ ສູນຄວບຄຸມລະບົບທັງໝົດ ໂດຍອັດຕະໂນມັດ..." : "Automatically entering system control center..."}
                 </p>
 
                 {/* Countdown animation progress bar */}

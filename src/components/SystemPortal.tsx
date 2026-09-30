@@ -121,7 +121,7 @@ export default function SystemPortal({
             <div className="space-y-1.5">
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-amber-500/20 via-amber-400/25 to-amber-500/20 backdrop-blur-md border border-amber-400/40 text-xs font-black text-amber-300 shadow-sm">
                 <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-spin" style={{ animationDuration: '8s' }} />
-                <span>{isLao ? "ລະບົບບໍລິຫານທັນສະໄໝ" : "Modern Administration System"}</span>
+                <span>{isLao ? "ສູນຄວບຄຸມລະບົບທັງໝົດ" : "System Control Center"}</span>
                 <span>•</span>
                 <span>{isLao ? "ຫ້ອງວ່າການແຂວງຫົວພັນ" : "Houaphanh Provincial Office"}</span>
               </div>

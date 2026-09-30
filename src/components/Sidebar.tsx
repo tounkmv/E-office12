@@ -135,7 +135,7 @@ export default function Sidebar({
   const menuItems = isPortal ? [
     { 
       id: "portal", 
-      label: isLao ? "ສູນລວມ 3 ລະບົບ (Hub)" : "System Portal Hub", 
+      label: isLao ? "ສູນຄວບຄຸມລະບົບທັງໝົດ" : "System Control Center", 
       icon: Layers, 
       action: () => { setActiveSystem?.("portal"); setActiveTab("portal"); } 
     },
@@ -231,7 +231,7 @@ export default function Sidebar({
               className="text-[10px] font-black text-indigo-600 dark:text-amber-400 hover:underline flex items-center gap-1 cursor-pointer"
             >
               <Layers className="w-3 h-3" />
-              <span>{isLao ? "ສູນ 3 ລະບົບ" : "Portal"}</span>
+              <span>{isLao ? "ສູນຄວບຄຸມລະບົບທັງໝົດ" : "Control Center"}</span>
             </button>
           </div>
 
@@ -446,7 +446,7 @@ export default function Sidebar({
                 isPortal ? "text-amber-300" : isLeadershipSystem ? "text-emerald-200" : isVehicleSystem ? "text-amber-200" : "text-indigo-200"
               }`}>
                 {isPortal
-                  ? (language === "lo" ? "• ສູນລວມ 3 ລະບົບບໍລິຫານຫຼັກ" : "• 3-SYSTEM MANAGEMENT HUB")
+                  ? (language === "lo" ? "• ສູນຄວບຄຸມລະບົບທັງໝົດ" : "• ALL-SYSTEM CONTROL CENTER")
                   : isLeadershipSystem
                   ? (language === "lo" ? "• ລະບົບຕິດຕາມການເຄື່ອນໄຫວວຽກ" : "• EXECUTIVE DUTY TRACKER")
                   : isVehicleSystem 
@@ -536,7 +536,7 @@ export default function Sidebar({
                         isPortal ? "text-amber-300" : isLeadershipSystem ? "text-emerald-200" : isVehicleSystem ? "text-amber-200" : "text-indigo-200"
                       }`}>
                         {isPortal
-                          ? (language === "lo" ? "• ສູນລວມ 3 ລະບົບບໍລິຫານຫຼັກ" : "• 3-SYSTEM MANAGEMENT HUB")
+                          ? (language === "lo" ? "• ສູນຄວບຄຸມລະບົບທັງໝົດ" : "• ALL-SYSTEM CONTROL CENTER")
                           : isLeadershipSystem
                           ? (language === "lo" ? "• ລະບົບຕິດຕາມການເຄື່ອນໄຫວວຽກ" : "• EXECUTIVE DUTY TRACKER")
                           : isVehicleSystem 
