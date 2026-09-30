@@ -71,6 +71,9 @@ export default function SystemPortal({
 
   const permSummary = countSystemPermissions(userProfile);
 
+  // Clean display name to ensure "ທ່ານ" is never duplicated
+  const cleanDisplayName = (userProfile.displayName || "").replace(/^(ທ່ານ\s*)+/g, "").trim();
+
   // Calculations for meeting rooms
   const pendingRoomBookings = roomBookings.filter(b => b.status === "pending").length;
   const approvedRoomBookings = roomBookings.filter(b => b.status === "approved").length;
@@ -126,7 +129,7 @@ export default function SystemPortal({
                 <span>{isLao ? "ຫ້ອງວ່າການແຂວງຫົວພັນ" : "Houaphanh Provincial Office"}</span>
               </div>
               <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tight">
-                {isLao ? `ສະບາຍດີ, ທ່ານ ${userProfile.displayName}` : `Welcome, ${userProfile.displayName}`}
+                {isLao ? `ສະບາຍດີ, ທ່ານ ${cleanDisplayName || userProfile.displayName}` : `Welcome, ${cleanDisplayName || userProfile.displayName}`}
               </h1>
               <p className="text-xs sm:text-sm text-slate-300 max-w-xl font-medium leading-relaxed">
                 {isLao 

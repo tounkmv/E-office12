@@ -994,7 +994,7 @@ export default function App() {
                     <p className="text-xs sm:text-sm text-slate-300 font-bold">
                       {language === "lo" ? "ສະບາຍດີ, ທ່ານ" : "Hello,"}{" "}
                       <span className="text-amber-400 font-black">
-                        {(userProfile.displayName || "").replace(/^ທ່ານ\s*/, "").trim()}
+                        {(userProfile.displayName || "").replace(/^(ທ່ານ\s*)+/g, "").trim()}
                       </span>
                     </p>
                     {userProfile.department && (

@@ -521,7 +521,7 @@ export default function LeadershipReports({
           </h2>
           {targetUserObj && (
             <p className="text-xs sm:text-sm font-black text-indigo-600 dark:text-amber-400 print:text-black">
-              {isLao ? `ບັນຊີຜູ້ໃຊ້: ທ່ານ ${targetUserObj.name} (${targetUserObj.dept})` : `User Account: ${targetUserObj.name} (${targetUserObj.dept})`}
+              {isLao ? `ບັນຊີຜູ້ໃຊ້: ທ່ານ ${(targetUserObj.name || "").replace(/^(ທ່ານ\s*)+/g, "").trim()} (${targetUserObj.dept})` : `User Account: ${targetUserObj.name} (${targetUserObj.dept})`}
             </p>
           )}
         </div>
