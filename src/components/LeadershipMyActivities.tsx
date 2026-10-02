@@ -62,6 +62,8 @@ export default function LeadershipMyActivities({
   const [outcomeModalActivity, setOutcomeModalActivity] = useState<LeadershipActivity | null>(null);
   const [outcomeText, setOutcomeText] = useState("");
   const [isSavingOutcome, setIsSavingOutcome] = useState(false);
+  const [deletingActivity, setDeletingActivity] = useState<LeadershipActivity | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Filter activities strictly for the logged-in user
   const myAllActivities = useMemo(() => {
@@ -160,8 +162,29 @@ export default function LeadershipMyActivities({
   };
 
   // Delete activity
+  const handleRequestDelete = (act: LeadershipActivity) => {
+    setDeletingActivity(act);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingActivity) return;
+    setIsDeleting(true);
+    try {
+      await deleteLeadershipActivity(deletingActivity.id);
+      setDeletingActivity(null);
+      if (onRefresh) onRefresh();
+    } catch (err) {
+      console.error("Delete failed:", err);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const handleDelete = async (id: string) => {
-    if (window.confirm(isLao ? "ທ່ານແນ່ໃຈບໍ່ວ່າຕ້ອງການລຶບການເຄື່ອນໄຫວວຽກນີ້?" : "Delete this activity?")) {
+    const act = activities.find(a => a.id === id);
+    if (act) {
+      setDeletingActivity(act);
+    } else {
       try {
         await deleteLeadershipActivity(id);
         if (onRefresh) onRefresh();
@@ -476,7 +499,7 @@ export default function LeadershipMyActivities({
                     </button>
 
                     <button
-                      onClick={() => handleDelete(act.id)}
+                      onClick={() => handleRequestDelete(act)}
                       className="p-1.5 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/40 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
                       title={isLao ? "ລຶບວຽກນີ້" : "Delete activity"}
                     >
@@ -542,6 +565,42 @@ export default function LeadershipMyActivities({
               >
                 <Check className="w-4 h-4" />
                 <span>{isSavingOutcome ? (isLao ? "ກຳລັງບັນທຶກ..." : "Saving...") : (isLao ? "ບັນທຶກວ່າສຳເລັດ" : "Save & Complete")}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DELETE ACTIVITY MODAL */}
+      {deletingActivity && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in">
+          <div className="w-full max-w-sm bg-white dark:bg-[#1e293b] rounded-3xl p-6 border border-slate-200 dark:border-white/10 shadow-2xl text-center space-y-4">
+            <div className="w-14 h-14 rounded-2xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 mx-auto flex items-center justify-center shadow-inner">
+              <Trash2 className="w-7 h-7" />
+            </div>
+            <div className="space-y-1.5">
+              <h3 className="text-base font-black text-slate-900 dark:text-white">
+                {isLao ? "ຢືນຢັນການລຶບການເຄື່ອນໄຫວວຽກ?" : "Confirm Delete Duty Activity?"}
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {isLao ? `ທ່ານແນ່ໃຈບໍ່ວ່າຕ້ອງການລຶບ "${deletingActivity.title}"?` : `Are you sure you want to delete "${deletingActivity.title}"?`}
+              </p>
+            </div>
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setDeletingActivity(null)}
+                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs cursor-pointer"
+              >
+                {isLao ? "ຍົກເລີກ" : "Cancel"}
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                disabled={isDeleting}
+                className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs shadow-md shadow-rose-600/30 cursor-pointer disabled:opacity-50"
+              >
+                {isDeleting ? (isLao ? "ກຳລັງລຶບ..." : "Deleting...") : (isLao ? "ລຶບວຽກ" : "Delete")}
               </button>
             </div>
           </div>

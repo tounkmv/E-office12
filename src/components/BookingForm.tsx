@@ -90,6 +90,8 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
 
   // Social Notify Success Modal
   const [submittedBookingModal, setSubmittedBookingModal] = useState<RoomBooking | null>(null);
+  const [cancellingBooking, setCancellingBooking] = useState<RoomBooking | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, isEdit: boolean = false) => {
     const file = e.target.files?.[0];
@@ -200,13 +202,7 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
 
   const handleReject = async (id: string) => {
     try {
-      const reason = adminNotesText[id] || "";
-      if (!reason) {
-        const confirmMsg = language === "lo" 
-          ? "ທ່ານຕ້ອງການປະຕິເສດໂດຍບໍ່ໃສ່ເຫດຜົນ/ໝາຍເຫດ ບໍ?" 
-          : "Are you sure you want to reject without any comments?";
-        if (!window.confirm(confirmMsg)) return;
-      }
+      const reason = adminNotesText[id]?.trim() || (language === "lo" ? "ປະຕິເສດໂດຍຜູ້ດູແລລະບົບ" : "Rejected by Administrator");
       await updateBookingStatus(id, "rejected", reason);
       setSuccess(t.bkStatusChanged);
       showSystemToast(
@@ -221,8 +217,7 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
       });
     } catch (err: any) {
       console.error("Reject error:", err);
-      setError(t.error + ": " + err.message);
-      showSystemToast(err.message || "Failed to reject", "error", "ERROR");
+      showSystemToast(err.message || "Failed to update", "error", "ERROR");
     }
   };
 
@@ -398,18 +393,44 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
     }
   };
 
-  const handleCancelBooking = async (id: string) => {
-    if (!window.confirm(language === "lo" ? "ທ່ານແນ່ໃຈບໍ່ວ່າຕ້ອງການຍົກເລີກການຈອງນີ້?" : "Are you sure you want to cancel this booking?")) return;
+  const handleRequestCancelBooking = (booking: RoomBooking) => {
+    setCancellingBooking(booking);
+  };
+
+  const handleConfirmCancelBooking = async () => {
+    if (!cancellingBooking) return;
+    setIsCancelling(true);
     try {
-      await deleteBooking(id);
+      await deleteBooking(cancellingBooking.id);
       showSystemToast(
         language === "lo" ? "ຍົກເລີກການຈອງຫ້ອງປະຊຸມສຳເລັດແລ້ວ!" : "Booking cancelled successfully!",
         "info",
         language === "lo" ? "ຍົກເລີກແລ້ວ" : "Cancelled"
       );
+      setCancellingBooking(null);
     } catch (err: any) {
       console.error("Error cancelling booking:", err);
       showSystemToast(err.message || "Error cancelling booking", "error", "ERROR");
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
+  const handleCancelBooking = async (id: string) => {
+    const found = bookings.find(b => b.id === id);
+    if (found) {
+      setCancellingBooking(found);
+    } else {
+      try {
+        await deleteBooking(id);
+        showSystemToast(
+          language === "lo" ? "ຍົກເລີກການຈອງຫ້ອງປະຊຸມສຳເລັດແລ້ວ!" : "Booking cancelled successfully!",
+          "info",
+          language === "lo" ? "ຍົກເລີກແລ້ວ" : "Cancelled"
+        );
+      } catch (err: any) {
+        showSystemToast(err.message || "Error cancelling booking", "error", "ERROR");
+      }
     }
   };
 
@@ -1635,7 +1656,7 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
                                 </button>
                                 <button
                                   id={`btn-admin-delete-${booking.id}`}
-                                  onClick={() => handleCancelBooking(booking.id)}
+                                  onClick={() => handleRequestCancelBooking(booking)}
                                   className="p-1 text-red-500 hover:bg-red-500/10 rounded-md transition-all cursor-pointer"
                                   title={language === "lo" ? "ລຶບການຈອງ" : "Delete booking"}
                                 >
@@ -1860,6 +1881,66 @@ export default function BookingForm({ rooms, bookings, userProfile, language }: 
                   className="bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-bold py-2.5 px-4 rounded-xl text-xs border border-slate-600/80 transition-all cursor-pointer"
                 >
                   {language === "lo" ? "ປິດ" : "Close"}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* CONFIRM CANCEL BOOKING MODAL */}
+      <AnimatePresence>
+        {cancellingBooking && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-md bg-white dark:bg-[#1e293b] rounded-3xl p-6 border border-slate-200 dark:border-white/10 shadow-2xl text-center space-y-4"
+            >
+              <div className="w-14 h-14 rounded-2xl bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 mx-auto flex items-center justify-center shadow-inner">
+                <Trash2 className="w-7 h-7" />
+              </div>
+              <div className="space-y-1.5">
+                <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
+                  {language === "lo" ? "ຢືນຢັນການຍົກເລີກການຈອງ?" : "Confirm Cancel Booking?"}
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  {language === "lo" 
+                    ? `ທ່ານແນ່ໃຈບໍ່ວ່າຕ້ອງການຍົກເລີກການຈອງຫົວຂໍ້ "${cancellingBooking.title}"?` 
+                    : `Are you sure you want to cancel the booking for "${cancellingBooking.title}"?`}
+                </p>
+                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 text-left text-xs space-y-1 font-semibold text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-white/5">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400 font-medium">{language === "lo" ? "ຫ້ອງປະຊຸມ:" : "Room:"}</span>
+                    <span className="font-bold">{cancellingBooking.roomName}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400 font-medium">{language === "lo" ? "ວັນທີ & ເວລາ:" : "Date & Time:"}</span>
+                    <span>{cancellingBooking.date} ({cancellingBooking.startTime}-{cancellingBooking.endTime})</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setCancellingBooking(null)}
+                  className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs cursor-pointer"
+                >
+                  {t.cancel}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmCancelBooking}
+                  disabled={isCancelling}
+                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white font-extrabold text-xs shadow-lg shadow-red-600/30 cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                >
+                  {isCancelling ? (
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0" />
+                  ) : (
+                    <Trash2 className="w-4 h-4 shrink-0" />
+                  )}
+                  <span>{isCancelling ? (language === "lo" ? "ກຳລັງຍົກເລີກ..." : "Cancelling...") : (language === "lo" ? "ຢືນຢັນຍົກເລີກ" : "Confirm Cancel")}</span>
                 </button>
               </div>
             </motion.div>

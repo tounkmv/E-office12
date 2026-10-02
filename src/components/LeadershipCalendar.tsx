@@ -70,6 +70,7 @@ export default function LeadershipCalendar({
   const [formInitialDate, setFormInitialDate] = useState<string>("");
   const [editingActivity, setEditingActivity] = useState<LeadershipActivity | null>(null);
   const [selectedActivityForDetail, setSelectedActivityForDetail] = useState<LeadershipActivity | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Month navigation
@@ -249,17 +250,16 @@ export default function LeadershipCalendar({
 
   // Handle Delete
   const handleDelete = async (id: string) => {
-    if (window.confirm(isLao ? "ທ່ານແນ່ໃຈບໍ່ວ່າຕ້ອງການລຶບການເຄື່ອນໄຫວວຽກນີ້?" : "Are you sure you want to delete this activity?")) {
-      try {
-        setDeletingId(id);
-        await deleteLeadershipActivity(id);
-        setSelectedActivityForDetail(null);
-        if (onRefresh) onRefresh();
-      } catch (err) {
-        console.error("Delete activity error:", err);
-      } finally {
-        setDeletingId(null);
-      }
+    try {
+      setDeletingId(id);
+      await deleteLeadershipActivity(id);
+      setSelectedActivityForDetail(null);
+      setShowDeleteConfirm(false);
+      if (onRefresh) onRefresh();
+    } catch (err) {
+      console.error("Delete activity error:", err);
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -906,17 +906,39 @@ export default function LeadershipCalendar({
             {/* Footer / Actions */}
             <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/60 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
               
-              {/* Delete button (Admin or Creator) */}
+              {/* Delete button (Admin or Creator) with inline confirmation */}
               {(userProfile.role === "admin" || userProfile.uid === selectedActivityForDetail.userId) ? (
-                <button
-                  type="button"
-                  onClick={() => handleDelete(selectedActivityForDetail.id)}
-                  disabled={deletingId === selectedActivityForDetail.id}
-                  className="px-3.5 py-2 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 flex items-center gap-1.5 transition-colors cursor-pointer"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>{isLao ? "ລຶບວຽກ" : "Delete"}</span>
-                </button>
+                showDeleteConfirm ? (
+                  <div className="flex items-center gap-1.5 p-1 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60">
+                    <span className="text-[11px] font-bold text-rose-600 dark:text-rose-400 px-1">
+                      {isLao ? "ແນ່ໃຈບໍ່?" : "Sure?"}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(selectedActivityForDetail.id)}
+                      disabled={deletingId === selectedActivityForDetail.id}
+                      className="px-2 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-black cursor-pointer shadow-xs"
+                    >
+                      {deletingId === selectedActivityForDetail.id ? (isLao ? "ກຳລັງລຶບ..." : "Deleting...") : (isLao ? "ຢືນຢັນລຶບ" : "Confirm")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowDeleteConfirm(false)}
+                      className="px-2 py-1 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-[11px] font-bold cursor-pointer"
+                    >
+                      {isLao ? "ຍົກເລີກ" : "Cancel"}
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="px-3.5 py-2 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 flex items-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>{isLao ? "ລຶບວຽກ" : "Delete"}</span>
+                  </button>
+                )
               ) : <div />}
 
               <div className="flex items-center gap-2">

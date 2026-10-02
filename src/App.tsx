@@ -625,6 +625,7 @@ export default function App() {
                     (userProfile.role === "admin" || canManageRooms) ? (
                       <RoomManagement 
                         rooms={rooms} 
+                        bookings={bookings} 
                         language={language}
                       />
                     ) : (

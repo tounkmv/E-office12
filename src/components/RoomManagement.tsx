@@ -558,16 +558,24 @@ export default function RoomManagement({ rooms, bookings = [], language }: RoomM
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent" />
 
-                {/* Floating Status Pill */}
+                {/* Floating Status Pill (Clickable toggle) */}
                 <div className="absolute top-3 right-3 z-10">
-                  <span className={`px-3 py-1 rounded-full text-[10px] font-black tracking-wide uppercase shadow-md backdrop-blur-md flex items-center gap-1.5 border ${
-                    room.status === "active"
-                      ? "bg-emerald-500/90 text-white border-emerald-400/40"
-                      : "bg-red-500/90 text-white border-red-400/40"
-                  }`}>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleStatus(room);
+                    }}
+                    title={isLao ? "ຄລິກເພື່ອປ່ຽນສະຖານະຫ້ອງ (ເປີດ / ປິດຊົ່ວຄາວ)" : "Click to toggle availability status"}
+                    className={`px-3 py-1 rounded-full text-[10px] font-black tracking-wide uppercase shadow-md backdrop-blur-md flex items-center gap-1.5 border cursor-pointer hover:scale-105 active:scale-95 transition-all ${
+                      room.status === "active"
+                        ? "bg-emerald-500/90 hover:bg-emerald-600 text-white border-emerald-400/40"
+                        : "bg-red-500/90 hover:bg-red-600 text-white border-red-400/40"
+                    }`}
+                  >
                     <span className={`w-1.5 h-1.5 rounded-full ${room.status === "active" ? "bg-white animate-ping" : "bg-white"}`} />
                     <span>{room.status === "active" ? (isLao ? "ພ້ອມເປີດໃຊ້ງານ" : "Active Available") : (isLao ? "ປິດຊົ່ວຄາວ" : "Inactive")}</span>
-                  </span>
+                  </button>
                 </div>
 
                 {/* Floating Seating Capacity Badge */}
@@ -701,14 +709,19 @@ export default function RoomManagement({ rooms, bookings = [], language }: RoomM
                     </div>
                   </td>
                   <td className="py-4 px-4">
-                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-black border uppercase tracking-wider flex items-center gap-1.5 w-fit ${
-                      room.status === "active" 
-                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30" 
-                        : "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30"
-                    }`}>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleStatus(room)}
+                      title={isLao ? "ຄລິກເພື່ອປ່ຽນສະຖານະຫ້ອງ (ເປີດ / ປິດຊົ່ວຄາວ)" : "Click to toggle availability status"}
+                      className={`px-2.5 py-1 rounded-full text-[10px] font-black border uppercase tracking-wider flex items-center gap-1.5 w-fit cursor-pointer hover:scale-105 active:scale-95 transition-all ${
+                        room.status === "active" 
+                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20" 
+                          : "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30 hover:bg-red-500/20"
+                      }`}
+                    >
                       <span className={`w-1.5 h-1.5 rounded-full ${room.status === "active" ? "bg-emerald-500 animate-pulse" : "bg-red-500"}`} />
                       <span>{room.status === "active" ? (isLao ? "ພ້ອມໃຊ້ງານ" : "Active") : (isLao ? "ປິດຊົ່ວຄາວ" : "Inactive")}</span>
-                    </span>
+                    </button>
                   </td>
                   <td className="py-4 px-4 text-center">
                     <div className="flex justify-center gap-2">
@@ -1114,6 +1127,146 @@ export default function RoomManagement({ rooms, bookings = [], language }: RoomM
                 </div>
 
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* 5. CONFIRM DELETE ROOM MODAL (POPUP WINDOW) */}
+      <AnimatePresence>
+        {deletingRoom && (
+          <div id="delete-room-modal-overlay" className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50 overflow-y-auto">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              transition={{ type: "spring", stiffness: 350, damping: 25 }}
+              className="w-full max-w-lg bg-white dark:bg-[#1e293b] rounded-3xl p-6 sm:p-7 border border-slate-200 dark:border-white/10 shadow-2xl space-y-5"
+            >
+              {/* Header with Danger Icon */}
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-red-100 dark:bg-red-950/60 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0 shadow-inner">
+                  <Trash2 className="w-6 h-6 animate-pulse" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg font-black text-slate-900 dark:text-white leading-tight">
+                    {isLao ? "ຢືນຢັນການລຶບຫ້ອງປະຊຸມ" : "Confirm Room Deletion"}
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    {isLao 
+                      ? "ທ່ານແນ່ໃຈບໍ່ວ່າຕ້ອງການລຶບຫ້ອງປະຊຸມນີ້ອອກຈາກລະບົບ?" 
+                      : "Are you sure you want to permanently remove this meeting room from the system?"}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setDeletingRoom(null)}
+                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Room Details Preview Card */}
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200/80 dark:border-white/10 flex items-center gap-4">
+                <div className="w-20 h-16 rounded-xl bg-slate-900 overflow-hidden relative border border-slate-200 dark:border-white/10 shrink-0">
+                  {deletingRoom.imageUrl ? (
+                    <img src={deletingRoom.imageUrl} alt={deletingRoom.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <Building2 className="w-8 h-8 text-slate-500 mx-auto mt-4" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0 space-y-1">
+                  <h4 className="font-extrabold text-sm text-slate-900 dark:text-white truncate">
+                    {deletingRoom.name}
+                  </h4>
+                  <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                    <MapPin className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                    <span className="truncate">{deletingRoom.location || (isLao ? "ບໍ່ໄດ້ລະບຸທີ່ຕັ້ງ" : "No location")}</span>
+                  </div>
+                  <div className="flex items-center gap-2 pt-0.5">
+                    <span className="px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 text-[10px] font-bold">
+                      {deletingRoom.capacity} {isLao ? "ທີ່ນັ່ງ" : "seats"}
+                    </span>
+                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                      deletingRoom.status === "active" 
+                        ? "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300"
+                        : "bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-300"
+                    }`}>
+                      {deletingRoom.status === "active" ? (isLao ? "ພ້ອມໃຊ້ງານ" : "Active") : (isLao ? "ປິດຊົ່ວຄາວ" : "Inactive")}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Associated Bookings Notice */}
+              {(() => {
+                const associated = bookings.filter(b => 
+                  b.roomId === deletingRoom.id || 
+                  (b.roomName && b.roomName.trim().toLowerCase() === deletingRoom.name.trim().toLowerCase())
+                );
+                const activeOrPending = associated.filter(b => b.status === "approved" || b.status === "pending");
+
+                if (associated.length > 0) {
+                  return (
+                    <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300/80 dark:border-amber-700/60 text-amber-900 dark:text-amber-200 text-xs space-y-1.5">
+                      <div className="flex items-center gap-2 font-black text-amber-800 dark:text-amber-300">
+                        <AlertTriangle className="w-4 h-4 shrink-0 text-amber-600" />
+                        <span>
+                          {isLao 
+                            ? `ຄຳເຕືອນ: ພົບປະຫວັດການຈອງຫ້ອງນີ້ ${associated.length} ລາຍການ` 
+                            : `Notice: ${associated.length} associated bookings found`}
+                        </span>
+                      </div>
+                      <p className="text-[11px] leading-relaxed text-amber-800/90 dark:text-amber-300/90">
+                        {isLao
+                          ? `ຫ້ອງນີ້ມີລາຍການຈອງທີ່ລໍຖ້າ/ອະນຸມັດແລ້ວ ${activeOrPending.length} ລາຍການ. ຫາກທ່ານລຶບຫ້ອງນີ້ ປະຫວັດການຈອງເກົ່າຈະຍັງຄົງຢູ່ໃນລະບົບລາຍງານ ແຕ່ຜູ້ໃຊ້ຈະບໍ່ສາມາດເລືອກຈອງຫ້ອງນີ້ໄດ້ອີກ.`
+                          : `This room has ${activeOrPending.length} pending/approved bookings. Historical records will be retained for reports, but users won't be able to book this room anymore.`}
+                      </p>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
+
+              {/* Irreversible Action Warning */}
+              <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 flex items-center gap-2 text-xs text-red-700 dark:text-red-300">
+                <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
+                <span>
+                  {isLao 
+                    ? "ຂໍ້ຄວນລະວັງ: ການລຶບຂໍ້ມູນຫ້ອງປະຊຸມຈະບໍ່ສາມາດກູ້ຄືນໄດ້!" 
+                    : "Caution: This action cannot be undone."}
+                </span>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-2 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setDeletingRoom(null)}
+                  className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold transition-all cursor-pointer"
+                >
+                  {isLao ? "ຍົກເລີກ" : "Cancel"}
+                </button>
+                <button
+                  type="button"
+                  id="btn-confirm-delete-room"
+                  onClick={handleConfirmDelete}
+                  disabled={deleteLoading}
+                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-red-600 via-rose-600 to-red-700 hover:from-red-700 hover:to-rose-800 text-white text-xs font-black shadow-lg shadow-red-600/30 flex items-center gap-2 transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+                >
+                  {deleteLoading ? (
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0" />
+                  ) : (
+                    <Trash2 className="w-4 h-4 shrink-0" />
+                  )}
+                  <span>
+                    {deleteLoading 
+                      ? (isLao ? "ກຳລັງລຶບ..." : "Deleting...") 
+                      : (isLao ? "ຢືນຢັນລຶບຫ້ອງປະຊຸມ" : "Delete Room")}
+                  </span>
+                </button>
+              </div>
             </motion.div>
           </div>
         )}

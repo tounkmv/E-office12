@@ -63,6 +63,8 @@ export default function AdminBookings({ rooms, bookings, userProfile, language }
   const [editAttachment, setEditAttachment] = useState<{ name: string; data: string; type: string } | null>(null);
   const [editDragActive, setEditDragActive] = useState(false);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [deletingBooking, setDeletingBooking] = useState<RoomBooking | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Totals
   const totalDbBookings = bookings.length;
@@ -115,13 +117,7 @@ export default function AdminBookings({ rooms, bookings, userProfile, language }
 
   const handleReject = async (id: string) => {
     try {
-      const reason = adminNotesText[id] || "";
-      if (!reason) {
-        const confirmMsg = language === "lo" 
-          ? "ທ່ານຕ້ອງການປະຕິເສດໂດຍບໍ່ໃສ່ເຫດຜົນ/ໝາຍເຫດ ບໍ?" 
-          : "Are you sure you want to reject without any comments?";
-        if (!window.confirm(confirmMsg)) return;
-      }
+      const reason = adminNotesText[id]?.trim() || (language === "lo" ? "ປະຕິເສດໂດຍຜູ້ດູແລລະບົບ" : "Rejected by Administrator");
       await updateBookingStatus(id, "rejected", reason);
       showSystemToast(
         language === "lo" ? "ປະຕິເສດການຈອງຫ້ອງປະຊຸມແລ້ວ" : "Booking rejected",
@@ -139,18 +135,47 @@ export default function AdminBookings({ rooms, bookings, userProfile, language }
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm(language === "lo" ? "ທ່ານແນ່ໃຈບໍ່ວ່າຕ້ອງການລຶບການຈອງນີ້?" : "Are you sure you want to delete this booking?")) return;
+  const handleRequestDelete = (booking: RoomBooking) => {
+    setDeletingBooking(booking);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingBooking) return;
+    setIsDeleting(true);
     try {
-      await deleteBooking(id);
+      await deleteBooking(deletingBooking.id);
       showSystemToast(
         language === "lo" ? "ລຶບຂໍ້ມູນການຈອງສຳເລັດແລ້ວ" : "Booking deleted",
         "success",
         "Success"
       );
+      setDeletingBooking(null);
     } catch (err: any) {
       console.error("Delete error:", err);
       showSystemToast(err.message || "Failed to delete", "error", "ERROR");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    const b = bookings.find(item => item.id === id);
+    if (b) {
+      setDeletingBooking(b);
+    } else {
+      setIsDeleting(true);
+      try {
+        await deleteBooking(id);
+        showSystemToast(
+          language === "lo" ? "ລຶບຂໍ້ມູນການຈອງສຳເລັດແລ້ວ" : "Booking deleted",
+          "success",
+          "Success"
+        );
+      } catch (err: any) {
+        showSystemToast(err.message || "Failed to delete", "error", "ERROR");
+      } finally {
+        setIsDeleting(false);
+      }
     }
   };
 
@@ -210,14 +235,15 @@ export default function AdminBookings({ rooms, bookings, userProfile, language }
     e.preventDefault();
     if (!editingBooking) return;
 
-    const selectedRoom = rooms.find(r => r.id === editRoomId);
-    if (!selectedRoom) return;
+    const selectedRoom = rooms.find(r => r.id === editRoomId || r.name === editingBooking.roomName);
+    const roomName = selectedRoom?.name || editingBooking.roomName || "ຫ້ອງປະຊຸມ";
+    const finalRoomId = selectedRoom?.id || editRoomId || editingBooking.roomId;
 
     setIsSavingEdit(true);
     try {
       await updateBooking(editingBooking.id, {
-        roomId: editRoomId,
-        roomName: selectedRoom.name,
+        roomId: finalRoomId,
+        roomName: roomName,
         title: editTitle,
         date: editDate,
         endDate: editEndDate || editDate,
@@ -610,7 +636,7 @@ export default function AdminBookings({ rooms, bookings, userProfile, language }
                               <Pencil className="w-3.5 h-3.5" />
                             </button>
                             <button
-                              onClick={() => handleDelete(booking.id)}
+                              onClick={() => handleRequestDelete(booking)}
                               className="p-1 text-red-500 hover:bg-red-500/10 rounded-md transition-all cursor-pointer"
                               title={language === "lo" ? "ລຶບການຈອງ" : "Delete booking"}
                             >
@@ -881,6 +907,67 @@ export default function AdminBookings({ rooms, bookings, userProfile, language }
                   </button>
                 </div>
               </form>
+            </motion.div>
+          </div>
+        )}
+        {/* DELETE CONFIRMATION MODAL */}
+        {deletingBooking && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-md bg-white dark:bg-[#1e293b] rounded-3xl p-6 border border-slate-200 dark:border-white/10 shadow-2xl text-center space-y-4"
+            >
+              <div className="w-14 h-14 rounded-2xl bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 mx-auto flex items-center justify-center shadow-inner">
+                <Trash2 className="w-7 h-7" />
+              </div>
+              <div className="space-y-1.5">
+                <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
+                  {language === "lo" ? "ຢືນຢັນການລຶບການຈອງ?" : "Confirm Delete Booking?"}
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  {language === "lo" 
+                    ? `ທ່ານແນ່ໃຈບໍ່ວ່າຕ້ອງການລຶບການຈອງຫົວຂໍ້ "${deletingBooking.title}"? ຂໍ້ມູນຈະຖືກລຶບອອກຈາກລະບົບຢ່າງຖາວອນ.` 
+                    : `Are you sure you want to permanently delete "${deletingBooking.title}"?`}
+                </p>
+                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 text-left text-xs space-y-1 font-semibold text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-white/5">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400 font-medium">{language === "lo" ? "ຫ້ອງປະຊຸມ:" : "Room:"}</span>
+                    <span className="font-bold">{deletingBooking.roomName}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400 font-medium">{language === "lo" ? "ວັນທີ & ເວລາ:" : "Date & Time:"}</span>
+                    <span>{deletingBooking.date} ({deletingBooking.startTime}-{deletingBooking.endTime})</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400 font-medium">{language === "lo" ? "ຜູ້ຈອງ:" : "Booker:"}</span>
+                    <span>{deletingBooking.userName}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setDeletingBooking(null)}
+                  className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs cursor-pointer"
+                >
+                  {t.cancel}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmDelete}
+                  disabled={isDeleting}
+                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white font-extrabold text-xs shadow-lg shadow-red-600/30 cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                >
+                  {isDeleting ? (
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0" />
+                  ) : (
+                    <Trash2 className="w-4 h-4 shrink-0" />
+                  )}
+                  <span>{isDeleting ? (language === "lo" ? "ກຳລັງລຶບ..." : "Deleting...") : (language === "lo" ? "ລຶບການຈອງ" : "Delete")}</span>
+                </button>
+              </div>
             </motion.div>
           </div>
         )}

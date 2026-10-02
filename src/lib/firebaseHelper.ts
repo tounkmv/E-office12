@@ -252,6 +252,21 @@ export async function addRoom(room: MeetingRoom) {
 export async function updateRoom(roomId: string, updates: Partial<MeetingRoom>) {
   const roomRef = doc(db, "rooms", roomId);
   await setDoc(roomRef, updates, { merge: true });
+
+  // If room name has changed, propagate to bookings for consistency
+  if (updates.name && updates.name.trim()) {
+    try {
+      const bookingsRef = collection(db, "bookings");
+      const q = query(bookingsRef, where("roomId", "==", roomId));
+      const snap = await getDocs(q);
+      const updatesPromises = snap.docs.map(docSnap => 
+        updateDoc(docSnap.ref, { roomName: updates.name!.trim() })
+      );
+      await Promise.all(updatesPromises);
+    } catch (err) {
+      console.warn("Notice: could not cascade room name to bookings:", err);
+    }
+  }
 }
 
 export async function deleteRoom(roomId: string) {
