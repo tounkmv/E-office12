@@ -24,6 +24,7 @@ import {
   ShieldCheck,
   Key,
   Calendar,
+  CalendarClock,
   ArrowRight,
   Car,
   Lock,
@@ -102,7 +103,7 @@ export default function UserManagement({ language }: UserManagementProps) {
   const [permissionUser, setPermissionUser] = useState<UserProfile | null>(null);
   const [permissionsDraft, setPermissionsDraft] = useState<SystemPermissions>(DEFAULT_USER_PERMISSIONS);
   const [permissionLoading, setPermissionLoading] = useState(false);
-  const [activePermTab, setActivePermTab] = useState<"meeting" | "vehicle" | "leadership">("meeting");
+  const [activePermTab, setActivePermTab] = useState<"meeting" | "vehicle" | "leadership" | "hr" | "leave">("meeting");
 
   // Subscribe to real-time users collection
   useEffect(() => {
@@ -181,7 +182,7 @@ export default function UserManagement({ language }: UserManagementProps) {
   };
 
   // Quick Select / Deselect All for Active System Tab
-  const toggleSelectAllForTab = (tab: "meeting" | "vehicle" | "leadership", enable: boolean) => {
+  const toggleSelectAllForTab = (tab: "meeting" | "vehicle" | "leadership" | "hr" | "leave", enable: boolean) => {
     if (tab === "meeting") {
       setPermissionsDraft(prev => ({
         ...prev,
@@ -208,6 +209,21 @@ export default function UserManagement({ language }: UserManagementProps) {
         leadershipLogOwn: enable,
         leadershipManageAll: enable,
         leadershipReports: enable
+      }));
+    } else if (tab === "hr") {
+      setPermissionsDraft(prev => ({
+        ...prev,
+        hrAccess: enable,
+        hrManage: enable,
+        hrReports: enable
+      }));
+    } else if (tab === "leave") {
+      setPermissionsDraft(prev => ({
+        ...prev,
+        leaveAccess: enable,
+        leaveApply: enable,
+        leaveApprove: enable,
+        leaveReports: enable
       }));
     }
   };
@@ -1546,6 +1562,34 @@ export default function UserManagement({ language }: UserManagementProps) {
                   <span>{isLao ? "ລະບົບຕິດຕາມວຽກ" : "Duty"}</span>
                   <span className={`w-2 h-2 rounded-full ${permissionsDraft.leadershipAccess ? "bg-emerald-400" : "bg-rose-400"}`} />
                 </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActivePermTab("hr")}
+                  className={`py-2 px-3 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    activePermTab === "hr"
+                      ? "bg-purple-600 text-white shadow-md shadow-purple-600/25"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                  }`}
+                >
+                  <Users className="w-3.5 h-3.5" />
+                  <span>{isLao ? "ບັນຊີພະນັກງານ" : "HR"}</span>
+                  <span className={`w-2 h-2 rounded-full ${permissionsDraft.hrAccess ? "bg-emerald-400" : "bg-rose-400"}`} />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActivePermTab("leave")}
+                  className={`py-2 px-3 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    activePermTab === "leave"
+                      ? "bg-teal-600 text-white shadow-md shadow-teal-600/25"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                  }`}
+                >
+                  <CalendarClock className="w-3.5 h-3.5" />
+                  <span>{isLao ? "ຕິດຕາມລາພັກ" : "Leave"}</span>
+                  <span className={`w-2 h-2 rounded-full ${permissionsDraft.leaveAccess ? "bg-emerald-400" : "bg-rose-400"}`} />
+                </button>
               </div>
 
               {/* Tab 1: Meeting Room System Permissions */}
@@ -1990,6 +2034,239 @@ export default function UserManagement({ language }: UserManagementProps) {
                           </span>
                           <span className="text-[10px] text-slate-400">
                             {isLao ? "ສິດສັງລວມບົດລາຍງານ, ກັ່ນຕອງຕາມຂະແໜງ, ດາວໂຫຼດ ແລະ ພິມເອກະສານ" : "Can generate and print weekly/monthly/annual reports"}
+                          </span>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">
+                        {isLao ? "ທົ່ວໄປ" : "General"}
+                      </span>
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {/* Tab 4: HR Civil Servant Directory System Permissions */}
+              {activePermTab === "hr" && (
+                <div className="space-y-4 p-5 rounded-2xl bg-purple-50/50 dark:bg-purple-950/20 border-2 border-purple-500/30">
+                  {/* Master Access Toggle */}
+                  <div className="flex items-center justify-between p-3.5 bg-white dark:bg-slate-900 rounded-xl border border-purple-200 dark:border-purple-900 shadow-xs">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-purple-600 text-white flex items-center justify-center">
+                        <Users className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="font-black text-sm text-slate-800 dark:text-slate-100">
+                          {isLao ? "ເປີດສິດການເຂົ້າເຖິງລະບົບຈັດການບັນຊີພະນັກງານ" : "Enable HR Directory System Access"}
+                        </h4>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                          {isLao ? "ອະນຸຍາດໃຫ້ຜູ້ໃຊ້ນີ້ສາມາດເບິ່ງເຫັນ ແລະ ເຂົ້າໃຊ້ລະບົບຈັດການບັນຊີພະນັກງານໄດ້" : "Permits user to open HR Directory system"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setPermissionsDraft(prev => ({ ...prev, hrAccess: !prev.hrAccess }))}
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                        permissionsDraft.hrAccess ? "bg-purple-600" : "bg-slate-300 dark:bg-slate-700"
+                      }`}
+                    >
+                      <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                        permissionsDraft.hrAccess ? "translate-x-5" : "translate-x-0"
+                      }`} />
+                    </button>
+                  </div>
+
+                  {/* Sub-permissions */}
+                  <div className={`space-y-2 pt-2 transition-opacity ${permissionsDraft.hrAccess ? "opacity-100" : "opacity-40 pointer-events-none"}`}>
+                    <div className="flex items-center justify-between px-1">
+                      <span className="text-[11px] font-black uppercase text-purple-700 dark:text-purple-300 tracking-wider block">
+                        {isLao ? "ຟັງຊັນຍ່ອຍໃນລະບົບບັນຊີພະນັກງານ:" : "HR Sub-features:"}
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => toggleSelectAllForTab("hr", true)}
+                          className="px-2 py-0.5 rounded-lg bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/60 text-purple-700 dark:text-purple-200 text-[10px] font-black cursor-pointer"
+                        >
+                          {isLao ? "ເລືອກທັງໝົດ" : "Select All"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => toggleSelectAllForTab("hr", false)}
+                          className="px-2 py-0.5 rounded-lg bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[10px] font-black cursor-pointer"
+                        >
+                          {isLao ? "ຍົກເລີກທັງໝົດ" : "Deselect All"}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* hrManage */}
+                    <label className="flex items-center justify-between p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-white/5 hover:border-purple-400 transition-colors cursor-pointer">
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={permissionsDraft.hrManage}
+                          onChange={(e) => setPermissionsDraft(prev => ({ ...prev, hrManage: e.target.checked }))}
+                          className="w-4 h-4 rounded text-purple-600 focus:ring-purple-500 cursor-pointer"
+                        />
+                        <div>
+                          <span className="font-extrabold text-xs text-slate-800 dark:text-slate-100 block">
+                            {isLao ? "1. ເພີ່ມ, ແກ້ໄຂ ແລະ ລົບຂໍ້ມູນຊີວະປະຫວັດພະນັກງານ" : "Manage Civil Servant Profiles"}
+                          </span>
+                          <span className="text-[10px] text-slate-400">
+                            {isLao ? "ສິດຄຸ້ມຄອງຂໍ້ມູນພື້ນຖານ, ຮູບ 4x6, ຊັ້ນ-ຂັ້ນເງິນເດືອນ ແລະ ເອກະສານ" : "Full CRUD permissions on employee roster"}
+                          </span>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-950 text-purple-600 dark:text-purple-300">
+                        {isLao ? "ສິດຜູ້ບໍລິຫານ" : "Admin Level"}
+                      </span>
+                    </label>
+
+                    {/* hrReports */}
+                    <label className="flex items-center justify-between p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-white/5 hover:border-purple-400 transition-colors cursor-pointer">
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={permissionsDraft.hrReports}
+                          onChange={(e) => setPermissionsDraft(prev => ({ ...prev, hrReports: e.target.checked }))}
+                          className="w-4 h-4 rounded text-purple-600 focus:ring-purple-500 cursor-pointer"
+                        />
+                        <div>
+                          <span className="font-extrabold text-xs text-slate-800 dark:text-slate-100 block">
+                            {isLao ? "2. ເບິ່ງ ແລະ ພິມບົດລາຍງານບັນຊີພະນັກງານ (HR Reports)" : "View & Export HR Reports"}
+                          </span>
+                          <span className="text-[10px] text-slate-400">
+                            {isLao ? "ສິດກັ່ນຕອງ ແລະ ສົ່ງອອກບົດລາຍງານທາງການ" : "Can view and print official staff reports"}
+                          </span>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">
+                        {isLao ? "ທົ່ວໄປ" : "General"}
+                      </span>
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {/* Tab 5: Leave Tracking System Permissions */}
+              {activePermTab === "leave" && (
+                <div className="space-y-4 p-5 rounded-2xl bg-teal-50/50 dark:bg-teal-950/20 border-2 border-teal-500/30">
+                  {/* Master Access Toggle */}
+                  <div className="flex items-center justify-between p-3.5 bg-white dark:bg-slate-900 rounded-xl border border-teal-200 dark:border-teal-900 shadow-xs">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-teal-600 text-white flex items-center justify-center">
+                        <CalendarClock className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="font-black text-sm text-slate-800 dark:text-slate-100">
+                          {isLao ? "ເປີດສິດການເຂົ້າເຖິງລະບົບຕິດຕາມການລາພັກ" : "Enable Leave Tracking System Access"}
+                        </h4>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                          {isLao ? "ອະນຸຍາດໃຫ້ຜູ້ໃຊ້ນີ້ສາມາດເບິ່ງເຫັນ ແລະ ເຂົ້າໃຊ້ລະບົບຕິດຕາມການລາພັກໄດ້" : "Permits user to open leave tracking system"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setPermissionsDraft(prev => ({ ...prev, leaveAccess: !prev.leaveAccess }))}
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                        permissionsDraft.leaveAccess ? "bg-teal-600" : "bg-slate-300 dark:bg-slate-700"
+                      }`}
+                    >
+                      <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                        permissionsDraft.leaveAccess ? "translate-x-5" : "translate-x-0"
+                      }`} />
+                    </button>
+                  </div>
+
+                  {/* Sub-permissions */}
+                  <div className={`space-y-2 pt-2 transition-opacity ${permissionsDraft.leaveAccess ? "opacity-100" : "opacity-40 pointer-events-none"}`}>
+                    <div className="flex items-center justify-between px-1">
+                      <span className="text-[11px] font-black uppercase text-teal-700 dark:text-teal-300 tracking-wider block">
+                        {isLao ? "ຟັງຊັນຍ່ອຍໃນລະບົບຕິດຕາມການລາພັກ:" : "Leave Sub-features:"}
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => toggleSelectAllForTab("leave", true)}
+                          className="px-2 py-0.5 rounded-lg bg-teal-100 hover:bg-teal-200 dark:bg-teal-900/60 text-teal-700 dark:text-teal-200 text-[10px] font-black cursor-pointer"
+                        >
+                          {isLao ? "ເລືອກທັງໝົດ" : "Select All"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => toggleSelectAllForTab("leave", false)}
+                          className="px-2 py-0.5 rounded-lg bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[10px] font-black cursor-pointer"
+                        >
+                          {isLao ? "ຍົກເລີກທັງໝົດ" : "Deselect All"}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* leaveApply */}
+                    <label className="flex items-center justify-between p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-white/5 hover:border-teal-400 transition-colors cursor-pointer">
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={permissionsDraft.leaveApply}
+                          onChange={(e) => setPermissionsDraft(prev => ({ ...prev, leaveApply: e.target.checked }))}
+                          className="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 cursor-pointer"
+                        />
+                        <div>
+                          <span className="font-extrabold text-xs text-slate-800 dark:text-slate-100 block">
+                            {isLao ? "1. ຍື່ນແບບຟອມຂໍລາພັກ (Apply for Leave)" : "Submit Leave Applications"}
+                          </span>
+                          <span className="text-[10px] text-slate-400">
+                            {isLao ? "ສິດຍື່ນຄຳຮ້ອງ, ກວດສອບໂຄຕ້າ 15 ວັນທີ່ຍັງເຫຼືອ ແລະ ແຈ້ງເຕືອນຫາຫົວໜ້າຫ້ອງ" : "Can submit leave requests against 15-day quota"}
+                          </span>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">
+                        {isLao ? "ຜູ້ໃຊ້ທົ່ວໄປ" : "User Role"}
+                      </span>
+                    </label>
+
+                    {/* leaveApprove */}
+                    <label className="flex items-center justify-between p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-white/5 hover:border-teal-400 transition-colors cursor-pointer">
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={permissionsDraft.leaveApprove}
+                          onChange={(e) => setPermissionsDraft(prev => ({ ...prev, leaveApprove: e.target.checked }))}
+                          className="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 cursor-pointer"
+                        />
+                        <div>
+                          <span className="font-extrabold text-xs text-slate-800 dark:text-slate-100 block">
+                            {isLao ? "2. ສູນອະນຸມັດຄຳຮ້ອງ (Admin ຫຼື ຫົວໜ້າຫ້ອງ ບໍລິຫານ-ການເງິນ)" : "Approve/Reject Leave Applications"}
+                          </span>
+                          <span className="text-[10px] text-slate-400">
+                            {isLao ? "ສິດອະນຸມັດ, ປະຕິເສດ ແລະ ບັນທຶກຊື່ບັນຊີຜູ້ອະນຸມັດລົງໃນລະບົບ" : "Authorized approver with audit trail stamp"}
+                          </span>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-teal-100 dark:bg-teal-950 text-teal-700 dark:text-teal-300">
+                        {isLao ? "ສິດອະນຸມັດ" : "Approver Role"}
+                      </span>
+                    </label>
+
+                    {/* leaveReports */}
+                    <label className="flex items-center justify-between p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-white/5 hover:border-teal-400 transition-colors cursor-pointer">
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={permissionsDraft.leaveReports}
+                          onChange={(e) => setPermissionsDraft(prev => ({ ...prev, leaveReports: e.target.checked }))}
+                          className="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 cursor-pointer"
+                        />
+                        <div>
+                          <span className="font-extrabold text-xs text-slate-800 dark:text-slate-100 block">
+                            {isLao ? "3. ບົດລາຍງານສະຖິຕິ ແລະ ໂຄຕ້າ 15 ວັນ (Leave Reports)" : "Leave Statistics & Quota Reports"}
+                          </span>
+                          <span className="text-[10px] text-slate-400">
+                            {isLao ? "ສິດເບິ່ງບົດລາຍງານການລາພັກຕາມການຄົ້ນຫາ ແລະ ພິມເອກະສານ" : "Can view and print leave reports"}
                           </span>
                         </div>
                       </div>

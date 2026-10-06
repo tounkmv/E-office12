@@ -24,6 +24,8 @@ import {
   Vehicle, 
   VehicleBooking, 
   LeadershipActivity, 
+  CivilServant,
+  LeaveRequest,
   AppLanguage, 
   UserProfile,
   hasPermission,
@@ -41,7 +43,9 @@ interface SystemPortalProps {
   vehicles: Vehicle[];
   vehicleBookings: VehicleBooking[];
   activities?: LeadershipActivity[];
-  onSelectSystem: (system: "meeting" | "vehicle" | "leadership", tab?: string) => void;
+  employees?: CivilServant[];
+  leaves?: LeaveRequest[];
+  onSelectSystem: (system: "meeting" | "vehicle" | "leadership" | "hr" | "leave", tab?: string) => void;
 }
 
 export default function SystemPortal({
@@ -52,11 +56,13 @@ export default function SystemPortal({
   vehicles,
   vehicleBookings,
   activities = [],
+  employees = [],
+  leaves = [],
   onSelectSystem
 }: SystemPortalProps) {
   const isLao = language === "lo";
 
-  // Granular Permission Checks for the 3 Systems
+  // Granular Permission Checks for the 5 Systems
   const canAccessMeeting = hasPermission(userProfile, "meetingAccess");
   const canBookMeeting = hasPermission(userProfile, "meetingBook");
   const canApproveMeeting = hasPermission(userProfile, "meetingApprove");
@@ -68,6 +74,15 @@ export default function SystemPortal({
   const canAccessLeadership = hasPermission(userProfile, "leadershipAccess");
   const canLogDuty = hasPermission(userProfile, "leadershipLogOwn");
   const canDutyReports = hasPermission(userProfile, "leadershipReports");
+
+  const canAccessHR = hasPermission(userProfile, "hrAccess");
+  const canManageHR = hasPermission(userProfile, "hrManage");
+  const canHRReports = hasPermission(userProfile, "hrReports");
+
+  const canAccessLeave = hasPermission(userProfile, "leaveAccess");
+  const canApplyLeave = hasPermission(userProfile, "leaveApply");
+  const canApproveLeave = hasPermission(userProfile, "leaveApprove");
+  const canLeaveReports = hasPermission(userProfile, "leaveReports");
 
   const permSummary = countSystemPermissions(userProfile);
 
@@ -93,6 +108,18 @@ export default function SystemPortal({
   const todayActivities = activities.filter(a => a.startDate <= todayStr && a.endDate >= todayStr).length;
   const completedActivities = activities.filter(a => a.status === "completed").length;
   const myActivitiesCount = activities.filter(a => a.userId === userProfile.uid).length;
+
+  // Calculations for HR
+  const totalEmployees = employees.length;
+  const fullStaffCount = employees.filter(e => e.type === "full").length;
+  const masterDegreeCount = employees.filter(e => e.educationDegree?.includes("ໂທ") || e.educationDegree?.includes("Master")).length;
+
+  // Calculations for Leaves
+  const currentYear = new Date().getFullYear();
+  const yearLeaves = leaves.filter(l => l.year === currentYear || new Date(l.startDate).getFullYear() === currentYear);
+  const pendingLeaves = yearLeaves.filter(l => l.status === "pending").length;
+  const approvedLeaves = yearLeaves.filter(l => l.status === "approved").length;
+  const totalLeaveDaysUsed = yearLeaves.filter(l => l.status === "approved" && l.leaveType === "annual").reduce((sum, l) => sum + (Number(l.workingDaysCount) || 0), 0);
 
   return (
     <div id="system-portal-hub" className="space-y-8 animate-in fade-in duration-300">
@@ -133,8 +160,8 @@ export default function SystemPortal({
               </h1>
               <p className="text-xs sm:text-sm text-slate-300 max-w-xl font-medium leading-relaxed">
                 {isLao 
-                  ? "ກະລຸນາເລືອກລະບົບວຽກງານທີ່ທ່ານຕ້ອງການເຂົ້າໃຊ້ງານ ໂດຍມີ 3 ລະບົບຫຼັກໃຫ້ບໍລິການດັ່ງລຸ່ມນີ້:"
-                  : "Please select the management system you wish to access from the three core administrative services below:"}
+                  ? "ກະລຸນາເລືອກລະບົບວຽກງານທີ່ທ່ານຕ້ອງການເຂົ້າໃຊ້ງານ ໂດຍມີ 5 ລະບົບຫຼັກໃຫ້ບໍລິການດັ່ງລຸ່ມນີ້:"
+                  : "Please select the management system you wish to access from the five core administrative services below:"}
               </p>
             </div>
           </div>
@@ -151,15 +178,15 @@ export default function SystemPortal({
               </span>
             </div>
             <span className="text-[10px] font-bold text-amber-300/90 bg-amber-400/10 px-2 py-0.5 rounded-lg border border-amber-400/20">
-              {isLao ? `ສິດທິ 3 ລະບົບ: ${permSummary.totalEnabled}/${permSummary.totalFeatures} ຟັງຊັນ` : `Permissions: ${permSummary.totalEnabled}/${permSummary.totalFeatures}`}
+              {isLao ? `ສິດທິ 5 ລະບົບ: ${permSummary.totalEnabled}/${permSummary.totalFeatures} ຟັງຊັນ` : `Permissions: ${permSummary.totalEnabled}/${permSummary.totalFeatures}`}
             </span>
           </div>
 
         </div>
       </div>
 
-      {/* The 3 Main Systems Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-7">
+      {/* The 5 Main Systems Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-7">
         
         {/* ================================================================= */}
         {/* SYSTEM 1: ລະບົບຈອງຫ້ອງປະຊຸມທັນສະໄໝ */}
@@ -571,6 +598,195 @@ export default function SystemPortal({
                 <p className="text-[10.5px] text-slate-400">
                   {isLao ? "ຕິດຕໍ່ຜູ້ດູແລລະບົບເພື່ອຂໍເປີດສິດການໃຊ້ງານ" : "Contact admin to grant permissions"}
                 </p>
+              </div>
+            )}
+          </div>
+        </motion.div>
+
+        {/* ================================================================= */}
+        {/* SYSTEM 4: ລະບົບຈັດການບັນຊີພະນັກງານ (HR CIVIL SERVANT DIRECTORY) */}
+        {/* ================================================================= */}
+        <motion.div
+          whileHover={{ y: -5 }}
+          className={`relative flex flex-col justify-between rounded-3xl p-6 sm:p-7 border transition-all duration-300 overflow-hidden shadow-lg ${
+            canAccessHR
+              ? "bg-white dark:bg-slate-900/90 border-slate-200 dark:border-purple-500/20 hover:border-purple-400 dark:hover:border-purple-500/50 hover:shadow-2xl hover:shadow-purple-500/10"
+              : "bg-slate-50/80 dark:bg-slate-900/40 border-slate-200/60 dark:border-white/5 opacity-85"
+          }`}
+        >
+          <div className="absolute top-0 right-0 w-36 h-36 bg-purple-500/10 rounded-full blur-2xl pointer-events-none" />
+
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="w-13 h-13 rounded-2xl bg-gradient-to-tr from-purple-600 via-fuchsia-600 to-purple-500 text-white flex items-center justify-center shadow-lg shadow-purple-500/30">
+                <Users className="w-7 h-7" />
+              </div>
+              <span className="px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                {isLao ? "ລະບົບທີ 4" : "System 4"}
+              </span>
+            </div>
+
+            <div className="space-y-2 pt-1">
+              <div className="h-10 flex items-center">
+                <h2 className="text-base sm:text-lg xl:text-xl font-black text-slate-900 dark:text-white tracking-tight leading-normal group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors whitespace-nowrap overflow-hidden text-ellipsis" title={isLao ? "ລະບົບຈັດການບັນຊີພະນັກງານ" : "Civil Servant Directory"}>
+                  {isLao ? "ລະບົບຈັດການບັນຊີພະນັກງານ" : "Civil Servant Directory"}
+                </h2>
+              </div>
+              <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-300 font-medium leading-relaxed h-10 flex items-center line-clamp-2">
+                {isLao
+                  ? "ຄຸ້ມຄອງຂໍ້ມູນຊີວະປະຫວັດ, ຮູບ 4x6, ຊັ້ນ-ຂັ້ນເງິນເດືອນ, ຕຳແໜ່ງ ແລະ ສັງລວມບົດລາຍງານ."
+                  : "Manage biographical profiles, 4x6 photos, civil service grades, and printable roster reports."}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2 pt-2">
+              <div className="h-[58px] flex flex-col items-center justify-center p-2 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 text-center">
+                <span className="text-[10.5px] text-slate-400 font-bold block truncate">{isLao ? "ພະນັກງານ" : "Staff"}</span>
+                <span className="text-base sm:text-lg font-black text-slate-900 dark:text-white leading-tight mt-0.5">{totalEmployees}</span>
+              </div>
+              <div className="h-[58px] flex flex-col items-center justify-center p-2 rounded-2xl bg-purple-50/70 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900/40 text-center">
+                <span className="text-[10.5px] text-purple-600 dark:text-purple-400 font-bold block truncate">{isLao ? "ສົມບູນ" : "Permanent"}</span>
+                <span className="text-base sm:text-lg font-black text-purple-700 dark:text-purple-300 leading-tight mt-0.5">{fullStaffCount}</span>
+              </div>
+              <div className="h-[58px] flex flex-col items-center justify-center p-2 rounded-2xl bg-fuchsia-50/70 dark:bg-fuchsia-950/30 border border-fuchsia-100 dark:border-fuchsia-900/40 text-center">
+                <span className="text-[10.5px] text-fuchsia-600 dark:text-fuchsia-400 font-bold block truncate">{isLao ? "ປ.ໂທ" : "Masters"}</span>
+                <span className="text-base sm:text-lg font-black text-fuchsia-700 dark:text-fuchsia-300 leading-tight mt-0.5">{masterDegreeCount}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-4 mt-4 border-t border-slate-100 dark:border-white/5 space-y-2">
+            {canAccessHR ? (
+              <>
+                <button
+                  onClick={() => onSelectSystem("hr", "hr-dashboard")}
+                  className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-purple-600 via-fuchsia-600 to-purple-700 hover:from-purple-500 hover:to-fuchsia-500 text-white font-extrabold text-xs shadow-md shadow-purple-600/25 flex items-center justify-center gap-2 group-hover:shadow-purple-600/40 transition-all cursor-pointer active:scale-[0.99]"
+                >
+                  <span>{isLao ? "ເຂົ້າສູ່ລະບົບບັນຊີພະນັກງານ" : "Enter HR Directory"}</span>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </button>
+
+                <div className="grid grid-cols-2 gap-1.5 pt-1">
+                  <button
+                    onClick={() => onSelectSystem("hr", "hr-directory")}
+                    className="py-1.5 px-2.5 rounded-xl bg-purple-50/70 hover:bg-purple-100 dark:bg-purple-950/40 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 text-[11px] font-bold text-center transition-colors cursor-pointer border border-purple-200/50 dark:border-purple-800/40 truncate"
+                  >
+                    {isLao ? "ບັນຊີຊີວະປະຫວັດ" : "Staff Directory"}
+                  </button>
+                  <button
+                    onClick={() => onSelectSystem("hr", "hr-reports")}
+                    className="py-1.5 px-2.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 dark:bg-slate-800/60 dark:hover:bg-slate-700/60 text-slate-700 dark:text-slate-300 text-[11px] font-bold text-center transition-colors cursor-pointer border border-slate-200/60 dark:border-white/5 truncate"
+                  >
+                    {isLao ? "ບົດລາຍງານ" : "Reports"}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="p-3 bg-slate-100 dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-white/5 text-center space-y-1">
+                <div className="flex items-center justify-center gap-1.5 text-xs font-black text-rose-500 dark:text-rose-400">
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>{isLao ? "ບໍ່ໄດ້ຮັບສິດເຂົ້າເຖິງລະບົບນີ້" : "No Access Granted"}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </motion.div>
+
+        {/* ================================================================= */}
+        {/* SYSTEM 5: ລະບົບຕິດຕາມການລາພັກຂອງພະນັກງານ (STAFF LEAVE SYSTEM) */}
+        {/* ================================================================= */}
+        <motion.div
+          whileHover={{ y: -5 }}
+          className={`relative flex flex-col justify-between rounded-3xl p-6 sm:p-7 border transition-all duration-300 overflow-hidden shadow-lg ${
+            canAccessLeave
+              ? "bg-white dark:bg-slate-900/90 border-slate-200 dark:border-teal-500/20 hover:border-teal-400 dark:hover:border-teal-500/50 hover:shadow-2xl hover:shadow-teal-500/10"
+              : "bg-slate-50/80 dark:bg-slate-900/40 border-slate-200/60 dark:border-white/5 opacity-85"
+          }`}
+        >
+          <div className="absolute top-0 right-0 w-36 h-36 bg-teal-500/10 rounded-full blur-2xl pointer-events-none" />
+
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="w-13 h-13 rounded-2xl bg-gradient-to-tr from-teal-600 via-emerald-600 to-teal-500 text-white flex items-center justify-center shadow-lg shadow-teal-500/30">
+                <CalendarDays className="w-7 h-7" />
+              </div>
+              <span className="px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-teal-100 dark:bg-teal-950 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800">
+                {isLao ? "ລະບົບທີ 5" : "System 5"}
+              </span>
+            </div>
+
+            <div className="space-y-2 pt-1">
+              <div className="h-10 flex items-center">
+                <h2 className="text-base sm:text-lg xl:text-xl font-black text-slate-900 dark:text-white tracking-tight leading-normal group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors whitespace-nowrap overflow-hidden text-ellipsis" title={isLao ? "ລະບົບຕິດຕາມການລາພັກຂອງພະນັກງານ" : "Staff Leave Tracking System"}>
+                  {isLao ? "ລະບົບຕິດຕາມການລາພັກຂອງພະນັກງານ" : "Staff Leave Tracking System"}
+                </h2>
+              </div>
+              <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-300 font-medium leading-relaxed h-10 flex items-center line-clamp-2">
+                {isLao
+                  ? "ໂຄຕ້າລາພັກປະຈຳປີ 15 ວັນລັດຖະການ, ແບບຟອມຍື່ນຂໍ, ອະນຸມັດ ແລະ ບົດລາຍງານສະຖິຕິ."
+                  : "Track statutory 15 days quota, submit leave applications, authorized approvals & analytics."}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2 pt-2">
+              <div className="h-[58px] flex flex-col items-center justify-center p-2 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 text-center">
+                <span className="text-[10.5px] text-slate-400 font-bold block truncate">{isLao ? "ໂຄຕ້າ/ປີ" : "Quota"}</span>
+                <span className="text-base sm:text-lg font-black text-slate-900 dark:text-white leading-tight mt-0.5">15 <span className="text-[10px] font-bold text-slate-400">ວັນ</span></span>
+              </div>
+              <div className="h-[58px] flex flex-col items-center justify-center p-2 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/40 text-center">
+                <span className="text-[10.5px] text-amber-600 dark:text-amber-400 font-bold block truncate">{isLao ? "ລໍຖ້າ" : "Pending"}</span>
+                <span className="text-base sm:text-lg font-black text-amber-700 dark:text-amber-300 leading-tight mt-0.5">{pendingLeaves}</span>
+              </div>
+              <div className="h-[58px] flex flex-col items-center justify-center p-2 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/40 text-center">
+                <span className="text-[10.5px] text-emerald-600 dark:text-emerald-400 font-bold block truncate">{isLao ? "ອະນຸມັດ" : "Approved"}</span>
+                <span className="text-base sm:text-lg font-black text-emerald-700 dark:text-emerald-300 leading-tight mt-0.5">{approvedLeaves}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-4 mt-4 border-t border-slate-100 dark:border-white/5 space-y-2">
+            {canAccessLeave ? (
+              <>
+                <button
+                  onClick={() => onSelectSystem("leave", "leave-dashboard")}
+                  className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-teal-600 via-emerald-600 to-teal-700 hover:from-teal-500 hover:to-emerald-500 text-white font-extrabold text-xs shadow-md shadow-teal-600/25 flex items-center justify-center gap-2 group-hover:shadow-teal-600/40 transition-all cursor-pointer active:scale-[0.99]"
+                >
+                  <span>{isLao ? "ເຂົ້າສູ່ລະບົບຕິດຕາມການລາພັກ" : "Enter Leave Tracker"}</span>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </button>
+
+                <div className="grid grid-cols-3 gap-1.5 pt-1">
+                  <button
+                    onClick={() => onSelectSystem("leave", "leave-apply")}
+                    className="py-1.5 px-2 rounded-xl bg-teal-50/70 hover:bg-teal-100 dark:bg-teal-950/40 dark:hover:bg-teal-900/50 text-teal-700 dark:text-teal-300 text-[10px] font-bold text-center transition-colors cursor-pointer border border-teal-200/50 dark:border-teal-800/40 truncate"
+                  >
+                    + {isLao ? "ຍື່ນຂໍລາພັກ" : "Apply"}
+                  </button>
+                  <button
+                    onClick={() => onSelectSystem("leave", "leave-approvals")}
+                    className="py-1.5 px-2 rounded-xl bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/50 text-amber-700 dark:text-amber-300 text-[10px] font-bold text-center transition-colors cursor-pointer border border-amber-200/70 dark:border-amber-800/40 truncate flex items-center justify-center gap-1"
+                  >
+                    <span>{isLao ? "ສູນອະນຸມັດ" : "Approvals"}</span>
+                    {pendingLeaves > 0 && (
+                      <span className="px-1 py-0.2 rounded-full text-[9px] font-black bg-amber-500 text-white leading-none shrink-0 animate-pulse">
+                        {pendingLeaves}
+                      </span>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => onSelectSystem("leave", "leave-reports")}
+                    className="py-1.5 px-2 rounded-xl bg-slate-100 hover:bg-slate-200/80 dark:bg-slate-800/60 dark:hover:bg-slate-700/60 text-slate-700 dark:text-slate-300 text-[10px] font-bold text-center transition-colors cursor-pointer border border-slate-200/60 dark:border-white/5 truncate"
+                  >
+                    {isLao ? "ລາຍງານ" : "Reports"}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="p-3 bg-slate-100 dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-white/5 text-center space-y-1">
+                <div className="flex items-center justify-center gap-1.5 text-xs font-black text-rose-500 dark:text-rose-400">
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>{isLao ? "ບໍ່ໄດ້ຮັບສິດເຂົ້າເຖິງລະບົບນີ້" : "No Access Granted"}</span>
+                </div>
               </div>
             )}
           </div>

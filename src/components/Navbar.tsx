@@ -28,7 +28,9 @@ import {
   Menu,
   Car,
   Layers,
-  Briefcase
+  Briefcase,
+  Users,
+  CalendarClock
 } from "lucide-react";
 import { db, collection, query, where, orderBy, onSnapshot, doc, updateDoc, getDocs } from "../lib/firebase";
 import { AppLanguage, SystemNotification, UserProfile, hasPermission } from "../types";
@@ -47,8 +49,8 @@ interface NavbarProps {
   isMobileMenuOpen?: boolean;
   onToggleMobileMenu?: () => void;
   setActiveTab?: (tab: string) => void;
-  activeSystem?: "portal" | "meeting" | "vehicle" | "leadership";
-  setActiveSystem?: (system: "portal" | "meeting" | "vehicle" | "leadership") => void;
+  activeSystem?: "portal" | "meeting" | "vehicle" | "leadership" | "hr" | "leave";
+  setActiveSystem?: (system: "portal" | "meeting" | "vehicle" | "leadership" | "hr" | "leave") => void;
 }
 
 const PRESET_AVATARS = [
@@ -439,11 +441,15 @@ export default function Navbar({
           const canAccessMeeting = hasPermission(userProfile, "meetingAccess");
           const canAccessVehicle = hasPermission(userProfile, "vehicleAccess");
           const canAccessLeadership = hasPermission(userProfile, "leadershipAccess");
+          const canAccessHR = hasPermission(userProfile, "hrAccess");
+          const canAccessLeave = hasPermission(userProfile, "leaveAccess");
 
-          const authorizedSystems: ("portal" | "meeting" | "vehicle" | "leadership")[] = ["portal"];
+          const authorizedSystems: ("portal" | "meeting" | "vehicle" | "leadership" | "hr" | "leave")[] = ["portal"];
           if (canAccessMeeting) authorizedSystems.push("meeting");
           if (canAccessVehicle) authorizedSystems.push("vehicle");
           if (canAccessLeadership) authorizedSystems.push("leadership");
+          if (canAccessHR) authorizedSystems.push("hr");
+          if (canAccessLeave) authorizedSystems.push("leave");
 
           const handleCycleSystem = () => {
             if (authorizedSystems.length <= 1) {
@@ -459,6 +465,8 @@ export default function Navbar({
             else if (nextSystem === "meeting") setActiveTab?.("dashboard");
             else if (nextSystem === "vehicle") setActiveTab?.("vehicle-dashboard");
             else if (nextSystem === "leadership") setActiveTab?.("leadership-calendar");
+            else if (nextSystem === "hr") setActiveTab?.("hr-dashboard");
+            else if (nextSystem === "leave") setActiveTab?.("leave-dashboard");
           };
 
           return (
@@ -488,6 +496,10 @@ export default function Navbar({
                     ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white border-emerald-300/50 hover:brightness-110 shadow-emerald-500/20"
                     : activeSystem === "vehicle"
                     ? "bg-gradient-to-r from-amber-500 via-orange-500 to-rose-600 text-white border-amber-300/50 hover:brightness-110 shadow-amber-500/20"
+                    : activeSystem === "hr"
+                    ? "bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 text-white border-cyan-300/50 hover:brightness-110 shadow-cyan-500/20"
+                    : activeSystem === "leave"
+                    ? "bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-600 text-white border-fuchsia-300/50 hover:brightness-110 shadow-fuchsia-500/20"
                     : "bg-gradient-to-r from-indigo-600 via-blue-600 to-purple-600 text-white border-indigo-300/50 hover:brightness-110 shadow-indigo-500/20"
                 }`}
                 title={isLao ? "ກົດເພື່ອສະຫຼັບລະບົບທີ່ໄດ້ຮັບສິດ" : "Click to switch authorized system"}
@@ -513,6 +525,22 @@ export default function Navbar({
                     <Car className="w-3.5 h-3.5" />
                     <span>{isLao ? "ລະບົບຈັດການລົດບໍລິຫານ" : "Vehicle System"}</span>
                     <span className="text-[10px] bg-black/25 px-1.5 py-0.5 rounded-md text-amber-200">
+                      {isLao ? "ສະຫຼັບ ➜" : "Switch ➜"}
+                    </span>
+                  </>
+                ) : activeSystem === "hr" ? (
+                  <>
+                    <Users className="w-3.5 h-3.5" />
+                    <span>{isLao ? "ລະບົບບັນຊີພະນັກງານ" : "HR System"}</span>
+                    <span className="text-[10px] bg-black/25 px-1.5 py-0.5 rounded-md text-cyan-200">
+                      {isLao ? "ສະຫຼັບ ➜" : "Switch ➜"}
+                    </span>
+                  </>
+                ) : activeSystem === "leave" ? (
+                  <>
+                    <CalendarClock className="w-3.5 h-3.5" />
+                    <span>{isLao ? "ລະບົບຕິດຕາມການລາພັກ" : "Leave System"}</span>
+                    <span className="text-[10px] bg-black/25 px-1.5 py-0.5 rounded-md text-fuchsia-200">
                       {isLao ? "ສະຫຼັບ ➜" : "Switch ➜"}
                     </span>
                   </>

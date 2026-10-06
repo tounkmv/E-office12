@@ -26,6 +26,17 @@ export interface SystemPermissions {
   leadershipLogOwn: boolean; // ສິດບັນທຶກ ແລະ ຄຸ້ມຄອງວຽກຕົນເອງ
   leadershipManageAll: boolean; // ສິດຄຸ້ມຄອງ ແລະ ກວດກາວຽກຂອງທຸກຄົນ
   leadershipReports: boolean; // ສິດສ້າງ ແລະ ສົ່ງອອກບົດລາຍງານ ອາທິດ/ເດືອນ/ປີ
+
+  // SYSTEM 4: ລະບົບຈັດການບັນຊີພະນັກງານ (HR & Civil Servant Directory)
+  hrAccess: boolean; // ສິດເຂົ້າເຖິງລະບົບຈັດການບັນຊີພະນັກງານ
+  hrManage: boolean; // ສິດເພີ່ມ/ແກ້ໄຂ/ລົບຂໍ້ມູນຊີວະປະຫວັດພະນັກງານ
+  hrReports: boolean; // ສິດເບິ່ງ ແລະ ພິມບົດລາຍງານບັນຊີພະນັກງານ
+
+  // SYSTEM 5: ລະບົບຕິດຕາມການລາພັກຂອງພະນັກງານ (Staff Leave Tracking System)
+  leaveAccess: boolean; // ສິດເຂົ້າເຖິງລະບົບຕິດຕາມການລາພັກ
+  leaveApply: boolean; // ສິດຍື່ນແບບຟອມຂໍລາພັກ
+  leaveApprove: boolean; // ສິດອະນຸມັດ/ປະຕິເສດການລາພັກ (Admin ຫຼື ຫົວໜ້າຫ້ອງ ບໍລິຫານ, ພິທີການ ແລະ ການເງິນ)
+  leaveReports: boolean; // ສິດເບິ່ງບົດລາຍງານສະຖິຕິ ແລະ ໂຄຕ້າການລາພັກ 15 ວັນ
 }
 
 export const DEFAULT_USER_PERMISSIONS: SystemPermissions = {
@@ -46,6 +57,15 @@ export const DEFAULT_USER_PERMISSIONS: SystemPermissions = {
   leadershipLogOwn: true,
   leadershipManageAll: false,
   leadershipReports: true,
+
+  hrAccess: true,
+  hrManage: false,
+  hrReports: true,
+
+  leaveAccess: true,
+  leaveApply: true,
+  leaveApprove: false,
+  leaveReports: true,
 };
 
 export const DEFAULT_ADMIN_PERMISSIONS: SystemPermissions = {
@@ -66,6 +86,15 @@ export const DEFAULT_ADMIN_PERMISSIONS: SystemPermissions = {
   leadershipLogOwn: true,
   leadershipManageAll: true,
   leadershipReports: true,
+
+  hrAccess: true,
+  hrManage: true,
+  hrReports: true,
+
+  leaveAccess: true,
+  leaveApply: true,
+  leaveApprove: true,
+  leaveReports: true,
 };
 
 export const PRESET_MEETING_OFFICER: SystemPermissions = {
@@ -86,6 +115,15 @@ export const PRESET_MEETING_OFFICER: SystemPermissions = {
   leadershipLogOwn: false,
   leadershipManageAll: false,
   leadershipReports: false,
+
+  hrAccess: false,
+  hrManage: false,
+  hrReports: false,
+
+  leaveAccess: true,
+  leaveApply: true,
+  leaveApprove: false,
+  leaveReports: false,
 };
 
 export const PRESET_VEHICLE_OFFICER: SystemPermissions = {
@@ -106,6 +144,15 @@ export const PRESET_VEHICLE_OFFICER: SystemPermissions = {
   leadershipLogOwn: false,
   leadershipManageAll: false,
   leadershipReports: false,
+
+  hrAccess: false,
+  hrManage: false,
+  hrReports: false,
+
+  leaveAccess: true,
+  leaveApply: true,
+  leaveApprove: false,
+  leaveReports: false,
 };
 
 export const PRESET_LEADERSHIP_OFFICER: SystemPermissions = {
@@ -126,6 +173,15 @@ export const PRESET_LEADERSHIP_OFFICER: SystemPermissions = {
   leadershipLogOwn: true,
   leadershipManageAll: true,
   leadershipReports: true,
+
+  hrAccess: false,
+  hrManage: false,
+  hrReports: false,
+
+  leaveAccess: true,
+  leaveApply: true,
+  leaveApprove: false,
+  leaveReports: false,
 };
 
 export const PRESET_VIEW_ONLY: SystemPermissions = {
@@ -146,6 +202,15 @@ export const PRESET_VIEW_ONLY: SystemPermissions = {
   leadershipLogOwn: false,
   leadershipManageAll: false,
   leadershipReports: true,
+
+  hrAccess: true,
+  hrManage: false,
+  hrReports: true,
+
+  leaveAccess: true,
+  leaveApply: false,
+  leaveApprove: false,
+  leaveReports: true,
 };
 
 export const PRESET_REVOKED: SystemPermissions = {
@@ -166,6 +231,15 @@ export const PRESET_REVOKED: SystemPermissions = {
   leadershipLogOwn: false,
   leadershipManageAll: false,
   leadershipReports: false,
+
+  hrAccess: false,
+  hrManage: false,
+  hrReports: false,
+
+  leaveAccess: false,
+  leaveApply: false,
+  leaveApprove: false,
+  leaveReports: false,
 };
 
 export function hasPermission(
@@ -194,6 +268,10 @@ export function countSystemPermissions(user: UserProfile | null | undefined): {
   vehicleTotal: number;
   leadershipCount: number;
   leadershipTotal: number;
+  hrCount: number;
+  hrTotal: number;
+  leaveCount: number;
+  leaveTotal: number;
   totalEnabled: number;
   totalFeatures: number;
 } {
@@ -206,6 +284,12 @@ export function countSystemPermissions(user: UserProfile | null | undefined): {
   const leadershipKeys: (keyof SystemPermissions)[] = [
     "leadershipAccess", "leadershipCalendar", "leadershipLogOwn", "leadershipManageAll", "leadershipReports"
   ];
+  const hrKeys: (keyof SystemPermissions)[] = [
+    "hrAccess", "hrManage", "hrReports"
+  ];
+  const leaveKeys: (keyof SystemPermissions)[] = [
+    "leaveAccess", "leaveApply", "leaveApprove", "leaveReports"
+  ];
 
   let meetingCount = 0;
   meetingKeys.forEach(k => { if (hasPermission(user, k)) meetingCount++; });
@@ -216,6 +300,12 @@ export function countSystemPermissions(user: UserProfile | null | undefined): {
   let leadershipCount = 0;
   leadershipKeys.forEach(k => { if (hasPermission(user, k)) leadershipCount++; });
 
+  let hrCount = 0;
+  hrKeys.forEach(k => { if (hasPermission(user, k)) hrCount++; });
+
+  let leaveCount = 0;
+  leaveKeys.forEach(k => { if (hasPermission(user, k)) leaveCount++; });
+
   return {
     meetingCount,
     meetingTotal: meetingKeys.length,
@@ -223,8 +313,12 @@ export function countSystemPermissions(user: UserProfile | null | undefined): {
     vehicleTotal: vehicleKeys.length,
     leadershipCount,
     leadershipTotal: leadershipKeys.length,
-    totalEnabled: meetingCount + vehicleCount + leadershipCount,
-    totalFeatures: meetingKeys.length + vehicleKeys.length + leadershipKeys.length
+    hrCount,
+    hrTotal: hrKeys.length,
+    leaveCount,
+    leaveTotal: leaveKeys.length,
+    totalEnabled: meetingCount + vehicleCount + leadershipCount + hrCount + leaveCount,
+    totalFeatures: meetingKeys.length + vehicleKeys.length + leadershipKeys.length + hrKeys.length + leaveKeys.length
   };
 }
 
@@ -298,7 +392,7 @@ export interface SystemSettings {
 
 // Vehicle Management System Types
 export type VehicleStatus = "available" | "in_use" | "maintenance";
-export type VehicleType = "sedan" | "suv" | "van" | "pickup" | "minibus";
+export type VehicleType = "sedan" | "suv" | "van" | "pickup" | "minibus" | "other" | string;
 export type VehicleBookingStatus = "pending" | "approved" | "rejected" | "completed" | "cancelled";
 
 export interface Vehicle {
@@ -372,6 +466,109 @@ export interface LeadershipActivity {
   priority: ActivityPriority;
   participants?: string; // ຄະນະເຂົ້າຮ່ວມ / ຜູ້ຕິດຕາມ
   outcome?: string; // ຜົນການຈັດຕັ້ງປະຕິບັດ / ຂໍ້ສະຫຼຸບຫຍໍ້
+  createdAt: string;
+  updatedAt?: string;
+}
+
+// ============================================================================
+// SYSTEM 4: ລະບົບຈັດການບັນຊີພະນັກງານ (HR & Civil Servant Directory System)
+// ============================================================================
+export type CivilServantType = "full" | "probation" | "contract" | "assigned";
+// full = ລັດຖະກອນສົມບູນ, probation = ລັດຖະກອນທົດລອງງານ, contract = ພະນັກງານຕາມສັນຍາ, assigned = ພະນັກງານຊ່ວຍວຽກ
+
+export type CivilServantStatus = "active" | "study" | "retired" | "transferred" | "suspended";
+// active = ປະຈຳການປົກກະຕິ, study = ໄປຍົກລະດັບ/ຮຽນຕໍ່, retired = ບໍານານ, transferred = ຍົກຍ້າຍ, suspended = ພັກວຽກ
+
+export interface CivilServant {
+  id: string; // Document ID
+  staffCode: string; // e.g. "HP-LK-001" (ລະຫັດລັດຖະກອນ)
+  fullName: string; // ຊື່ ແລະ ນາມສະກຸນ
+  gender: "male" | "female"; // ເພດ
+  dateOfBirth: string; // YYYY-MM-DD
+  ethnicity?: string; // ຊົນເຜົ່າ
+  religion?: string; // ສາສະໜາ
+  position: string; // ຕຳແໜ່ງບໍລິຫານ
+  department: string; // ພະແນກ / ຂະແໜງການ
+  type: CivilServantType; // ປະເພດລັດຖະກອນ
+  salaryGrade?: string; // ຊັ້ນ/ຂັ້ນເງິນເດືອນ (ເຊັ່ນ: ຊັ້ນ 4 ຂັ້ນ 6)
+  dateJoinedState: string; // ວັນທີເຂົ້າສັງກັດລັດ (YYYY-MM-DD)
+  dateJoinedOffice?: string; // ວັນທີມາປະຈຳການຢູ່ຫ້ອງວ່າການແຂວງ
+  educationDegree: string; // ລະດັບການສຶກສາ (ປະລິນຍາຕີ, ໂທ, ເອກ, ຊັ້ນສູງ...)
+  majorField: string; // ສາຂາວິຊາສະເພາະ
+  politicalTheory?: string; // ທິດສະດີການເມືອງ (ຊັ້ນຕົ້ນ, ຊັ້ນກາງ, ຊັ້ນສູງ, ຍັງບໍ່ມີ)
+  phone: string; // ເບີໂທລະສັບ
+  email?: string; // ອີເມວ
+  currentAddress: string; // ທີ່ຢູ່ປະຈຸບັນ
+  originVillage?: string; // ບ້ານເກີດ/ເມືອງເກີດ
+  idCardNumber?: string; // ເລກບັດປະຈຳຕົວ
+  officialPhotoUrl: string; // ຮູບຖ່າຍທາງການ ຂະໜາດ 4*6
+  status: CivilServantStatus; // ສະຖານະປະຈຳການ
+  notes?: string; // ໝາຍເຫດ
+  documentName?: string; // ເອກະສານຊີວະປະຫວັດແນບ
+  documentData?: string; // base64 / URL
+  createdAt: string;
+  updatedAt?: string;
+}
+
+// ============================================================================
+// SYSTEM 5: ລະບົບຕິດຕາມການລາພັກຂອງພະນັກງານ (Staff Leave Tracking System)
+// ============================================================================
+export type LeaveType = 
+  | "annual" // ລາພັກປະຈຳປີ (ໂຄຕ້າ 15 ວັນທາງລັດຖະການຕໍ່ປີ)
+  | "sick" // ລາປ່ວຍ
+  | "maternity" // ລາເກີດລູກ/ຄອດລູກ
+  | "emergency" // ລາກິດສຸກເສີນ
+  | "study" // ລາໄປຮຽນ/ຝຶກອົບຮົມ
+  | "other"; // ອື່ນໆ
+
+export type LeaveStatus = "pending" | "approved" | "rejected" | "cancelled";
+
+export interface LeaveRequest {
+  id: string;
+  staffId: string; // Reference to CivilServant ID
+  staffCode: string; // ລະຫັດລັດຖະກອນ
+  staffName: string; // ຊື່ ແລະ ນາມສະກຸນ ຜູ້ຂໍລາພັກ
+  staffDepartment: string; // ພະແນກ/ຂະແໜງ
+  staffPosition: string; // ຕຳແໜ່ງ
+  staffPhone: string; // ເບີໂທ
+  userId?: string; // Account UID of submitter
+  
+  leaveType: LeaveType;
+  title: string; // ຫົວຂໍ້ທີ່ຂໍສະເໜີລາພັກ
+  reason: string; // ເຫດຜົນ ແລະ ຄວາມຈຳເປັນ
+  startDate: string; // YYYY-MM-DD
+  endDate: string; // YYYY-MM-DD
+  workingDaysCount: number; // ຈຳນວນວັນທາງລັດຖະການ
+  year: number; // e.g. 2026
+  
+  // 15 days quota tracking snapshot at request time
+  quotaTotal: number; // 15
+  quotaUsedBefore: number; // ວັນທີ່ໃຊ້ໄປແລ້ວໃນປີນີ້
+  quotaRemainingBefore: number; // ວັນທີ່ຍັງເຫຼືອ
+  
+  handoverPerson?: string; // ຜູ້ມອບໝາຍວຽກແທນຊົ່ວຄາວ
+  handoverPhone?: string;
+  emergencyPhone?: string; // ເບີໂທຕິດຕໍ່ສຸກເສີນ
+  destination?: string; // ສະຖານທີ່ພັກເຊົາລະຫວ່າງລາພັກ
+  
+  attachmentName?: string;
+  attachmentData?: string;
+  
+  status: LeaveStatus;
+  
+  // Approver Record (ບັນຊີຜູ້ອະນຸມັດ: Admin ຫຼື ຫົວໜ້າຫ້ອງ ບໍລິຫານ, ພິທີການ ແລະ ການເງິນ)
+  approvedByUid?: string;
+  approvedByName?: string;
+  approvedByRole?: string;
+  approvedByEmail?: string;
+  approvedAt?: string;
+  approvalRemarks?: string;
+  
+  rejectionReason?: string;
+  rejectedByUid?: string;
+  rejectedByName?: string;
+  rejectedAt?: string;
+  
   createdAt: string;
   updatedAt?: string;
 }

@@ -10,15 +10,19 @@ import {
   Vehicle, 
   VehicleBooking, 
   LeadershipActivity,
+  CivilServant,
+  LeaveRequest,
   hasPermission
 } from "./types";
 import { translations } from "./lib/translations";
-import { Building2, LogOut, Clock, ShieldAlert, Car, Briefcase, ArrowRight, ArrowLeft, X, Layers, Lock, CheckCircle2 } from "lucide-react";
+import { Building2, LogOut, Clock, ShieldAlert, Car, Briefcase, ArrowRight, ArrowLeft, X, Layers, Lock, CheckCircle2, Users, CalendarClock } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import emblemLogo from "./assets/images/emblem.png";
 import emblemSvg from "./assets/images/emblem.svg";
 import { seedDefaultVehicles } from "./lib/vehicleHelper";
 import { subscribeLeadershipActivities, fetchLeadershipActivities } from "./lib/activityHelper";
+import { seedDefaultEmployees } from "./lib/hrHelper";
+import { seedDefaultLeaveRequests, getLeaveRequests } from "./lib/leaveHelper";
 import { showSystemToast } from "./utils/toast";
 
 // Components
@@ -46,6 +50,16 @@ import VehicleReports from "./components/VehicleReports";
 import LeadershipCalendar from "./components/LeadershipCalendar";
 import LeadershipMyActivities from "./components/LeadershipMyActivities";
 import LeadershipReports from "./components/LeadershipReports";
+
+// HR Civil Servant Directory Components (System 4)
+import HRDashboard from "./components/HRDashboard";
+import HREmployeeDirectory from "./components/HREmployeeDirectory";
+import HRReports from "./components/HRReports";
+
+// Staff Leave Tracking Components (System 5)
+import LeaveDashboard from "./components/LeaveDashboard";
+import LeaveRequestForm from "./components/LeaveRequestForm";
+import LeaveReports from "./components/LeaveReports";
 
 export default function App() {
   // Auth & Profile State
@@ -100,11 +114,11 @@ export default function App() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Active System State: "portal" | "meeting" | "vehicle" | "leadership"
-  const [activeSystem, setActiveSystemState] = useState<"portal" | "meeting" | "vehicle" | "leadership">(() => {
+  // Active System State: "portal" | "meeting" | "vehicle" | "leadership" | "hr" | "leave"
+  const [activeSystem, setActiveSystemState] = useState<"portal" | "meeting" | "vehicle" | "leadership" | "hr" | "leave">(() => {
     return (localStorage.getItem("office-active-system") as any) || "portal";
   });
-  const setActiveSystem = (sys: "portal" | "meeting" | "vehicle" | "leadership") => {
+  const setActiveSystem = (sys: "portal" | "meeting" | "vehicle" | "leadership" | "hr" | "leave") => {
     setActiveSystemState(sys);
     localStorage.setItem("office-active-system", sys);
   };
@@ -116,7 +130,14 @@ export default function App() {
   // Leadership Activities state
   const [leadershipActivities, setLeadershipActivities] = useState<LeadershipActivity[]>([]);
 
-  // Granular Permission Checks for the 3 Systems and features
+  // HR Civil Servants state (System 4)
+  const [employees, setEmployees] = useState<CivilServant[]>([]);
+  const [isHRAddModalOpen, setIsHRAddModalOpen] = useState(false);
+
+  // Staff Leave Requests state (System 5)
+  const [leaves, setLeaves] = useState<LeaveRequest[]>([]);
+
+  // Granular Permission Checks for the 5 Systems and features
   const canAccessMeeting = hasPermission(userProfile, "meetingAccess");
   const canBookMeeting = hasPermission(userProfile, "meetingBook");
   const canApproveMeeting = hasPermission(userProfile, "meetingApprove");
@@ -133,6 +154,15 @@ export default function App() {
   const canCalendarLeadership = hasPermission(userProfile, "leadershipCalendar");
   const canLogDuty = hasPermission(userProfile, "leadershipLogOwn");
   const canDutyReports = hasPermission(userProfile, "leadershipReports");
+
+  const canAccessHR = hasPermission(userProfile, "hrAccess");
+  const canManageHR = hasPermission(userProfile, "hrManage");
+  const canHRReports = hasPermission(userProfile, "hrReports");
+
+  const canAccessLeave = hasPermission(userProfile, "leaveAccess");
+  const canApplyLeave = hasPermission(userProfile, "leaveApply");
+  const canApproveLeave = hasPermission(userProfile, "leaveApprove");
+  const canLeaveReports = hasPermission(userProfile, "leaveReports");
 
   // Sync Theme to HTML Element attribute
   useEffect(() => {
@@ -380,6 +410,42 @@ export default function App() {
     };
     window.addEventListener("leadership-activities-updated", handleActivityLocalSync);
 
+    // Listen to Civil Servants (HR) collection
+    const hrRef = collection(db, "civil_servants");
+    const unsubscribeHR = onSnapshot(hrRef, (snapshot) => {
+      const list: CivilServant[] = [];
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data() as CivilServant;
+        list.push({ ...data, id: docSnap.id || data.id });
+      });
+      if (list.length === 0) {
+        seedDefaultEmployees().then(e => setEmployees(e));
+      } else {
+        setEmployees(list);
+      }
+    }, (error) => {
+      console.warn("HR collection snapshot notice:", error);
+      seedDefaultEmployees().then(e => setEmployees(e));
+    });
+
+    // Listen to Leave Requests collection
+    const leaveRef = collection(db, "leave_requests");
+    const unsubscribeLeave = onSnapshot(leaveRef, (snapshot) => {
+      const list: LeaveRequest[] = [];
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data() as LeaveRequest;
+        list.push({ ...data, id: docSnap.id || data.id });
+      });
+      if (list.length === 0) {
+        seedDefaultLeaveRequests([]).then(l => setLeaves(l));
+      } else {
+        setLeaves(list.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || "")));
+      }
+    }, (error) => {
+      console.warn("Leave collection snapshot notice:", error);
+      getLeaveRequests().then(l => setLeaves(l));
+    });
+
     return () => {
       unsubscribeRooms();
       unsubscribeBookings();
@@ -387,6 +453,8 @@ export default function App() {
       unsubscribeVehicles();
       unsubscribeVehicleBookings();
       unsubscribeActivities();
+      unsubscribeHR();
+      unsubscribeLeave();
       window.removeEventListener("vehicle-bookings-updated", handleVehicleLocalSync);
       window.removeEventListener("vehicle-booking-created", handleVehicleLocalSync);
       window.removeEventListener("storage", handleVehicleLocalSync);
@@ -512,6 +580,8 @@ export default function App() {
           setActiveSystem={setActiveSystem}
           vehicleBookings={vehicleBookings}
           vehicles={vehicles}
+          employees={employees}
+          leaves={leaves}
         />
 
         {/* Main Content Area */}
@@ -532,7 +602,7 @@ export default function App() {
 
           {/* Dynamic active page viewer */}
           <main id="app-main-content" className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto max-w-7xl w-full mx-auto">
-            {/* PORTAL VIEW: 3 MAIN WINDOWS AFTER LOGIN */}
+            {/* PORTAL VIEW: 5 MAIN SYSTEMS AFTER LOGIN */}
             {activeSystem === "portal" && activeTab === "portal" && (
               <SystemPortal 
                 language={language}
@@ -542,14 +612,22 @@ export default function App() {
                 vehicles={vehicles}
                 vehicleBookings={vehicleBookings}
                 activities={leadershipActivities}
-                onSelectSystem={(sys) => {
+                employees={employees}
+                leaves={leaves}
+                onSelectSystem={(sys, initialTab) => {
                   setActiveSystem(sys);
-                  if (sys === "meeting") {
+                  if (initialTab) {
+                    setActiveTab(initialTab);
+                  } else if (sys === "meeting") {
                     setActiveTab("dashboard");
                   } else if (sys === "vehicle") {
                     setActiveTab("vehicle-dashboard");
                   } else if (sys === "leadership") {
                     setActiveTab("leadership-calendar");
+                  } else if (sys === "hr") {
+                    setActiveTab("hr-dashboard");
+                  } else if (sys === "leave") {
+                    setActiveTab("leave-dashboard");
                   }
                 }}
               />
@@ -890,6 +968,194 @@ export default function App() {
                         </div>
                         <h3 className="text-lg font-black text-slate-900 dark:text-white">
                           {language === "lo" ? "ທ່ານບໍ່ມີສິດເບິ່ງບົດລາຍງານວຽກ" : "No Duty Reports Permission"}
+                        </h3>
+                      </div>
+                    )
+                  )}
+                </>
+              )
+            )}
+
+            {/* ========================================================================= */}
+            {/* SYSTEM 4: ລະບົບຈັດການບັນຊີພະນັກງານ (HR CIVIL SERVANT DIRECTORY SYSTEM) */}
+            {/* ========================================================================= */}
+            {activeSystem === "hr" && (
+              !canAccessHR ? (
+                <div className="p-8 max-w-lg mx-auto my-12 bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/40 rounded-3xl text-center space-y-4 shadow-xl">
+                  <div className="w-16 h-16 mx-auto rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 flex items-center justify-center">
+                    <Lock className="w-8 h-8" />
+                  </div>
+                  <h3 className="text-xl font-black text-slate-900 dark:text-white">
+                    {language === "lo" ? "ທ່ານບໍ່ມີສິດເຂົ້າເຖິງລະບົບບັນຊີພະນັກງານ" : "Access Denied: HR Roster System"}
+                  </h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    {language === "lo" 
+                      ? "ບັນຊີຂອງທ່ານບໍ່ໄດ້ຮັບສິດໃຫ້ນຳໃຊ້ລະບົບຈັດການບັນຊີພະນັກງານ ກະລຸນາຕິດຕໍ່ຜູ້ດູແລລະບົບ (Admin) ເພື່ອຂໍເປີດສິດ"
+                      : "Your account does not have permission to access the Civil Servant Directory. Please contact an administrator."}
+                  </p>
+                  <button
+                    onClick={() => { setActiveSystem("portal"); setActiveTab("portal"); }}
+                    className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm cursor-pointer shadow-md inline-flex items-center gap-2"
+                  >
+                    <Layers className="w-4 h-4" />
+                    <span>{language === "lo" ? "ກັບໄປໜ້າສູນຄວບຄຸມລະບົບທັງໝົດ" : "Return to Control Center"}</span>
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {activeTab === "hr-dashboard" && (
+                    <HRDashboard 
+                      employees={employees}
+                      language={language}
+                      userRole={userProfile.role}
+                      onNavigateToDirectory={() => setActiveTab("hr-directory")}
+                      onNavigateToReports={() => setActiveTab("hr-reports")}
+                      onOpenAddModal={() => {
+                        setActiveTab("hr-directory");
+                        setIsHRAddModalOpen(true);
+                      }}
+                    />
+                  )}
+
+                  {activeTab === "hr-directory" && (
+                    <HREmployeeDirectory 
+                      employees={employees}
+                      language={language}
+                      userRole={userProfile.role}
+                      isAddModalOpen={isHRAddModalOpen}
+                      onCloseAddModal={() => setIsHRAddModalOpen(false)}
+                    />
+                  )}
+
+                  {activeTab === "hr-reports" && (
+                    (userProfile.role === "admin" || canHRReports) ? (
+                      <HRReports 
+                        employees={employees}
+                        language={language}
+                      />
+                    ) : (
+                      <div className="p-8 max-w-lg mx-auto my-12 bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/40 rounded-3xl text-center space-y-4 shadow-xl">
+                        <div className="w-16 h-16 mx-auto rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 flex items-center justify-center">
+                          <Lock className="w-8 h-8" />
+                        </div>
+                        <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                          {language === "lo" ? "ທ່ານບໍ່ມີສິດເບິ່ງບົດລາຍງານບັນຊີພະນັກງານ" : "No HR Reports Permission"}
+                        </h3>
+                      </div>
+                    )
+                  )}
+                </>
+              )
+            )}
+
+            {/* ========================================================================= */}
+            {/* SYSTEM 5: ລະບົບຕິດຕາມການລາພັກຂອງພະນັກງານ (STAFF LEAVE TRACKING SYSTEM) */}
+            {/* ========================================================================= */}
+            {activeSystem === "leave" && (
+              !canAccessLeave ? (
+                <div className="p-8 max-w-lg mx-auto my-12 bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/40 rounded-3xl text-center space-y-4 shadow-xl">
+                  <div className="w-16 h-16 mx-auto rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 flex items-center justify-center">
+                    <Lock className="w-8 h-8" />
+                  </div>
+                  <h3 className="text-xl font-black text-slate-900 dark:text-white">
+                    {language === "lo" ? "ທ່ານບໍ່ມີສິດເຂົ້າເຖິງລະບົບຕິດຕາມການລາພັກ" : "Access Denied: Leave Tracking System"}
+                  </h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    {language === "lo" 
+                      ? "ບັນຊີຂອງທ່ານບໍ່ໄດ້ຮັບສິດໃຫ້ນຳໃຊ້ລະບົບຕິດຕາມການລາພັກ ກະລຸນາຕິດຕໍ່ຜູ້ດູແລລະບົບ (Admin) ເພື່ອຂໍເປີດສິດ"
+                      : "Your account does not have permission to access the leave tracking system. Please contact an administrator."}
+                  </p>
+                  <button
+                    onClick={() => { setActiveSystem("portal"); setActiveTab("portal"); }}
+                    className="px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-sm cursor-pointer shadow-md inline-flex items-center gap-2"
+                  >
+                    <Layers className="w-4 h-4" />
+                    <span>{language === "lo" ? "ກັບໄປໜ້າສູນຄວບຄຸມລະບົບທັງໝົດ" : "Return to Control Center"}</span>
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {activeTab === "leave-dashboard" && (
+                    <LeaveDashboard 
+                      leaves={leaves}
+                      employees={employees}
+                      language={language}
+                      userProfile={userProfile}
+                      onNavigateToApply={() => setActiveTab("leave-apply")}
+                      onNavigateToApprovals={() => setActiveTab("leave-approvals")}
+                      onNavigateToReports={() => setActiveTab("leave-reports")}
+                    />
+                  )}
+
+                  {activeTab === "leave-apply" && (
+                    (userProfile.role === "admin" || canApplyLeave) ? (
+                      <LeaveRequestForm 
+                        leaves={leaves}
+                        employees={employees}
+                        language={language}
+                        userProfile={userProfile}
+                        initialSubTab="apply"
+                        onRefreshData={() => getLeaveRequests().then(setLeaves)}
+                      />
+                    ) : (
+                      <div className="p-8 max-w-lg mx-auto my-12 bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/40 rounded-3xl text-center space-y-4 shadow-xl">
+                        <div className="w-16 h-16 mx-auto rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 flex items-center justify-center">
+                          <Lock className="w-8 h-8" />
+                        </div>
+                        <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                          {language === "lo" ? "ທ່ານບໍ່ມີສິດຂຽນແບບຟອມຂໍລາພັກ" : "No Leave Application Permission"}
+                        </h3>
+                      </div>
+                    )
+                  )}
+
+                  {activeTab === "leave-approvals" && (
+                    (userProfile.role === "admin" || canApproveLeave || userProfile?.department?.includes("ບໍລິຫານ") || userProfile?.department?.includes("ການເງິນ") || userProfile?.displayName?.includes("ມະນີວອນ") || userProfile?.email?.toLowerCase().includes("tounkmv99")) ? (
+                      <LeaveRequestForm 
+                        leaves={leaves}
+                        employees={employees}
+                        language={language}
+                        userProfile={userProfile}
+                        initialSubTab="approvals"
+                        onRefreshData={() => getLeaveRequests().then(setLeaves)}
+                      />
+                    ) : (
+                      <div className="p-8 max-w-lg mx-auto my-12 bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/40 rounded-3xl text-center space-y-4 shadow-xl">
+                        <div className="w-16 h-16 mx-auto rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 flex items-center justify-center">
+                          <Lock className="w-8 h-8" />
+                        </div>
+                        <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                          {language === "lo" ? "ທ່ານບໍ່ມີສິດອະນຸມັດຄຳຮ້ອງຂໍລາພັກ" : "No Leave Approval Permission"}
+                        </h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                          {language === "lo" 
+                            ? "ສິດອະນຸມັດສະຫງວນໄວ້ສະເພາະ ແອັດມິນ ຫຼື ຫົວໜ້າຫ້ອງ ບໍລິຫານ, ພິທີການ ແລະ ການເງິນ" 
+                            : "Approval is reserved for Administrator or Chief of Administration, Protocol & Finance."}
+                        </p>
+                        <button
+                          onClick={() => setActiveTab("leave-dashboard")}
+                          className="px-5 py-2 rounded-xl bg-purple-600 text-white font-bold text-xs"
+                        >
+                          {language === "lo" ? "ກັບໄປ Dashboard" : "Back to Dashboard"}
+                        </button>
+                      </div>
+                    )
+                  )}
+
+                  {activeTab === "leave-reports" && (
+                    (userProfile.role === "admin" || canLeaveReports) ? (
+                      <LeaveReports 
+                        leaves={leaves}
+                        employees={employees}
+                        language={language}
+                      />
+                    ) : (
+                      <div className="p-8 max-w-lg mx-auto my-12 bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/40 rounded-3xl text-center space-y-4 shadow-xl">
+                        <div className="w-16 h-16 mx-auto rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 flex items-center justify-center">
+                          <Lock className="w-8 h-8" />
+                        </div>
+                        <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                          {language === "lo" ? "ທ່ານບໍ່ມີສິດເບິ່ງບົດລາຍງານການລາພັກ" : "No Leave Reports Permission"}
                         </h3>
                       </div>
                     )

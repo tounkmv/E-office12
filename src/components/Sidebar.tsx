@@ -52,10 +52,12 @@ interface SidebarProps {
   bookings?: RoomBooking[];
   allUsers?: UserProfile[];
   pendingUsersCount?: number;
-  activeSystem?: "portal" | "meeting" | "vehicle" | "leadership";
-  setActiveSystem?: (system: "portal" | "meeting" | "vehicle" | "leadership") => void;
+  activeSystem?: "portal" | "meeting" | "vehicle" | "leadership" | "hr" | "leave";
+  setActiveSystem?: (system: "portal" | "meeting" | "vehicle" | "leadership" | "hr" | "leave") => void;
   vehicleBookings?: VehicleBooking[];
   vehicles?: Vehicle[];
+  employees?: any[];
+  leaves?: any[];
 }
 
 export default function Sidebar({ 
@@ -73,7 +75,9 @@ export default function Sidebar({
   activeSystem = "meeting",
   setActiveSystem,
   vehicleBookings = [],
-  vehicles = []
+  vehicles = [],
+  employees = [],
+  leaves = []
 }: SidebarProps) {
   const t = translations[language];
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -107,11 +111,14 @@ export default function Sidebar({
   // Calculate pending and total booking counts for notification badges
   const pendingMeetingCount = bookings.filter(b => b.status === "pending").length;
   const pendingVehicleCount = vehicleBookings.filter(b => b.status === "pending").length;
+  const pendingLeavesCount = leaves.filter(l => l.status === "pending").length;
 
   const isLao = language === "lo";
   const isPortal = activeSystem === "portal";
   const isVehicleSystem = activeSystem === "vehicle";
   const isLeadershipSystem = activeSystem === "leadership";
+  const isHRSystem = activeSystem === "hr";
+  const isLeaveSystem = activeSystem === "leave";
   const isMeetingSystem = activeSystem === "meeting";
 
   // Granular Permission Checks for Menu Items
@@ -131,6 +138,23 @@ export default function Sidebar({
   const canCalendarLeadership = hasPermission(userProfile, "leadershipCalendar");
   const canLogDuty = hasPermission(userProfile, "leadershipLogOwn");
   const canDutyReports = hasPermission(userProfile, "leadershipReports");
+
+  const canAccessHR = hasPermission(userProfile, "hrAccess");
+  const canManageHR = hasPermission(userProfile, "hrManage");
+  const canHRReports = hasPermission(userProfile, "hrReports");
+
+  const canAccessLeave = hasPermission(userProfile, "leaveAccess");
+  const canApplyLeave = hasPermission(userProfile, "leaveApply");
+  const canApproveLeave = hasPermission(userProfile, "leaveApprove");
+  const canLeaveReports = hasPermission(userProfile, "leaveReports");
+
+  // Determine if current user can approve leave requests (Admin or Dept of Admin/Finance or specific permission)
+  const canApproveLeaveUser = userRole === "admin" || 
+    canApproveLeave || 
+    userProfile?.department?.includes("ບໍລິຫານ") || 
+    userProfile?.department?.includes("ການເງິນ") || 
+    userProfile?.displayName?.includes("ມະນີວອນ") ||
+    userProfile?.email?.toLowerCase().includes("tounkmv99");
 
   // Dynamic menu items based on active system and user permissions
   const menuItems = isPortal ? [
@@ -158,10 +182,55 @@ export default function Sidebar({
       icon: Briefcase, 
       action: () => { setActiveSystem?.("leadership"); setActiveTab("leadership-calendar"); } 
     }] : []),
+    ...(canAccessHR ? [{ 
+      id: "goto-hr", 
+      label: isLao ? "ລະບົບຈັດການບັນຊີພະນັກງານ" : "Civil Servant Directory", 
+      icon: Users, 
+      action: () => { setActiveSystem?.("hr"); setActiveTab("hr-dashboard"); } 
+    }] : []),
+    ...(canAccessLeave ? [{ 
+      id: "goto-leave", 
+      label: isLao ? "ລະບົບຕິດຕາມການລາພັກ" : "Leave Tracking System", 
+      icon: CalendarClock, 
+      action: () => { setActiveSystem?.("leave"); setActiveTab("leave-dashboard"); } 
+    }] : []),
     ...(userRole === "admin" ? [
       { id: "users", label: t.navUsers, icon: Users, action: () => { setActiveTab("users"); } }
     ] : []),
     { id: "settings", label: t.navSettings, icon: SettingsIcon, action: () => { setActiveTab("settings"); } }
+  ] : isLeaveSystem ? [
+    { id: "leave-dashboard", label: isLao ? "Dashboard ຕິດຕາມການລາພັກ" : "Leave Dashboard", icon: LayoutDashboard },
+    ...(canApplyLeave ? [
+      { id: "leave-apply", label: isLao ? "ແບບຟອມຂໍລາພັກ" : "Apply for Leave", icon: CalendarClock }
+    ] : []),
+    ...(canApproveLeaveUser ? [
+      { 
+        id: "leave-approvals", 
+        label: isLao ? "ສູນອະນຸມັດຄຳຮ້ອງ" : "Approval Center", 
+        icon: ShieldCheck,
+        action: () => {
+          setActiveSystem?.("leave");
+          setActiveTab("leave-approvals");
+        }
+      }
+    ] : []),
+    ...(canLeaveReports ? [
+      { id: "leave-reports", label: isLao ? "ບົດລາຍງານສະຖິຕິ 15 ວັນ" : "15-Day Leave Reports", icon: FileSpreadsheet }
+    ] : []),
+    ...(userRole === "admin" ? [
+      { id: "users", label: t.navUsers, icon: Users }
+    ] : []),
+    { id: "settings", label: t.navSettings, icon: SettingsIcon }
+  ] : isHRSystem ? [
+    { id: "hr-dashboard", label: isLao ? "Dashboard ບັນຊີພະນັກງານ" : "HR Dashboard", icon: LayoutDashboard },
+    { id: "hr-directory", label: isLao ? "ບັນຊີຊີວະປະຫວັດພະນັກງານ" : "Civil Servant Directory", icon: Users },
+    ...(canHRReports ? [
+      { id: "hr-reports", label: isLao ? "ບົດລາຍງານບັນຊີພະນັກງານ" : "HR Roster Reports", icon: FileSpreadsheet }
+    ] : []),
+    ...(userRole === "admin" ? [
+      { id: "users", label: t.navUsers, icon: Users }
+    ] : []),
+    { id: "settings", label: t.navSettings, icon: SettingsIcon }
   ] : isLeadershipSystem ? [
     ...(canCalendarLeadership ? [
       { id: "leadership-calendar", label: isLao ? "ປະຕິທິນການເຄື່ອນໄຫວວຽກ" : "Duty Calendar", icon: CalendarDays }
@@ -275,7 +344,12 @@ export default function Sidebar({
                 <span className="truncate text-[10px] font-black">{isLao ? "ຫ້ອງປະຊຸມ" : "Rooms"}</span>
                 {!canAccessMeeting && <Lock className="w-2.5 h-2.5 shrink-0 opacity-60" />}
                 {pendingMeetingCount > 0 && canAccessMeeting && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-ping shrink-0" />
+                  <span 
+                    className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-rose-500 text-white shadow-xs shrink-0 animate-pulse border border-white/40 leading-none"
+                    title={isLao ? `${pendingMeetingCount} ການຈອງລໍຖ້າອະນຸມັດ` : `${pendingMeetingCount} pending`}
+                  >
+                    {pendingMeetingCount}
+                  </span>
                 )}
               </div>
             </button>
@@ -318,7 +392,12 @@ export default function Sidebar({
                 <span className="truncate text-[10px] font-black">{isLao ? "ຈັດການລົດ" : "Vehicles"}</span>
                 {!canAccessVehicle && <Lock className="w-2.5 h-2.5 shrink-0 opacity-60" />}
                 {pendingVehicleCount > 0 && canAccessVehicle && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-ping shrink-0" />
+                  <span 
+                    className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-rose-500 text-white shadow-xs shrink-0 animate-pulse border border-white/40 leading-none"
+                    title={isLao ? `${pendingVehicleCount} ຄຳຂໍຈອງລໍຖ້າອະນຸມັດ` : `${pendingVehicleCount} pending`}
+                  >
+                    {pendingVehicleCount}
+                  </span>
                 )}
               </div>
             </button>
@@ -363,6 +442,95 @@ export default function Sidebar({
               </div>
             </button>
           </div>
+
+          {/* Row 2: Systems 4 (HR) & 5 (Leave) */}
+          <div className="grid grid-cols-2 gap-1.5 bg-slate-200/70 dark:bg-slate-900/80 p-1.5 rounded-2xl border border-slate-300/40 dark:border-white/5 shadow-inner">
+            {/* 4. HR Civil Servant Directory Button */}
+            <button
+              onClick={() => {
+                if (!canAccessHR) return;
+                setActiveSystem("hr");
+                setActiveTab("hr-dashboard");
+                if (onItemClick) onItemClick();
+              }}
+              disabled={!canAccessHR}
+              className={`group relative flex flex-col items-center justify-between p-1.5 rounded-xl transition-all duration-200 cursor-pointer overflow-hidden ${
+                !canAccessHR
+                  ? "opacity-40 cursor-not-allowed bg-slate-100 dark:bg-slate-800/40 text-slate-400 border border-slate-200 dark:border-white/5"
+                  : isHRSystem
+                  ? "bg-gradient-to-r from-purple-600 via-fuchsia-600 to-purple-700 text-white shadow-md shadow-purple-600/30 border border-purple-400/50 scale-[1.02]"
+                  : "bg-white dark:bg-slate-800/90 text-slate-700 dark:text-slate-200 border border-purple-200/70 dark:border-purple-900/40 hover:border-purple-400 hover:text-purple-600 dark:hover:text-purple-400 hover:shadow-xs shadow-2xs"
+              }`}
+              title={canAccessHR ? (isLao ? "ລະບົບຈັດການບັນຊີພະນັກງານ" : "HR") : (isLao ? "ບໍ່ມີສິດເຂົ້າເຖິງ" : "No Access")}
+            >
+              <div className={`w-full h-1 rounded-full mb-1 transition-all duration-200 ${
+                !canAccessHR
+                  ? "bg-slate-300 dark:bg-slate-700"
+                  : isHRSystem
+                  ? "bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]"
+                  : "bg-gradient-to-r from-purple-500 via-fuchsia-500 to-purple-600 shadow-xs"
+              }`} />
+
+              <div className="w-full flex items-center justify-center gap-1 min-w-0">
+                <div className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 shadow-2xs ${
+                  isHRSystem
+                    ? "bg-white/25 text-white"
+                    : "bg-purple-100 dark:bg-purple-950/80 text-purple-600 dark:text-purple-400 border border-purple-200/80 dark:border-purple-800/80"
+                }`}>
+                  <Users className="w-3.5 h-3.5 shrink-0" />
+                </div>
+                <span className="truncate text-[10px] font-black">{isLao ? "ບັນຊີພະນັກງານ" : "HR Staff"}</span>
+                {!canAccessHR && <Lock className="w-2.5 h-2.5 shrink-0 opacity-60" />}
+              </div>
+            </button>
+
+            {/* 5. Leave Tracking System Button */}
+            <button
+              onClick={() => {
+                if (!canAccessLeave) return;
+                setActiveSystem("leave");
+                setActiveTab("leave-dashboard");
+                if (onItemClick) onItemClick();
+              }}
+              disabled={!canAccessLeave}
+              className={`group relative flex flex-col items-center justify-between p-1.5 rounded-xl transition-all duration-200 cursor-pointer overflow-hidden ${
+                !canAccessLeave
+                  ? "opacity-40 cursor-not-allowed bg-slate-100 dark:bg-slate-800/40 text-slate-400 border border-slate-200 dark:border-white/5"
+                  : isLeaveSystem
+                  ? "bg-gradient-to-r from-teal-600 via-emerald-600 to-teal-700 text-white shadow-md shadow-teal-600/30 border border-teal-400/50 scale-[1.02]"
+                  : "bg-white dark:bg-slate-800/90 text-slate-700 dark:text-slate-200 border border-teal-200/70 dark:border-teal-900/40 hover:border-teal-400 hover:text-teal-600 dark:hover:text-teal-400 hover:shadow-xs shadow-2xs"
+              }`}
+              title={canAccessLeave ? (isLao ? "ລະບົບຕິດຕາມການລາພັກ" : "Leave") : (isLao ? "ບໍ່ມີສິດເຂົ້າເຖິງ" : "No Access")}
+            >
+              <div className={`w-full h-1 rounded-full mb-1 transition-all duration-200 ${
+                !canAccessLeave
+                  ? "bg-slate-300 dark:bg-slate-700"
+                  : isLeaveSystem
+                  ? "bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]"
+                  : "bg-gradient-to-r from-teal-500 via-emerald-500 to-teal-600 shadow-xs"
+              }`} />
+
+              <div className="w-full flex items-center justify-center gap-1 min-w-0">
+                <div className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 shadow-2xs ${
+                  isLeaveSystem
+                    ? "bg-white/25 text-white"
+                    : "bg-teal-100 dark:bg-teal-950/80 text-teal-600 dark:text-teal-400 border border-teal-200/80 dark:border-teal-800/80"
+                }`}>
+                  <CalendarClock className="w-3.5 h-3.5 shrink-0" />
+                </div>
+                <span className="truncate text-[10px] font-black">{isLao ? "ຕິດຕາມລາພັກ" : "Leave"}</span>
+                {!canAccessLeave && <Lock className="w-2.5 h-2.5 shrink-0 opacity-60" />}
+                {pendingLeavesCount > 0 && canAccessLeave && (
+                  <span 
+                    className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-rose-500 text-white shadow-xs shrink-0 animate-pulse border border-white/40 leading-none"
+                    title={isLao ? `${pendingLeavesCount} ຄຳຮ້ອງລໍຖ້າອະນຸມັດ` : `${pendingLeavesCount} pending`}
+                  >
+                    {pendingLeavesCount}
+                  </span>
+                )}
+              </div>
+            </button>
+          </div>
         </div>
       )}
 
@@ -397,6 +565,24 @@ export default function Sidebar({
               title={language === "lo" ? `${pendingVehicleCount} ຄຳຂໍຈອງລົດລໍຖ້າການອະນຸມັດ` : `${pendingVehicleCount} pending requests`}
             >
               {pendingVehicleCount}
+            </span>
+          );
+        } else if (item.id === "leave-approvals" && pendingLeavesCount > 0) {
+          badge = (
+            <span 
+              className="px-2 py-0.5 rounded-full text-xs font-black bg-gradient-to-r from-amber-500 via-orange-500 to-rose-600 text-white shadow-md shadow-orange-500/40 border border-orange-300/50 animate-bounce shrink-0 flex items-center justify-center min-w-[22px] h-5.5 leading-none"
+              title={language === "lo" ? `${pendingLeavesCount} ຄຳຮ້ອງລາພັກລໍຖ້າການອະນຸມັດ` : `${pendingLeavesCount} pending leave requests`}
+            >
+              {pendingLeavesCount}
+            </span>
+          );
+        } else if (item.id === "goto-leave" && pendingLeavesCount > 0) {
+          badge = (
+            <span 
+              className="px-2 py-0.5 rounded-full text-xs font-black bg-gradient-to-r from-amber-500 via-orange-500 to-rose-600 text-white shadow-md shadow-orange-500/40 border border-orange-300/50 animate-bounce shrink-0 flex items-center justify-center min-w-[22px] h-5.5 leading-none"
+              title={language === "lo" ? `${pendingLeavesCount} ຄຳຮ້ອງລາພັກລໍຖ້າການອະນຸມັດ` : `${pendingLeavesCount} pending leave requests`}
+            >
+              {pendingLeavesCount}
             </span>
           );
         } else if (item.id === "users" && effectivePendingUsersCount > 0) {
