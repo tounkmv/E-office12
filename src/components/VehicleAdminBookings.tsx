@@ -19,7 +19,11 @@ import {
   RotateCcw,
   Sparkles,
   Bell,
-  RefreshCw
+  RefreshCw,
+  Paperclip,
+  Download,
+  Eye,
+  FileCheck
 } from "lucide-react";
 import { VehicleBooking, Vehicle, AppLanguage, VehicleBookingStatus, UserProfile } from "../types";
 import { updateVehicleBookingStatus } from "../lib/vehicleHelper";
@@ -484,6 +488,40 @@ export default function VehicleAdminBookings({
                   </div>
                 </div>
 
+                {/* Attached Document / Form */}
+                {booking.attachmentName && (
+                  <div className="p-3.5 rounded-2xl bg-amber-500/[0.06] border border-amber-500/20 flex flex-wrap items-center justify-between gap-3 text-xs">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-8 h-8 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                        <Paperclip className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-slate-400 text-[10px] block font-bold uppercase">
+                          {isLao ? "ເອກະສານຄັດຕິດ / ແບບຟອມ:" : "Attached Document / Form:"}
+                        </span>
+                        <span className="font-extrabold text-slate-900 dark:text-white truncate block max-w-sm">
+                          {booking.attachmentName}
+                        </span>
+                      </div>
+                    </div>
+
+                    {booking.attachmentData && (
+                      <div className="flex items-center gap-2 shrink-0">
+                        <a
+                          href={booking.attachmentData}
+                          download={booking.attachmentName}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-[11px] flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          <span>{isLao ? "ດາວໂຫຼດ / ເປີດເບິ່ງ" : "Download / View"}</span>
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Rejection reason if any */}
                 {isRejected && booking.rejectionReason && (
                   <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 text-xs font-medium">
@@ -576,6 +614,25 @@ export default function VehicleAdminBookings({
                 <p><strong>{isLao ? "ຈຸດໝາຍ:" : "Destination:"}</strong> {assignModalBooking.destination}</p>
                 <p><strong>{isLao ? "ວັນທີ:" : "Date:"}</strong> {assignModalBooking.startDate} ({assignModalBooking.startTime} - {assignModalBooking.endTime})</p>
                 <p><strong>{isLao ? "ຜູ້ຂໍ:" : "Requester:"}</strong> {assignModalBooking.userName} ({assignModalBooking.department})</p>
+                {assignModalBooking.attachmentName && (
+                  <div className="pt-1 mt-1 border-t border-slate-200 dark:border-white/10 flex items-center justify-between">
+                    <span className="flex items-center gap-1 font-bold text-amber-600 dark:text-amber-400 truncate">
+                      <Paperclip className="w-3.5 h-3.5 shrink-0" />
+                      <span className="truncate max-w-[200px]">{assignModalBooking.attachmentName}</span>
+                    </span>
+                    {assignModalBooking.attachmentData && (
+                      <a
+                        href={assignModalBooking.attachmentData}
+                        download={assignModalBooking.attachmentName}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[11px] font-bold text-blue-600 hover:underline shrink-0"
+                      >
+                        {isLao ? "ເປີດເບິ່ງ" : "View"}
+                      </a>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="space-y-1.5">

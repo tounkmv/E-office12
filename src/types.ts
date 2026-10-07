@@ -436,6 +436,9 @@ export interface VehicleBooking {
   driverPhone?: string; // ເບີໂທຄົນຂັບລົດ
   adminNotes?: string;
   rejectionReason?: string;
+  attachmentName?: string;
+  attachmentData?: string;
+  attachmentType?: string;
   createdAt: string;
   approvedAt?: string;
   approvedBy?: string;
