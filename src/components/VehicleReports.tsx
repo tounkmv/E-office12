@@ -13,7 +13,16 @@ import {
   CheckCircle2, 
   FileText,
   Search,
-  Sparkles
+  Sparkles,
+  Settings,
+  Stamp,
+  Upload,
+  Trash2,
+  Image as ImageIcon,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  RotateCcw
 } from "lucide-react";
 import { VehicleBooking, Vehicle, AppLanguage } from "../types";
 import emblemLogo from "../assets/images/emblem.png";
@@ -43,12 +52,52 @@ export default function VehicleReports({
 
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
 
+  // Official Lao Report Form Configurations (Model from ReportSystem)
+  const [isConfigOpen, setIsConfigOpen] = useState(true);
+  const [provinceName, setProvinceName] = useState("ແຂວງຫົວພັນ");
+  const [officeName, setOfficeName] = useState("ຫ້ອງວ່າການແຂວງ");
+  const [docNumber, setDocNumber] = useState("109/ຫວຂ.ຫພ");
+  const [docDate, setDocDate] = useState(() => new Date().toISOString().substring(0, 10));
+
   // Signatory fields for print
   const [approverTitle, setApproverTitle] = useState("ຫົວໜ້າຫ້ອງວ່າການແຂວງ");
   const [approverName, setApproverName] = useState("ຄຳແພງ ວົງພະຈັນ");
   const [reporterTitle, setReporterTitle] = useState("ຜູ້ສະຫຼຸບ ແລະ ບັນທຶກລາຍງານ");
   const [reporterName, setReporterName] = useState("ຄຳຕຸ່ນ ຄໍາມະວົງ");
-  const [deliverPlace, setDeliverPlace] = useState("ຫ້ອງວ່າການແຂວງຫົວພັນ\nພະແນກການເງິນແຂວງ\nເກັບມ້ຽນສຳເນົາ");
+
+  // Seal & Stamp
+  const [showSeal, setShowSeal] = useState(true);
+  const [sealMode, setSealMode] = useState<"default" | "custom">("default");
+  const [customSealUrl, setCustomSealUrl] = useState<string | null>(null);
+
+  // Distribution Form State (ບ່ອນນຳສົ່ງ)
+  const [showDistribution, setShowDistribution] = useState(true);
+  const [deliverPlace, setDeliverPlace] = useState(
+    `- ທ່ານເຈົ້າແຂວງ (ເພື່ອລາຍງານ)\n- ຫ້ອງວ່າການແຂວງ (ເພື່ອຕິດຕາມ)\n- ພະແນກການເງິນແຂວງ (ເພື່ອຊາບ)\n- ເກັບມ້ຽນສຳເນົາ`
+  );
+
+  const handleSealUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          setCustomSealUrl(event.target.result as string);
+          setSealMode("custom");
+          setShowSeal(true);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const formattedDocDate = useMemo(() => {
+    const parts = docDate.split("-");
+    if (parts.length === 3) {
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    return docDate;
+  }, [docDate]);
 
   // Extract unique departments from bookings
   const departments = useMemo(() => {
@@ -314,6 +363,190 @@ export default function VehicleReports({
         )}
       </div>
 
+      {/* ========================================================================= */}
+      {/* REPORT CONFIGURATION & DISTRIBUTION FORM (print:hidden)                   */}
+      {/* Modeled after ReportSystem: Editable headers, signatories & ບ່ອນນຳສົ່ງ     */}
+      {/* ========================================================================= */}
+      <div className="bg-white dark:bg-[#1e293b] rounded-3xl p-6 border border-slate-100 dark:border-white/5 shadow-xs space-y-4 print:hidden">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-3">
+          <div className="flex items-center gap-2 text-xs font-black text-slate-800 dark:text-white">
+            <Settings className="w-4 h-4 text-amber-500" />
+            <span>{isLao ? "ຟອມປັບປຸງຮ່າງບົດລາຍງານ & ບ່ອນນຳສົ່ງ (Report Draft & Distribution Setup)" : "Report Draft & Distribution Setup"}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsConfigOpen(!isConfigOpen)}
+            className="text-xs font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1 hover:underline cursor-pointer"
+          >
+            <span>{isConfigOpen ? (isLao ? "ຫຍໍ້ລົງ" : "Collapse") : (isLao ? "ຂະຫຍາຍຟອມ" : "Expand")}</span>
+            {isConfigOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
+        </div>
+
+        {isConfigOpen && (
+          <div className="space-y-4 text-xs pt-1 animate-in fade-in duration-200">
+            {/* Grid 1: Basic Administrative & Signatory info */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="space-y-1">
+                <label className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">{isLao ? "ຊື່ອົງການຈັດຕັ້ງ" : "Office Name"}</label>
+                <input
+                  type="text"
+                  value={officeName}
+                  onChange={(e) => setOfficeName(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-amber-500"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">{isLao ? "ເລກທີເອກະສານ" : "Doc Number"}</label>
+                <input
+                  type="text"
+                  value={docNumber}
+                  onChange={(e) => setDocNumber(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-amber-500"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">{isLao ? "ລົງວັນທີ" : "Reference Date"}</label>
+                <input
+                  type="date"
+                  value={docDate}
+                  onChange={(e) => setDocDate(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 font-semibold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-amber-500"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">{isLao ? "ຕຳແໜ່ງຜູ້ມີອຳນາດອະນຸມັດ" : "Approver Title"}</label>
+                <input
+                  type="text"
+                  value={approverTitle}
+                  onChange={(e) => setApproverTitle(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-amber-500"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">{isLao ? "ຊື່ຜູ້ມີອຳນາດອະນຸມັດ" : "Approver Name"}</label>
+                <input
+                  type="text"
+                  value={approverName}
+                  onChange={(e) => setApproverName(e.target.value)}
+                  placeholder={isLao ? "ປະວ່າງຫາກບໍ່ຕ້ອງການໃສ່ຊື່" : "Leave empty if not required"}
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 font-semibold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-amber-500"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">{isLao ? "ຕຳແໜ່ງຜູ້ສັງລວມ/ບັນທຶກ" : "Compiler Title"}</label>
+                <input
+                  type="text"
+                  value={reporterTitle}
+                  onChange={(e) => setReporterTitle(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 font-semibold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-amber-500"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">{isLao ? "ຊື່ຜູ້ສັງລວມ/ບັນທຶກ" : "Compiler Name"}</label>
+                <input
+                  type="text"
+                  value={reporterName}
+                  onChange={(e) => setReporterName(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 font-semibold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-amber-500"
+                />
+              </div>
+
+              {/* Seal Toggle */}
+              <div className="flex items-end">
+                <button
+                  type="button"
+                  onClick={() => setShowSeal(!showSeal)}
+                  className={`w-full p-2 rounded-xl border flex items-center justify-between text-left cursor-pointer transition-all ${
+                    showSeal 
+                      ? "border-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-300 font-bold" 
+                      : "border-slate-200 dark:border-white/10 text-slate-500"
+                  }`}
+                >
+                  <span className="flex items-center gap-1.5 text-xs">
+                    <Stamp className="w-3.5 h-3.5 text-amber-600" />
+                    <span>{isLao ? "ກາປະທັບທາງການ" : "Official Stamp"}</span>
+                  </span>
+                  <div className={`w-4 h-4 rounded-full flex items-center justify-center ${showSeal ? "bg-amber-600 text-white" : "bg-slate-300"}`}>
+                    {showSeal && <Check className="w-3 h-3" />}
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* Sub-Section: Distribution List Form (ບ່ອນນຳສົ່ງ ໃຫ້ສ້າງເປັນຟອມ ເພື່ອສາມາດປັບປ່ຽນໄດ້) */}
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="font-black text-slate-800 dark:text-white text-xs">
+                    {isLao ? "ຟອມປັບປຸງບ່ອນນຳສົ່ງ (Distribution List Form):" : "Distribution List Form:"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowDistribution(!showDistribution)}
+                    className="text-[10px] text-amber-600 dark:text-amber-400 font-bold hover:underline"
+                  >
+                    {showDistribution ? (isLao ? "[ເຊື່ອງບ່ອນນຳສົ່ງ]" : "[Hide]") : (isLao ? "[ສະແດງບ່ອນນຳສົ່ງ]" : "[Show]")}
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setDeliverPlace(`- ທ່ານເຈົ້າແຂວງ (ເພື່ອລາຍງານ)\n- ຫ້ອງວ່າການແຂວງ (ເພື່ອຕິດຕາມ)\n- ພະແນກການເງິນແຂວງ (ເພື່ອຊາບ)\n- ເກັບມ້ຽນສຳເນົາ`)}
+                  className="text-[10px] font-bold text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  <span>{isLao ? "ຄືນຄ່າມາດຕະຖານ" : "Reset Default"}</span>
+                </button>
+              </div>
+
+              {showDistribution && (
+                <>
+                  {/* Quick Preset Buttons */}
+                  <div className="flex flex-wrap gap-1.5 items-center">
+                    <span className="text-[10px] text-slate-400 font-semibold">{isLao ? "ເພີ່ມດ່ວນ:" : "Quick add:"}</span>
+                    {[
+                      { label: "- ທ່ານເຈົ້າແຂວງ", text: "- ທ່ານເຈົ້າແຂວງ (ເພື່ອລາຍງານ)" },
+                      { label: "- ຫ້ອງວ່າການແຂວງ", text: "- ຫ້ອງວ່າການແຂວງ (ເພື່ອຕິດຕາມ)" },
+                      { label: "- ພະແນກການເງິນ", text: "- ພະແນກການເງິນແຂວງ (ເພື່ອຊາບ)" },
+                      { label: "- ບັນດາພະແນກການ", text: "- ບັນດາພະແນກການອ້ອມຂ້າງ (ເພື່ອຊາບ)" },
+                      { label: "- ເກັບມ້ຽນສຳເນົາ", text: "- ເກັບມ້ຽນສຳເນົາ" }
+                    ].map((chip, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          if (!deliverPlace.includes(chip.text)) {
+                            setDeliverPlace(prev => prev ? `${prev}\n${chip.text}` : chip.text);
+                          }
+                        }}
+                        className="px-2 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-[10px] font-semibold text-slate-700 dark:text-slate-200 hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:text-amber-700 transition-colors cursor-pointer"
+                      >
+                        + {chip.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Editable Distribution Textarea */}
+                  <textarea
+                    rows={3}
+                    value={deliverPlace}
+                    onChange={(e) => setDeliverPlace(e.target.value)}
+                    placeholder={isLao ? "ປ້ອນບັນຊີບ່ອນນຳສົ່ງ (ແຍກແຕ່ລະແຖວ)..." : "Type distribution list (line by line)..."}
+                    className="w-full text-xs text-slate-800 dark:text-white bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl p-2.5 outline-none focus:ring-2 focus:ring-amber-500 leading-relaxed resize-none"
+                  />
+                </>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* METRIC SUMMARY CARDS (print:hidden) */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 print:hidden">
         <div className="bg-white dark:bg-[#1e293b] p-5 rounded-2xl border border-slate-100 dark:border-white/5 shadow-xs space-y-1">
@@ -372,12 +605,12 @@ export default function VehicleReports({
         {/* Provincial Office Header */}
         <div className="flex justify-between items-start text-xs font-bold">
           <div>
-            <p>ແຂວງຫົວພັນ</p>
-            <p>ຫ້ອງວ່າການແຂວງຫົວພັນ</p>
+            <p>{provinceName}</p>
+            <p className="font-extrabold">{officeName}</p>
           </div>
           <div className="text-right">
-            <p>ເລກທີ: ......./ຫວຂ.ຮພ</p>
-            <p>ວັນທີ: {new Date().toLocaleDateString("lo-LA")}</p>
+            <p className="font-bold">ເລກທີ: {docNumber}</p>
+            <p>ຊຳເໜືອ, ລົງວັນທີ: {formattedDocDate}</p>
           </div>
         </div>
 
@@ -456,63 +689,72 @@ export default function VehicleReports({
           <span>ຈຳນວນຄົນຮ່ວມເດີນທາງ: {totalPassengers} ເທື່ອຄົນ</span>
         </div>
 
-        {/* OFFICIAL SIGN-OFF BLOCK: (Approver on Left with space for seal, Compiler on Right, Distribution underneath) */}
-        <div className="pt-8 grid grid-cols-2 gap-8 text-xs">
+        {/* OFFICIAL SIGN-OFF BLOCK: (Approver on Left with seal, Compiler on Right, Distribution underneath - Modeled after ReportSystem) */}
+        <div className="pt-8 grid grid-cols-2 gap-8 text-xs font-sans">
           
-          {/* Left Column: Approver with seal spacing + Distribution underneath */}
-          <div className="space-y-6">
-            <div className="space-y-1">
-              <input
-                type="text"
-                value={approverTitle}
-                onChange={(e) => setApproverTitle(e.target.value)}
-                className="font-bold text-slate-800 bg-transparent border-b border-dashed border-slate-300 focus:border-amber-500 outline-none w-full print:border-none"
-              />
+          {/* Left Column: Approver with seal + Distribution underneath */}
+          <div className="flex flex-col justify-between">
+            <div className="text-center space-y-1">
+              <p className="font-bold uppercase text-xs text-slate-950">{approverTitle}</p>
               
-              {/* Generous space for Official Stamp and Signature */}
-              <div className="h-28 flex items-center justify-start text-slate-300 text-[10px] italic">
-                (ຈ້ຳກາປະທັບ ແລະ ລົງລາຍເຊັນ)
-              </div>
+              {/* Space for Seal Stamp */}
+              {showSeal ? (
+                sealMode === "custom" && customSealUrl ? (
+                  <div className="my-2 flex items-center justify-center min-h-[75px]">
+                    <img
+                      src={customSealUrl}
+                      alt="Official Seal"
+                      className="w-20 h-20 object-contain filter select-none"
+                    />
+                  </div>
+                ) : (
+                  <div className="relative my-2 flex items-center justify-center min-h-[75px] select-none">
+                    <div className="w-20 h-20 rounded-full border-2 border-dashed border-red-500/50 flex flex-col items-center justify-center p-1 text-center">
+                      <span className="text-[6px] text-red-500 font-bold leading-none">{officeName}</span>
+                      <span className="text-[7px] text-red-500 font-black leading-tight my-0.5">{provinceName}</span>
+                      <span className="text-[5px] text-red-500">OFFICIAL SEAL</span>
+                    </div>
+                    <div className="absolute text-[7px] text-red-500 font-bold border border-red-500/30 px-1 py-0.5 rotate-[-12deg] bg-white/95">
+                      ບ່ອນປະທັບຕາ
+                    </div>
+                  </div>
+                )
+              ) : (
+                <div className="h-20" />
+              )}
 
-              <input
-                type="text"
-                value={approverName}
-                onChange={(e) => setApproverName(e.target.value)}
-                className="font-bold text-slate-900 bg-transparent border-b border-dashed border-slate-300 focus:border-amber-500 outline-none w-full print:border-none"
-              />
+              <div className="pt-1 text-center w-full">
+                <p className="font-bold text-slate-400">......................................................</p>
+                <p className="font-bold text-slate-900 text-xs mt-1">{approverName}</p>
+              </div>
             </div>
 
             {/* Distribution List (ບ່ອນນຳສົ່ງ) Underneath Approver */}
-            <div className="pt-4 border-t border-slate-200 space-y-1">
-              <span className="font-bold text-slate-700 block text-[11px]">ບ່ອນນຳສົ່ງ:</span>
-              <textarea
-                rows={3}
-                value={deliverPlace}
-                onChange={(e) => setDeliverPlace(e.target.value)}
-                className="w-full text-[11px] text-slate-600 bg-transparent border-b border-dashed border-slate-300 focus:border-amber-500 outline-none resize-none print:border-none"
-              />
-            </div>
+            {showDistribution && (
+              <div className="pt-4 mt-4 border-t border-dashed border-slate-300 text-left">
+                <span className="font-bold underline text-[11px] block uppercase text-slate-900">
+                  ບ່ອນນຳສົ່ງ (Distribution List):
+                </span>
+                <div className="text-[10px] text-slate-700 whitespace-pre-line leading-relaxed font-medium pl-1 mt-1">
+                  {deliverPlace || (isLao ? "(ບໍ່ມີຂໍ້ມູນບ່ອນນຳສົ່ງ)" : "(No distribution text)")}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Right Column: Report Compiler */}
-          <div className="space-y-1 text-right">
-            <input
-              type="text"
-              value={reporterTitle}
-              onChange={(e) => setReporterTitle(e.target.value)}
-              className="font-bold text-slate-800 bg-transparent border-b border-dashed border-slate-300 focus:border-amber-500 outline-none text-right w-full print:border-none"
-            />
-
-            <div className="h-28 flex items-center justify-end text-slate-300 text-[10px] italic">
-              (ລົງລາຍເຊັນ)
+          <div className="text-center flex flex-col items-center justify-between">
+            <div className="space-y-1 w-full">
+              <p className="font-bold uppercase text-xs text-slate-950">{reporterTitle}</p>
             </div>
 
-            <input
-              type="text"
-              value={reporterName}
-              onChange={(e) => setReporterName(e.target.value)}
-              className="font-bold text-slate-900 bg-transparent border-b border-dashed border-slate-300 focus:border-amber-500 outline-none text-right w-full print:border-none"
-            />
+            {/* Signature spacing matching standard official height */}
+            <div className="min-h-[85px] flex items-center justify-center" />
+
+            <div className="pt-1 text-center w-full">
+              <p className="font-bold text-slate-400">......................................................</p>
+              <p className="font-bold text-slate-900 text-xs mt-1">{reporterName}</p>
+            </div>
           </div>
 
         </div>

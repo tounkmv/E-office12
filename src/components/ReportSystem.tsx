@@ -44,13 +44,13 @@ export default function ReportSystem({ bookings, rooms, language }: ReportSystem
 
   // Official Lao Report Form Configurations
   const [provinceName, setProvinceName] = useState("ແຂວງຫົວພັນ");
-  const [officeNameState, setOfficeNameState] = useState("ຫ້ອງວ່າການແຂວງຫົວພັນ");
+  const [officeNameState, setOfficeNameState] = useState("ຫ້ອງວ່າການແຂວງ");
   const [docNumber, setDocNumber] = useState("108/ຫວກ.ຫພ");
   const [docDate, setDocDate] = useState(() => new Date().toISOString().substring(0, 10));
   const [compilerName, setCompilerName] = useState("ທ່ານ ສົມໄຊ ວິໄລພອນ");
   const [compilerTitle, setCompilerTitle] = useState("ວິຊາການ ຂະແໜງເຕັກໂນໂລຊີ-ສັງລວມ");
   const [approverName, setApproverName] = useState("ທ່ານ ສົມພອນ ບຸນມະນີ");
-  const [approverTitle, setApproverTitle] = useState("ຫົວໜ້າຫ້ອງວ່າການແຂວງຫົວພັນ");
+  const [approverTitle, setApproverTitle] = useState("ຫົວໜ້າຫ້ອງວ່າການແຂວງ");
   const [showSeal, setShowSeal] = useState(true);
   const [sealMode, setSealMode] = useState<"default" | "custom">("default");
   const [customSealUrl, setCustomSealUrl] = useState<string | null>(null);
@@ -61,7 +61,7 @@ export default function ReportSystem({ bookings, rooms, language }: ReportSystem
   );
 
   const [customPreface, setCustomPreface] = useState(
-    "ເພື່ອເປັນການສະຫຼຸບ, ສັງເຄາະ ແລະ ຕິດຕາມການນຳໃຊ້ຫ້ອງປະຊຸມຂອງບັນດາພະແນກການ ແລະ ອົງການອ້ອມຂ້າງແຂວງ, ຫ້ອງວ່າການແຂວງຫົວພັນ ຂໍສະຫຼຸບສັງລວມຕົວເລກສະຖິຕິການຈອງ ແລະ ນຳໃຊ້ຫ້ອງປະຊຸມ ດັ່ງມີລາຍລະອຽດລຸ່ມນີ້:"
+    "ເພື່ອເປັນການສະຫຼຸບ, ສັງເຄາະ ແລະ ຕິດຕາມການນຳໃຊ້ຫ້ອງປະຊຸມຂອງບັນດາພະແນກການ ແລະ ອົງການອ້ອມຂ້າງແຂວງ, ຫ້ອງວ່າການແຂວງ ຂໍສະຫຼຸບສັງລວມຕົວເລກສະຖິຕິການຈອງ ແລະ ນຳໃຊ້ຫ້ອງປະຊຸມ ດັ່ງມີລາຍລະອຽດລຸ່ມນີ້:"
   );
 
   const handleSealUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -156,7 +156,7 @@ export default function ReportSystem({ bookings, rooms, language }: ReportSystem
   const formattedDocDate = (() => {
     const parts = docDate.split("-");
     if (parts.length === 3) {
-      return `ວັນທີ ${parts[2]}/${parts[1]}/${parts[0]}`;
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
     }
     return docDate;
   })();
@@ -671,12 +671,45 @@ export default function ReportSystem({ bookings, rooms, language }: ReportSystem
 
                   {/* Sub-Panel 2: Custom Distribution Comment Textarea */}
                   {showDistribution && (
-                    <div className="p-3.5 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-white/10 space-y-2 animate-in fade-in duration-200">
+                    <div className="p-3.5 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-white/10 space-y-2.5 animate-in fade-in duration-200">
                       <div className="flex items-center justify-between">
                         <label className="text-[10px] text-slate-600 dark:text-slate-300 font-extrabold">
-                          {isLao ? "ເນື້ອໃນບ່ອນນຳສົ່ງ (ປັບແຕ່ງ/ພີມໄດ້ຕາມຈຸດປະສົງ)" : "Distribution List / Comments (Customizable)"}
+                          {isLao ? "ເນື້ອໃນບ່ອນນຳສົ່ງ (ຟອມປັບປ່ຽນໄດ້ຕາມໃຈ)" : "Distribution List / Comments (Customizable)"}
                         </label>
+                        <button
+                          type="button"
+                          onClick={() => setDistributionText(`- ທ່ານເຈົ້າແຂວງ (ເພື່ອລາຍງານ)\n- ຫ້ອງວ່າການແຂວງ (ເພື່ອຕິດຕາມ)\n- ບັນດາພະແນກການອ້ອມຂ້າງ (ເພື່ອຊາບ)\n- ເກັບມ້ຽນສຳເນົາ`)}
+                          className="text-[9px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
+                        >
+                          {isLao ? "ຄືນຄ່າມາດຕະຖານ" : "Reset Default"}
+                        </button>
                       </div>
+                      
+                      {/* Quick preset chips to easily adjust / add entries */}
+                      <div className="flex flex-wrap gap-1">
+                        <span className="text-[9px] text-slate-400 self-center mr-1">{isLao ? "ເພີ່ມດ່ວນ:" : "Quick add:"}</span>
+                        {[
+                          { label: "- ທ່ານເຈົ້າແຂວງ", text: "- ທ່ານເຈົ້າແຂວງ (ເພື່ອລາຍງານ)" },
+                          { label: "- ຫ້ອງວ່າການແຂວງ", text: "- ຫ້ອງວ່າການແຂວງ (ເພື່ອຕິດຕາມ)" },
+                          { label: "- ພະແນກການເງິນ", text: "- ພະແນກການເງິນແຂວງ (ເພື່ອຊາບ)" },
+                          { label: "- ບັນດາພະແນກການ", text: "- ບັນດາພະແນກການອ້ອມຂ້າງ (ເພື່ອຊາບ)" },
+                          { label: "- ເກັບມ້ຽນສຳເນົາ", text: "- ເກັບມ້ຽນສຳເນົາ" }
+                        ].map((chip, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              if (!distributionText.includes(chip.text)) {
+                                setDistributionText(prev => prev ? `${prev}\n${chip.text}` : chip.text);
+                              }
+                            }}
+                            className="px-2 py-0.5 rounded-md bg-white dark:bg-slate-700 border border-slate-200 dark:border-white/10 text-[9px] font-semibold text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-900/40 hover:text-indigo-600 transition-colors cursor-pointer"
+                          >
+                            + {chip.label}
+                          </button>
+                        ))}
+                      </div>
+
                       <textarea
                         value={distributionText}
                         onChange={(e) => setDistributionText(e.target.value)}
@@ -740,7 +773,7 @@ export default function ReportSystem({ bookings, rooms, language }: ReportSystem
                         </div>
                         <div className="text-right space-y-0.5">
                           <p className="text-indigo-600 font-extrabold text-[10px]">ເລກທີ: {docNumber}</p>
-                          <p className="text-slate-800 text-[10px]">ວັນທີ: {formattedDocDate}</p>
+                          <p className="text-slate-800 text-[10px]">ຊຳເໜືອ, ລົງວັນທີ: {formattedDocDate}</p>
                         </div>
                       </div>
                     </div>
@@ -752,8 +785,8 @@ export default function ReportSystem({ bookings, rooms, language }: ReportSystem
                       </h2>
                       <h3 className="text-[11px] font-extrabold text-slate-800 leading-relaxed max-w-xl mx-auto">
                         {isLao 
-                          ? "ການນໍາໃຊ້ລະບົບການຈອງຫ້ອງປະຊຸມທັນສະໄໝ ຫ້ອງວ່າການແຂວງຫົວພັນ" 
-                          : "Utilization of the Modern Meeting Room Booking System, Houaphanh Provincial Office"}
+                          ? `ການນໍາໃຊ້ລະບົບການຈອງຫ້ອງປະຊຸມທັນສະໄໝ ${officeNameState}` 
+                          : "Utilization of the Modern Meeting Room Booking System, Provincial Office"}
                       </h3>
                       <p className="text-[9px] font-bold text-slate-500 italic">
                         {reportPeriod === "day" && `( ປະຈຳວັນທີ: ${reportDate} )`}
@@ -994,7 +1027,7 @@ export default function ReportSystem({ bookings, rooms, language }: ReportSystem
               </div>
               <div className="text-right space-y-0.5">
                 <p className="text-indigo-600 font-extrabold text-[10px]">ເລກທີ: {docNumber}</p>
-                <p className="text-slate-800 text-[10px]">ວັນທີ: {formattedDocDate}</p>
+                <p className="text-slate-800 text-[10px]">ຊຳເໜືອ, ລົງວັນທີ: {formattedDocDate}</p>
               </div>
             </div>
           </div>
