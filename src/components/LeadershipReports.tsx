@@ -40,6 +40,7 @@ import {
   getPriorityLabel, 
   PROVINCIAL_DEPARTMENTS 
 } from "../lib/activityHelper";
+import { printReportDocument } from "../lib/printHelper";
 import emblemLogo from "../assets/images/emblem.png";
 import emblemSvg from "../assets/images/emblem.svg";
 
@@ -221,7 +222,10 @@ export default function LeadershipReports({
 
   // Print Report Handler
   const handlePrint = () => {
-    window.print();
+    printReportDocument(
+      "leadership-print-sheet",
+      isLao ? "ບົດລາຍງານການເຄື່ອນໄຫວວຽກການນຳ_ຫ້ອງວ່າການແຂວງ" : "Leadership_Activities_Report"
+    );
   };
 
   // Export CSV Handler
@@ -707,7 +711,10 @@ export default function LeadershipReports({
       {/* ========================================================================= */}
       {/* OFFICIAL REPORT DOCUMENT VIEW (Styled for both Screen & Print) */}
       {/* ========================================================================= */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm print:shadow-none print:border-0 print:p-0 print:m-0 space-y-6">
+      <div 
+        id="leadership-print-sheet"
+        className="print-report-sheet bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm print:shadow-none print:border-0 print:p-0 print:m-0 space-y-6"
+      >
         
         {/* OFFICIAL LAO NATIONAL HEADER */}
         <div className="text-center space-y-1 pb-4 border-b border-slate-200 dark:border-slate-800 print:border-black">

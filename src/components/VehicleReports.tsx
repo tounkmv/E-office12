@@ -25,6 +25,7 @@ import {
   RotateCcw
 } from "lucide-react";
 import { VehicleBooking, Vehicle, AppLanguage } from "../types";
+import { printReportDocument } from "../lib/printHelper";
 import emblemLogo from "../assets/images/emblem.png";
 import emblemSvg from "../assets/images/emblem.svg";
 
@@ -206,7 +207,10 @@ export default function VehicleReports({
 
   // Print Report
   const handlePrint = () => {
-    window.print();
+    printReportDocument(
+      "vehicle-print-sheet",
+      isLao ? "ບົດລາຍງານການນຳໃຊ້ລົດບໍລິຫານ_ຫ້ອງວ່າການແຂວງ" : "Vehicle_Usage_Report"
+    );
   };
 
   return (
@@ -577,7 +581,10 @@ export default function VehicleReports({
       {/* ========================================================================= */}
       {/* OFFICIAL PRINTABLE REPORT DOCUMENT (Styled for both Screen & Print Preview) */}
       {/* ========================================================================= */}
-      <div className="bg-white dark:bg-white text-slate-900 p-8 sm:p-12 rounded-3xl border border-slate-200 shadow-xl space-y-8 print:shadow-none print:border-none print:p-0">
+      <div 
+        id="vehicle-print-sheet" 
+        className="print-report-sheet bg-white dark:bg-white text-slate-900 p-8 sm:p-12 rounded-3xl border border-slate-200 shadow-xl space-y-8 print:shadow-none print:border-none print:p-0"
+      >
         
         {/* Official Lao Government Header */}
         <div className="text-center space-y-2">

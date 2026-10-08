@@ -25,6 +25,7 @@ import {
   RotateCcw
 } from "lucide-react";
 import { LeaveRequest, CivilServant, AppLanguage, LeaveType } from "../types";
+import { printReportDocument } from "../lib/printHelper";
 import { ANNUAL_LEAVE_QUOTA, calculateStaffLeaveBalance } from "../lib/leaveHelper";
 import emblemLogo from "../assets/images/emblem.png";
 import emblemSvg from "../assets/images/emblem.svg";
@@ -144,7 +145,10 @@ export default function LeaveReports({ leaves, employees, language }: LeaveRepor
 
   // Print Report Handler
   const handlePrint = () => {
-    window.print();
+    printReportDocument(
+      "leave-print-sheet",
+      isLao ? "ບົດລາຍງານການລາພັກ_ຫ້ອງວ່າການແຂວງ" : "Staff_Leave_Report"
+    );
   };
 
   return (
@@ -446,7 +450,10 @@ export default function LeaveReports({ leaves, employees, language }: LeaveRepor
       </div>
 
       {/* 4. PRINTABLE REPORT DOCUMENT CONTAINER */}
-      <div className="p-6 sm:p-10 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm print:p-0 print:border-none print:shadow-none space-y-6">
+      <div 
+        id="leave-print-sheet"
+        className="print-report-sheet p-6 sm:p-10 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm print:p-0 print:border-none print:shadow-none space-y-6"
+      >
         
         {/* OFFICIAL GOVERNMENT HEADER (VISIBLE IN PRINT & VIEW) */}
         <div className="text-center space-y-2 border-b-2 border-slate-900 pb-5">

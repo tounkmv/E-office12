@@ -133,51 +133,26 @@ p, span, select, input, textarea {
 
 /* --- PRINTING STYLES --- */
 @media print {
-  /* Set page setup options - margin 0 removes default browser headers/footers */
+  /* Set A4 portrait page with standard margins */
   @page {
     size: A4 portrait;
-    margin: 0;
+    margin: 12mm 15mm 15mm 15mm;
   }
 
-  /* Reset all HTML / body backgrounds for printing */
+  /* Reset HTML and body backgrounds to clean white */
   html, body {
     background: #ffffff !important;
-    color: #000000 !important;
+    background-color: #ffffff !important;
+    color: #0f172a !important;
     margin: 0 !important;
     padding: 0 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
     font-size: 11pt !important;
-    font-family: "Phetsarath", "Inter", sans-serif !important;
+    font-family: "Noto Sans Lao", "Phetsarath", "Inter", sans-serif !important;
   }
 
-  /* Hide absolutely everything by default */
-  body * {
-    visibility: hidden !important;
-  }
-
-  /* Only display the print-report-sheet container and all of its descendants */
-  #print-report-sheet,
-  #print-report-sheet * {
-    visibility: visible !important;
-  }
-
-  /* Position the print-report-sheet container with proper margins on physical paper */
-  #print-report-sheet {
-    display: block !important;
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
-    width: 100% !important;
-    margin: 0 !important;
-    padding: 20mm 20mm 20mm 20mm !important;
-    box-sizing: border-box !important;
-    border: none !important;
-    background: transparent !important;
-    box-shadow: none !important;
-  }
-
-  /* Hide any other panels/elements if they somehow render */
+  /* Hide navigation, sidebars, header, modals, form controls and action buttons */
   .print\:hidden,
   .print-hidden,
   aside,
@@ -185,9 +160,52 @@ p, span, select, input, textarea {
   header,
   footer,
   button,
-  #app-root-layout,
-  #toast-container {
+  input,
+  select,
+  textarea,
+  #toast-container,
+  [data-print-hide="true"] {
     display: none !important;
+  }
+
+  /* Ensure containers do not clip page overflow */
+  #root,
+  main,
+  div {
+    overflow: visible !important;
+    height: auto !important;
+  }
+
+  /* Official printable report sheet container */
+  #print-report-sheet,
+  .print-report-sheet,
+  #printable-civil-servant-report {
+    display: block !important;
+    visibility: visible !important;
+    position: static !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    box-shadow: none !important;
+    border: none !important;
+    overflow: visible !important;
+  }
+
+  /* Clean table printing across multiple pages */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  tr {
+    page-break-inside: avoid !important;
+  }
+
+  thead {
+    display: table-header-group !important;
   }
 }
 

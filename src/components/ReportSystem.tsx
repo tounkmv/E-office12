@@ -19,6 +19,7 @@ import {
   Trash2,
   Stamp
 } from "lucide-react";
+import { printReportDocument } from "../lib/printHelper";
 import emblemLogo from "../assets/images/emblem.png";
 import emblemSvg from "../assets/images/emblem.svg";
 
@@ -977,7 +978,10 @@ export default function ReportSystem({ bookings, rooms, language }: ReportSystem
                   onClick={() => {
                     setIsPrintModalOpen(false);
                     setTimeout(() => {
-                      window.print();
+                      printReportDocument(
+                        "print-report-sheet", 
+                        isLao ? "ບົດລາຍງານການຈອງຫ້ອງປະຊຸມ_ຫ້ອງວ່າການແຂວງ" : "Meeting_Room_Booking_Report"
+                      );
                     }, 250);
                   }}
                   className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-black shadow-md shadow-indigo-500/20 hover:shadow-indigo-500/35 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 w-1/2 sm:w-auto"
@@ -994,7 +998,7 @@ export default function ReportSystem({ bookings, rooms, language }: ReportSystem
 
       {/* PRINT-ONLY OFFICIAL LAO DOCUMENT */}
       {typeof document !== "undefined" && createPortal(
-        <div id="print-report-sheet" className="hidden print:block bg-white text-slate-950 p-6 min-h-screen font-sans">
+        <div id="print-report-sheet" className="hidden print:block print-report-sheet bg-white text-slate-950 p-6 min-h-screen font-sans">
           
           {/* LAO PDR NATIONAL EMBLEM & FORMAL ADMINISTRATIVE HEADER */}
           <div className="pb-5 mb-6 text-center font-sans">

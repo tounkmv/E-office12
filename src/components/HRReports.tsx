@@ -21,6 +21,7 @@ import {
   RotateCcw
 } from "lucide-react";
 import { CivilServant, AppLanguage } from "../types";
+import { printReportDocument } from "../lib/printHelper";
 import { PROVINCIAL_DEPARTMENTS, OFFICIAL_POSITIONS } from "../lib/hrHelper";
 import emblemLogo from "../assets/images/emblem.png";
 import emblemSvg from "../assets/images/emblem.svg";
@@ -115,7 +116,10 @@ export default function HRReports({ employees, language }: HRReportsProps) {
   const filteredProbation = filteredEmployees.filter(e => e.type === "probation").length;
 
   const handlePrint = () => {
-    window.print();
+    printReportDocument(
+      "printable-civil-servant-report",
+      isLao ? "ບົດລາຍງານບັນຊີພະນັກງານລັດຖະກອນ_ຫ້ອງວ່າການແຂວງ" : "Civil_Servants_HR_Report"
+    );
   };
 
   const handleExportCSV = () => {
@@ -487,7 +491,7 @@ export default function HRReports({ employees, language }: HRReportsProps) {
       {/* 2. FORMAL PRINTABLE REPORT PAPER */}
       <div 
         id="printable-civil-servant-report"
-        className="bg-white text-slate-950 p-8 sm:p-12 rounded-3xl border border-slate-200 shadow-md print:border-none print:shadow-none print:p-0 print:m-0 space-y-6"
+        className="print-report-sheet bg-white text-slate-950 p-8 sm:p-12 rounded-3xl border border-slate-200 shadow-md print:border-none print:shadow-none print:p-0 print:m-0 space-y-6"
       >
         {/* National Motto & Header */}
         <div className="text-center space-y-1">
